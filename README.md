@@ -1,109 +1,121 @@
-Consignes de travail
- 
+# EasySave – Logiciel de sauvegarde  
+Projet fil rouge – ProSoft
 
-Calendrier
-Durant ce projet fil rouge, vous allez vivre en manière accélérée le développement de 3 versions du logiciel de sauvegarde EasySave.
+## 📌 Présentation du projet
 
-Livrable 0 et Livrable 1 (EasySave version 1.0):
+EasySave est un logiciel de sauvegarde développé dans le cadre d’un projet fil rouge simulant un contexte professionnel au sein de l’éditeur **ProSoft**.  
+L’objectif est de concevoir, maintenir et faire évoluer un logiciel de sauvegarde en respectant des contraintes industrielles fortes : qualité du code, gestion des versions, documentation et maintenabilité.
 
-• 1er  jour  : Lancement du projet et Cahier des charges version 1.0
+Le projet couvre le développement de **trois versions majeures** du logiciel, accompagnées de versions mineures intermédiaires.
 
-• 3 eme jour : Création d'un environnement de travail et envoie des accès au tuteur (sera évalué sur l'ensemble du projet)
+---
 
-• Veille Livrable 1 : Livraison des diagrammes UML
+## 🗓️ Organisation et calendrier des livrables
 
-• Jour Livrable 1  : Réception du livrable 1 (version 1.0 de EasySave) et documentations associées.
+### 🔹 Livrable 0 & Livrable 1 – EasySave v1.0
+- **Jour 1** : Lancement du projet & Cahier des charges v1.0  
+- **Jour 3** : Mise en place de l’environnement de travail et partage des accès Git  
+- **Veille du livrable 1** : Livraison des diagrammes UML  
+- **Jour du livrable 1** : Livraison d’EasySave v1.0 + documentations associées  
 
-Livrable 2 (EasySave versions 2.0 et 1.1): // non évalué
+### 🔹 Livrable 2 – EasySave v2.0 et v1.1 *(non évalué)*
+- Mise à disposition des cahiers des charges v2.0 et v1.1  
+- Veille du livrable 2 : Diagrammes UML  
+- Jour du livrable 2 : Livraison du livrable  
 
-• Lendemain Livrable 1  : Mise à disposition du Cahier des charges de la version 2 et de la version 1.1
+### 🔹 Livrable 3 – EasySave v3.0
+- Mise à disposition du cahier des charges v3.0  
+- Avant-veille soutenance : Diagrammes UML  
+- Veille soutenance : Livraison du livrable 3  
+- Jour soutenance : Soutenance finale  
 
-• Veille  Livrable 2: Livraison des diagrammes UML
+---
 
-• Jour Livrable 2: Réception du livrable 2
+## 💼 Contexte professionnel – ProSoft
 
-Livrable 3 (EasySave version 3.0) :
+Le logiciel EasySave s’inscrit dans la **suite logicielle ProSoft** et respecte la politique tarifaire suivante :
 
-• Lendemain Livrable 2   : Mise à disposition du Cahier des charges de la version 3
+- **Prix unitaire** : 200 € HT  
+- **Contrat de maintenance annuel** (5j/7 – 8h à 17h, mises à jour incluses)  
+  - 12 % du prix d’achat  
+  - Contrat annuel à tacite reconduction  
+  - Revalorisation basée sur l’indice SYNTEC  
 
-• Avant-veille soutenance: Livraison des diagrammes UML
+---
 
-• Veille soutenance: Réception du livrable 3
+## 🧰 Outils et technologies
 
-• Jour soutenance: Soutenance du projet.
+### Environnement de développement
+- **IDE** : Visual Studio 2022 ou supérieur  
+- **Langage** : C#  
+- **Framework** : .NET 8.0  
+- **Gestion de version** : GitHub  
+- **UML** : ArgoUML (préconisé)
 
-Présentation de Prosoft
-Votre équipe vient d'intégrer l'éditeur de logiciels ProSoft. Sous la responsabilité du DSI, vous aurez la responsabilité de gérer le projet “EasySave” qui consiste à développer un logiciel de sauvegarde.
+> Tous les codes et documents du projet sont versionnés sur GitHub.  
+> Le tuteur/pilote du projet est invité au dépôt afin d’assurer le suivi des développements.
 
-Comme tout logiciel de la Suite ProSoft, le logiciel s'intégrera à la politique tarifaire.
+---
 
-Prix unitaire : 200 €HT
+## 🧱 Exigences techniques et qualité
 
-Contrat de maintenance annuel 5/7 8-17h (mises à jour incluses): 12% prix d'achat (Contrat annuel à tacite reconduction avec revalorisation basée sur l'indice SYNTEC)
+### Lisibilité & maintenabilité
+- Code et documentation **en anglais** (compatibilité filiales internationales)
+- Fonctions de taille raisonnable
+- Aucune duplication inutile de code
+- Respect strict des conventions de nommage
+- Architecture claire et évolutive
 
-Lors de ce projet, votre équipe devra assurer le développement, la gestion des versions majeures et mineures, mais aussi les documentations
+### Gestion des versions
+- Versions majeures et mineures clairement identifiées
+- Release notes obligatoires
+- Objectif : faciliter les évolutions futures et les corrections rapides
 
-pour les utilisateurs : manuel d'utilisation (sur une page)
+### Interface utilisateur
+- Logiciel destiné à être distribué chez des clients
+- Une attention particulière est portée à la qualité des IHM
 
-pour le support client : Informations nécessaires pour le support technique (Emplacement par défaut du logiciel, Configuration minimale, Emplacement des fichiers de configuration...)
+---
 
-Pour garantir une reprise de votre travail par d'autres équipes, la direction vous impose de travailler dans le respect des contraintes suivantes :
+## 📚 Documentation attendue
 
-Outils et méthodes (à valider avec votre responsable)
+### Documentation utilisateur
+- Manuel d’utilisation synthétique
+- **Une seule page maximum**
 
-Visual Studio 2022 ou supérieure
+### Documentation support technique
+- Emplacement par défaut du logiciel
+- Configuration minimale requise
+- Emplacement des fichiers de configuration
+- Informations nécessaires au support client
 
-GITHub
+---
 
-Editeur UML : Nous préconisations l'utilisation de ArgoUML
+## 📦 Livrables attendus
 
-« Tous vos documents et l'ensemble des codes doivent être gérés avec ces outils. »
+- Code source versionné sur GitHub
+- Diagrammes UML (livrés la veille de chaque livrable)
+- Documentation utilisateur
+- Documentation support
+- Release notes
+- Versions fonctionnelles du logiciel EasySave
 
-« Votre responsable (tuteur ou pilote) doit être invité sur votre GIT pour pouvoir suivre vos développements »
+---
 
-Langage, FrameWork
-
-Langage C#
-
-Bibliothèque .Net 8.0
-
-Lisibilité et maintenabilité du code :
-
-L'ensemble des documents, lignes de codes et commentaires doivent être exploitables par les filiales anglophones.
-
-Le nombre de lignes de code dans une fonction doit être raisonnable.
-
-La redondance des lignes de code est à proscrire (une vigilance particulière sera faite sur les copier-coller).
-
-Respect des conventions de nommage
-
-Autres :
-
-La documentation utilisateur doit tenir en une seule page
-
-Release note obligatoire
-
-Vous devez conduire ce projet de manière à réduire les coûts de développement des futures versions et surtout d'être capable de réagir rapidement à la remontée éventuelle d'un dysfonctionnement.
-
-Gestion des versions
-
-Limiter au maximum les lignes de code dupliquées
-
-Le logiciel devant être distribué chez les clients, il est impératif de soigner les IHM.
-
- 
-
-Livrables attendus
-Votre équipe doit installer un environnement de travail respectant les contraintes imposées par ProSoft.
-
-Le bon usage de l'environnement de travail et des contraintes imposées par la direction seront évalués tout au long du projet.
+## 🎯 Critères d’évaluation
 
 Une vigilance particulière sera portée sur :
+- La gestion de Git (versioning, commits, travail collaboratif)
+- Le respect des délais
+- La qualité de l’architecture logicielle
+- L’absence de redondance dans le code
+- La maintenabilité et l’évolutivité de la solution
 
-La gestion de GIT (versioning, suivi des modifications, travail en équipe,...)
+---
 
-Les diagrammes UML à rendre 24 heures avant chaque livrable (La veille)
+## 👥 Équipe projet
 
-La qualité du code (absence de redondance dans les lignes de code)
+Projet réalisé dans le cadre d’un travail d’équipe sous la supervision d’un tuteur CESI.
 
-L'architecture du code
+---
+

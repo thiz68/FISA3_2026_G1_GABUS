@@ -1,4 +1,4 @@
-# EasySave – Logiciel de sauvegarde 🚀
+# EasySave – Logiciel de sauvegarde
 Projet fil rouge – ProSoft
 
 ## 📌 Présentation du projet

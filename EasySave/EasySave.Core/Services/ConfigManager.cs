@@ -40,4 +40,16 @@ public class ConfigManager : IConfigManager
         foreach (var job in jobs)
             manager.AddJob(job);
     }
+    
+    //Save jobs
+    public void SaveJobs(IJobManager manager)
+    {
+        //JSON output
+        var options = new JsonSerializerOptions { WriteIndented = true };
+        
+        var json = JsonSerializer.Serialize(manager.Jobs, options);
+        
+        //Write JSON to config file
+        File.WriteAllText(_configFilePath, json);
+    }
 }

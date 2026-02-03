@@ -59,10 +59,11 @@ public class Program
             Console.WriteLine(_localization.GetString("menu_title"));
             Console.WriteLine();
             Console.WriteLine(_localization.GetString("menu_create"));    // Option 1
-            Console.WriteLine(_localization.GetString("menu_list"));      // Option 2
-            Console.WriteLine(_localization.GetString("menu_execute"));   // Option 3
-            Console.WriteLine(_localization.GetString("menu_language"));  // Option 4
-            Console.WriteLine(_localization.GetString("menu_exit"));      // Option 5
+            Console.WriteLine(_localization.GetString("menu_remove"));    // Option 2
+            Console.WriteLine(_localization.GetString("menu_list"));      // Option 3
+            Console.WriteLine(_localization.GetString("menu_execute"));   // Option 4
+            Console.WriteLine(_localization.GetString("menu_language"));  // Option 5
+            Console.WriteLine(_localization.GetString("menu_exit"));      // Option 6
             Console.WriteLine();
             Console.Write(_localization.GetString("enter_choice"));
 
@@ -75,15 +76,18 @@ public class Program
                     CreateJob();      // Launch job creation loop
                     break;
                 case "2":
-                    ListJobs();       // Show all jobs
+                    RemoveJobs();     //Remove a job
                     break;
                 case "3":
-                    ExecuteBackup();  // Select job and run it
+                    ListJobs();       // Show all jobs
                     break;
                 case "4":
+                    ExecuteBackup();  // Select job and run it
+                    break;
+                case "5":
                     ChangeLanguage(); // Chenge the language
                     break;
-                case "5":             // Exit the program
+                case "6":             // Exit the program
                     return;    
                 default:
                     // If wrong input :
@@ -138,6 +142,49 @@ public class Program
         {
             Console.WriteLine($"{_localization.GetString("error_max_jobs")}: {ex.Message}");
         }
+    }
+
+    private static void RemoveJobs()
+    {
+        //Verify jobs
+        if (_jobManager.Jobs.Count == 0)
+        {
+            Console.WriteLine(_localization.GetString("job_list_empty"));
+            return;
+        }
+        
+        //Print jobs
+        ListJobs();
+        
+        //Ask what jobs to suppress
+        Console.WriteLine(_localization.GetString("job_number_remove"));
+        Console.WriteLine("> ");
+        
+        var input = Console.ReadLine()?.Trim();
+        
+        //Verify input
+        if (!int.TryParse(input, out int index))
+        {
+            Console.WriteLine(_localization.GetString("error_not_found"));
+            return;
+        }
+
+        if (index < 1 || index >= _jobManager.Jobs.Count)
+        {
+            Console.WriteLine(_localization.GetString("error_not_found"));
+            return;
+        }
+        
+        //Return jobs
+        var job = _jobManager.GetJob(index);
+        
+        //Suppress job
+        _jobManager.RemoveJob(job.Name);
+        
+        //Save config
+        _configManager.SaveJobs(_jobManager);
+        
+        Console.WriteLine(_localization.GetString("job_removed"));
     }
 
     // Display jobs function

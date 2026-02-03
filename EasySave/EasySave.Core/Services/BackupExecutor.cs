@@ -39,12 +39,12 @@ public class BackupExecutor
     }
     
     //From command line arguments
-    public void ExecuteFromCommand(string command, IJobManager jobManager, ILogger logger, IStateManager stateManager)
+    public void ExecuteFromCommand(string command, IJobManager manager, ILogger logger, IStateManager stateManager)
     {
         var jobsToExecute = new List<IJob>();
-        
-        //Range format
-        if (command.Contains("-"))
+
+        //Check range format ("1-3")
+        if (command.Contains('-'))
         {
             var parts = command.Split('-');
             if (parts.Length == 2 && int.TryParse(parts[0], out int start) && int.TryParse(parts[1], out int end))
@@ -52,13 +52,12 @@ public class BackupExecutor
                 for (int i = start; i <= end; i++)
                 {
                     if (i >= 1 && i <= manager.Jobs.Count)
-                        jobsToExecute.Add(manager.GetJobs(i));
+                        jobsToExecute.Add(manager.GetJob(i));
                 }
             }
         }
-        
-        //Check selection format
-        else if (command.Contains(";"))
+        //Check for selection format ("1;3")
+        else if (command.Contains(';'))
         {
             var parts = command.Split(';');
             foreach (var part in parts)
@@ -67,13 +66,12 @@ public class BackupExecutor
                     jobsToExecute.Add(manager.GetJob(index));
             }
         }
-        
-        //Single Job ("1")
+        //Single job ("1")
         else if (int.TryParse(command, out int index) && index >= 1 && index <= manager.Jobs.Count)
         {
             jobsToExecute.Add(manager.GetJob(index));
         }
-        
+
         //Execute all selected jobs
         ExecuteSequential(jobsToExecute, logger, stateManager);
     }

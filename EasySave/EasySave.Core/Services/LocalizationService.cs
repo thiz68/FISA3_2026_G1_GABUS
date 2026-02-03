@@ -28,6 +28,8 @@ public class LocalizationService : ILocalizationService
             ["enter_source"] = "Enter source path: ",
             ["enter_target"] = "Enter target path: ",
             ["enter_type"] = "Enter type (1=Full, 2=Differential): ",
+            ["press_to_continue"] = "Press any key to continue...",
+            ["enter_job_number"] = "Enter job numbers to execute:",
 
             // Success
             ["job_created"] = "Job successfully created",
@@ -64,6 +66,8 @@ public class LocalizationService : ILocalizationService
             ["enter_source"] = "Chemin source: ",
             ["enter_target"] = "Chemin cible: ",
             ["enter_type"] = "Type (1=Complet, 2=Differentiel): ",
+            ["press_to_continue"] = "Appuyer sur une touche pour continuer...",
+            ["enter_job_number"] = "Entrez le nombre de travaux a executer:",
 
             // Success
             ["job_created"] = "Travail cree avec succes",

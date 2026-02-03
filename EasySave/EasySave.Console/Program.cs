@@ -92,7 +92,7 @@ public class Program
             }
 
             Console.WriteLine();
-            Console.WriteLine("Press any key to continue...");
+            Console.WriteLine(_localization.GetString("press_to_continue"));
             Console.ReadKey(); // Wait user to press a key
         }
     }
@@ -175,6 +175,7 @@ public class Program
 
         // Ask user for jobs he wants to run
         Console.WriteLine("Enter job numbers to execute:");
+        Console.WriteLine(_localization.GetString("enter_job_number"));
         Console.WriteLine("Ex: 1 | 2-5 | 1;3;4");
         Console.Write("> ");
 

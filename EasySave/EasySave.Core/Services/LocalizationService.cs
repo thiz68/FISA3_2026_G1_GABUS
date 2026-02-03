@@ -90,7 +90,6 @@ public class LocalizationService : ILocalizationService
         {
             return key;
         }
-            
     }
 
     // Change current language

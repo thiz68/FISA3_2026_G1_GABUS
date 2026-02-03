@@ -1,26 +1,27 @@
 namespace EasySave.Core.Models;
 
+// Represents the current state of a backup job (for state.json)
 public class JobState
 {
-    // Backup jobs name
+    // Name of the backup job
     public string Name { get; set; } = string.Empty;
 
-    // Source path
+    // Source directory path
     public string JobSourcePath { get; set; } = string.Empty;
 
-    // Target path
+    // Target directory path
     public string JobTargetPath { get; set; } = string.Empty;
 
-    // Timestamp to get the time of last update
+    // When the state was last updated
     public DateTime Timestamp { get; set; }
 
-    // State of the job exec
+    // Current state: Active, Inactive, etc.
     public string State { get; set; } = "Inactive";
 
-    // Number of files to save
+    // Total number of files to copy
     public int TotalFilesToCopy { get; set; }
 
-    // Size of files to save in bytes
+    // Total size of all files in bytes
     public long TotalFilesSize { get; set; }
 
     // Number of files remaining to copy
@@ -29,12 +30,12 @@ public class JobState
     // Size remaining to copy in bytes
     public long NbSizeLeftToDo { get; set; }
 
-    // Progession of job in %
+    // Progress percentage (0 to 100)
     public double Progression { get; set; }
 
-    // Current source file being saved
+    // Current file being copied (source path)
     public string CurrentSourceFilePath { get; set; } = string.Empty;
 
-    // Current target file being copied
+    // Current file being copied (target path)
     public string CurrentTargetFilePath { get; set; } = string.Empty;
 }

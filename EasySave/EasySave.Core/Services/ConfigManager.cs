@@ -24,4 +24,20 @@ public class ConfigManager : IConfigManager
         //Set path to config file
         _configFilePath = Path.Combine(configDir, "config.json");
     }
+    
+    //Load jobs from config file, send to job manager
+    public void LoadJobs(IJobManager manager)
+    {
+        if (!File.Exists(_configFilePath))
+            return;
+        
+        var json = File.ReadAllText(_configFilePath);
+        var jobs = JsonSerializer.Deserialize<List<SaveJob>>(json);
+
+        if (jobs == null)
+            return;
+        
+        foreach (var job in jobs)
+            manager.AddJob(job);
+    }
 }

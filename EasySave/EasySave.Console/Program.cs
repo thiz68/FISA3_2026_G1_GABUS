@@ -87,7 +87,7 @@ public class Program
                     return;    
                 default:
                     // If wrong input :
-                    Console.WriteLine("Invalid choice");
+                    Console.WriteLine(_localization.GetString("invalid_choice"));
                     break;
             }
 

@@ -41,7 +41,10 @@ public class LocalizationService : ILocalizationService
 
             // Errors
             ["error_max_jobs"] = "Error: Maximum 5 jobs allowed",
-            ["error_not_found"] = "Error: Job not found"
+            ["error_not_found"] = "Error: Job not found",
+            ["invalid_choice"] = "Error: Invalid choice"
+
+
         },
 
         // French dict
@@ -74,7 +77,8 @@ public class LocalizationService : ILocalizationService
 
             // Errors
             ["error_max_jobs"] = "Erreur: Maximum 5 travaux autorises",
-            ["error_not_found"] = "Erreur: Travail non trouve"
+            ["error_not_found"] = "Erreur: Travail non trouve",
+            ["invalid_choice"] = "Erreur: Choix invalide"
         }
     };
 

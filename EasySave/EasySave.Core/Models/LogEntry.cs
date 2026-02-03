@@ -1,21 +1,20 @@
 namespace EasySave.Core.Models;
 
-// Represents a single log entry for a file transfer
 public class LogEntry
 {
-    // When the transfer happened
+    // Timestamp to get the time of the transfer
     public DateTime Timestamp { get; set; }
 
-    // Name of the backup job
+    // Name of the job
     public string JobName { get; set; } = string.Empty;
 
-    // Full path of the source file
+    // Source file path
     public string SourceFile { get; set; } = string.Empty;
 
-    // Full path of the target file
+    // Target file path
     public string TargetFile { get; set; } = string.Empty;
 
-    // Size of the file in bytes
+    // Size of file in bytes
     public long FileSize { get; set; }
 
     // Time taken to transfer in milliseconds

@@ -28,7 +28,7 @@ public class FileBackupService
     
     //Copy all files and subfolders /!\ RECURSIVE /!\
     private void CopyDirectoryRecursive(string sourceDir, string targetDir, IJob job, ILogger logger,
-        IStateManager stateManager, int totalFiles, long totalSize, ref int FilesRemaining, ref long SizeRemaining)
+        IStateManager stateManager, int totalFiles, long totalSize, ref int filesRemaining, ref long sizeRemaining)
     {
         //Copy all files in the current folder
         foreach (var sourceFile in Directory.GetFiles(sourceDir))

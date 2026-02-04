@@ -18,6 +18,7 @@ public class LocalizationService : ILocalizationService
             ["menu_title"] = "=== EasySave v1.0 ===",
             ["menu_create"] = "1. Create backup job",
             ["menu_remove"] = "2. Remove backup job",
+            ["job_modified"] = "Job successfully modified",
             ["menu_modify"] = "3. Modify backup job",
             ["menu_list"] = "4. List backup jobs",
             ["menu_execute"] = "5. Execute backup",

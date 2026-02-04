@@ -6,6 +6,9 @@ using EasySave.Core.Models;
 // Store backup jobs and methods
 public class JobManager : IJobManager
 {
+    //Translation 
+    private static ILocalizationService _localization = null!;
+
     // List that contains all saved jobs
     private readonly List<IJob> _jobs = new();
 
@@ -18,13 +21,14 @@ public class JobManager : IJobManager
     // Add job to the list fucntion
     public void AddJob(IJob job)
     {
+        _localization = new LocalizationService();
         // Check if list full
         if (_jobs.Count >= MaxJobs)
-            throw new InvalidOperationException("Maximum 5 jobs allowed");
+            throw new InvalidOperationException(_localization.GetString("error_max_jobs"));
 
         // Check if job with the same name already exist
         if (_jobs.Any(j => j.Name == job.Name))
-            throw new InvalidOperationException("Job name already exists");
+            throw new InvalidOperationException(_localization.GetString("job_name_alr_exist"));
 
         // -> Add the job
         _jobs.Add(job);

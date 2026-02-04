@@ -174,7 +174,6 @@ public class Program
         if (_jobManager.Jobs.Count == 0) return;
 
         // Ask user for jobs he wants to run
-        Console.WriteLine("Enter job numbers to execute:");
         Console.WriteLine(_localization.GetString("enter_job_number"));
         Console.WriteLine("Ex: 1 | 2-5 | 1;3;4");
         Console.Write("> ");

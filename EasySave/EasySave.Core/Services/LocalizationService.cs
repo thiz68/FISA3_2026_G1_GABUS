@@ -26,7 +26,7 @@ public class LocalizationService : ILocalizationService
             // User input
             ["enter_choice"] = "Enter your choice: ",
             ["enter_name"] = "Enter job name: ",
-            ["job_number_remove"] = "Enter job number to remove: ",
+            ["job_to_remove"] = "Enter job's name or number to remove: ",
             ["enter_source"] = "Enter source path: ",
             ["enter_target"] = "Enter target path: ",
             ["enter_type"] = "Enter type (1=Full, 2=Differential): ",
@@ -62,7 +62,7 @@ public class LocalizationService : ILocalizationService
             // User input
             ["enter_choice"] = "Entrez votre choix: ",
             ["enter_name"] = "Nom du travail: ",
-            ["job_number_remove"] = "Entrez le numero du travail a supprimer : ",
+            ["job_to_remove"] = "Entrez le nom ou le numéro du travail a supprimer: ",
             ["enter_source"] = "Chemin source: ",
             ["enter_target"] = "Chemin cible: ",
             ["enter_type"] = "Type (1=Complet, 2=Differentiel): ",

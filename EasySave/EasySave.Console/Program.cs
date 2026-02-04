@@ -157,7 +157,7 @@ public class Program
         ListJobs();
 
         //Ask user which job to remove (number or name)
-        Console.Write(_localization.GetString("job_number_remove"));
+        Console.Write(_localization.GetString("job_to_remove"));
         var input = Console.ReadLine()?.Trim();
 
         //Check if input is empty

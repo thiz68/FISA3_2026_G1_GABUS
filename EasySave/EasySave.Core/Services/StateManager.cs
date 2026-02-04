@@ -18,13 +18,10 @@ public class StateManager : IStateManager
 
     public StateManager()
     {
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        //Get the application's directory
+        var appDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
-        var stateDir = Path.Combine(appData, "G1_EasySave");
-        
-        Directory.CreateDirectory(stateDir);
-        
-        _stateFilePath = Path.Combine(stateDir, "states.json");
+        _stateFilePath = Path.Combine(appDirectory, "states.json");
     }
     
     //Update state for job

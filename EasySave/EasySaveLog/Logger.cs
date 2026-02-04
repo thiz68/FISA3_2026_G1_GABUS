@@ -13,11 +13,11 @@ public class Logger : ILogger
     //Constructor
     public Logger()
     {
-        //Get AppData folder path
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        
+        //Get the application's directory
+        var appDirectory = AppDomain.CurrentDomain.BaseDirectory;
+
         //Build the Path with "\\":
-        _logDirectory = Path.Combine(appData, "EasySaveLog", "Logs");
+        _logDirectory = Path.Combine(appDirectory, "Logs");
     }
     
     //Creates log folder, once app start

@@ -40,11 +40,15 @@ public class LocalizationService : ILocalizationService
             // Infos
             ["job_list_empty"] = "No backup jobs configured",
             ["goodbye"] = "Goodbye!",
+            ["active"] = "Active",
+            ["inactive"] = "Inactive",
+            ["completed"] = "Completed",
 
             // Errors
             ["error_max_jobs"] = "Error: Maximum 5 jobs allowed",
             ["error_not_found"] = "Error: Job not found",
-            ["invalid_choice"] = "Error: Invalid choice"
+            ["invalid_choice"] = "Error: Invalid choice",
+            ["job_name_alr_exist"] = "Error : A job with the same name already exists",
 
 
         },
@@ -78,11 +82,15 @@ public class LocalizationService : ILocalizationService
             // Infos
             ["job_list_empty"] = "Aucun travail crees.",
             ["goodbye"] = "A bientot!",
+            ["active"] = "Actif",
+            ["inactive"] = "Inactif",
+            ["completed"] = "Complete",
 
             // Errors
             ["error_max_jobs"] = "Erreur: Maximum 5 travaux autorises",
             ["error_not_found"] = "Erreur: Travail non trouve",
-            ["invalid_choice"] = "Erreur: Choix invalide"
+            ["invalid_choice"] = "Erreur: Choix invalide",
+            ["job_name_alr_exist"] = "Erreur : Un travail portant le meme nom existe deja",
         }
     };
 

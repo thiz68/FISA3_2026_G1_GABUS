@@ -7,6 +7,7 @@ using EasySave.Core.Models;
 public class BackupExecutor
 {
     private readonly FileBackupService _fileBackupService;
+    private static ILocalizationService _localization = null!;
 
     public BackupExecutor()
     {
@@ -16,15 +17,17 @@ public class BackupExecutor
     //Single Job    
     public void ExecuteSingle(IJob job, ILogger logger, IStateManager stateManager)
     {
+        _localization = new LocalizationService();
+
         //Initialize the state as Active
-        var state = new JobState { State = "Active" };
+        var state = new JobState { State = _localization.GetString("active") };
         stateManager.UpdateJobState(job, state);
         
         //Copy all files from source to target
         _fileBackupService.CopyDirectory(job.SourcePath, job.TargetPath, job, logger, stateManager);
         
         //Mark job as completed
-        state.State = "Completed";
+        state.State = _localization.GetString("completed");
         state.Progression = 100;
         stateManager.UpdateJobState(job, state);
     }

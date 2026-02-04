@@ -17,20 +17,23 @@ public class LocalizationService : ILocalizationService
             // Menu 
             ["menu_title"] = "=== EasySave v1.0 ===",
             ["menu_create"] = "1. Create backup job",
-            ["menu_list"] = "2. List backup jobs",
-            ["menu_execute"] = "3. Execute backup",
-            ["menu_language"] = "4. Change language",
-            ["menu_exit"] = "5. Exit",
+            ["menu_remove"] = "2. Remove backup job",
+            ["menu_list"] = "3. List backup jobs",
+            ["menu_execute"] = "4. Execute backup",
+            ["menu_language"] = "5. Change language",
+            ["menu_exit"] = "6. Exit",
 
             // User input
             ["enter_choice"] = "Enter your choice: ",
             ["enter_name"] = "Enter job name: ",
+            ["job_to_remove"] = "Enter job's name or number to remove: ",
             ["enter_source"] = "Enter source path: ",
             ["enter_target"] = "Enter target path: ",
             ["enter_type"] = "Enter type (1=Full, 2=Differential): ",
 
             // Success
             ["job_created"] = "Job successfully created",
+            ["job_removed"] = "Job successfully removed",
             ["backup_started"] = "Backup started...",
             ["backup_completed"] = "Backup completed",
             ["file_copied"] = "Copied: {0}",
@@ -50,20 +53,23 @@ public class LocalizationService : ILocalizationService
             // Menu
             ["menu_title"] = "=== EasySave v1.0 ===",
             ["menu_create"] = "1. Creer un travail de sauvegarde",
-            ["menu_list"] = "2. Lister les travaux",
-            ["menu_execute"] = "3. Executer une sauvegarde",
-            ["menu_language"] = "4. Changer la langue",
-            ["menu_exit"] = "5. Quitter",
+            ["menu_remove"] = "2. Supprimer un travail de sauvegarde",
+            ["menu_list"] = "3. Lister les travaux",
+            ["menu_execute"] = "4. Executer une sauvegarde",
+            ["menu_language"] = "5. Changer la langue",
+            ["menu_exit"] = "6. Quitter",
 
             // User input
             ["enter_choice"] = "Entrez votre choix: ",
             ["enter_name"] = "Nom du travail: ",
+            ["job_to_remove"] = "Entrez le nom ou le numéro du travail a supprimer: ",
             ["enter_source"] = "Chemin source: ",
             ["enter_target"] = "Chemin cible: ",
             ["enter_type"] = "Type (1=Complet, 2=Differentiel): ",
 
             // Success
             ["job_created"] = "Travail cree avec succes",
+            ["job_removed"] = "Travail supprime avec succes",
             ["backup_started"] = "Sauvegarde demarree...",
             ["backup_completed"] = "Sauvegarde terminee",
             ["file_copied"] = "Fichiers copies: {0}",

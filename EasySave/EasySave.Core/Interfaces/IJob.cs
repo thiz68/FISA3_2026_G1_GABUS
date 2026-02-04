@@ -1,5 +1,3 @@
-using EasySave.Core.Enums;
-
 namespace EasySave.Core.Interfaces;
 
 // Interface for a backup job configuration
@@ -15,5 +13,5 @@ public interface IJob
     string TargetPath { get; set; }
 
     // Type of backup (Full or Differential)
-    SaveType Type { get; set; }
+    string Type { get; set; }
 }

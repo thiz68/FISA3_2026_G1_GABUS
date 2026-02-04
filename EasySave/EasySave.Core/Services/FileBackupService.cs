@@ -1,7 +1,6 @@
 ﻿namespace EasySave.Core.Services;
 
 using System.Diagnostics;
-using EasySave.Core.Enums;
 using EasySave.Core.Models;
 using EasySave.Core.Interfaces;
 
@@ -40,7 +39,7 @@ public class FileBackupService
             var targetFile = Path.Combine(targetDir, fileName);
             
             //DIFFERENTIAL : skip files no changes, compare "last modified" dates to decide.
-            if (job.Type == SaveType.Differential && File.Exists(targetFile))
+            if (job.Type == "diff" && File.Exists(targetFile))
             {
                 if (File.GetLastWriteTime(targetFile) >= File.GetLastWriteTime(sourceFile))
                     continue;
@@ -102,7 +101,7 @@ public class FileBackupService
         return fileSize;
     }
 
-    private (int fileCount, long totalSize) CalculateEligibleFiles(string sourceDir, string targetDir, SaveType type)
+    private (int fileCount, long totalSize) CalculateEligibleFiles(string sourceDir, string targetDir, string type)
     {
         int count = 0;
         long size = 0;
@@ -113,7 +112,7 @@ public class FileBackupService
             var fileInfo = new FileInfo(file);
             
             //DIFFERENTIAL : check file needed backup
-            if (type == SaveType.Differential)
+            if (type == "diff")
             {
                 //Convert absolute path to relative path
                 var relativePath = Path.GetRelativePath(sourceDir, file);

@@ -26,7 +26,7 @@ public class JobState
     public DateTime Timestamp { get; set; }
 
     // State of the job exec
-    public string State { get; set; } = _localization.GetString("inactive");
+    public string State { get; set; } = "inactive";
 
     // Number of files to save
     public int TotalFilesToCopy { get; set; }

@@ -9,6 +9,9 @@ using EasySave.Core.Interfaces;
 //It supports full and differential backups
 public class FileBackupService
 {
+    // Translation service
+    private static ILocalizationService _localization = null!;
+
     //Copy an entire dir from source to target
     public void CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger, IStateManager stateManager)
     {
@@ -132,10 +135,11 @@ public class FileBackupService
     private void UpdateStateForFile(IJob job, string currentSource, string currentTarget,
         int remainingFiles, long remainingSize, double progression, IStateManager stateManager)
     {
+        _localization = new LocalizationService();
         // Create state object with all information.
         var state = new JobState
         {
-            State = "Active",
+            State = _localization.GetString("active"),
             NbFilesLeftToDo = remainingFiles,
             NbSizeLeftToDo = remainingSize,
             Progression = progression,

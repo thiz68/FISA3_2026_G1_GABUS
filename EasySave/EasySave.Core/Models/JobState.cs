@@ -1,7 +1,18 @@
-﻿namespace EasySave.Core.Models;
+﻿using EasySave.Core.Interfaces;
+using EasySave.Core.Services;
+
+namespace EasySave.Core.Models;
 
 public class JobState
 {
+
+    public JobState()
+    {
+        _localization = new LocalizationService();
+    }
+
+    private static ILocalizationService _localization = null!;
+
     // Backup jobs name
     public string Name { get; set; } = string.Empty;
 
@@ -15,7 +26,7 @@ public class JobState
     public DateTime Timestamp { get; set; }
 
     // State of the job exec
-    public string State { get; set; } = "Inactive";
+    public string State { get; set; } = _localization.GetString("inactive");
 
     // Number of files to save
     public int TotalFilesToCopy { get; set; }

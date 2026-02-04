@@ -152,7 +152,7 @@ public class Program
 
         Console.WriteLine();
 
-        // Looptaht get every jobs info and display it
+        // Loop taht get every jobs info and display it
         for (int i = 0; i < _jobManager.Jobs.Count; i++)
         {
             var job = _jobManager.Jobs[i];

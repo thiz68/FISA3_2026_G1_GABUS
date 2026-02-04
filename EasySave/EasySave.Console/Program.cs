@@ -207,6 +207,78 @@ public class Program
         Console.WriteLine(_localization.GetString("job_removed"));
     }
 
+    private static void ModifyJobs()
+    {
+        if (_jobManager.Jobs.Count == 0)
+        {
+            Console.WriteLine(_localization.GetString("job_list_empty"));
+            return;
+        }
+        
+        ListJobs();
+        
+        Console.Write(_localization.GetString("job_to_modify"));
+        var input = Console.ReadLine()?.Trim();
+
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            Console.WriteLine(_localization.GetString("error_not_found"));
+            return;
+        }
+        
+        IJob? jobToModify = null;
+        
+        //CASE1 : Index
+        if (int.TryParse(input, out int index))
+        {
+            if (index < 1 || index > _jobManager.Jobs.Count)
+            {
+                Console.WriteLine(_localization.GetString("error_not_found"));
+                return;
+            }
+            
+            jobToModify = _jobManager.GetJob(index);
+            return;
+        }
+
+        //CASE 2: Name
+        else
+        {
+            jobToModify = _jobManager.Jobs.FirstOrDefault(j => j.Name.Equals(input, StringComparison.OrdinalIgnoreCase));
+
+            if (jobToModify == null)
+            {
+                Console.WriteLine(_localization.GetString("error_not_found"));
+                return;
+            }
+        }
+        
+        //ASK NEW VALUES
+        Console.Write(_localization.GetString("enter_name"));
+        var newName = Console.ReadLine()?.Trim() ?? "";
+
+        Console.Write(_localization.GetString("enter_source"));
+        var newSource = Console.ReadLine()?.Trim() ?? "";
+
+        Console.Write(_localization.GetString("enter_target"));
+        var newTarget = Console.ReadLine()?.Trim() ?? "";
+
+        Console.Write(_localization.GetString("enter_type"));
+        var typeInput = Console.ReadLine()?.Trim();
+        var newType = typeInput == "2" ? "full" : "diff";
+
+        //Apply modifications
+        jobToModify.Name = newName;
+        jobToModify.SourcePath = newSource;
+        jobToModify.TargetPath = newTarget;
+        jobToModify.Type = newType;
+
+        //Save config
+        _configManager.SaveJobs(_jobManager);
+
+        Console.WriteLine(_localization.GetString("job_modified"));
+    }
+
     // Display jobs function
     private static void ListJobs()
     {

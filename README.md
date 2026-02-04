@@ -1,121 +1,176 @@
-# EasySave – Logiciel de sauvegarde
-Projet fil rouge – ProSoft
+# EasySave
 
-## 📌 Présentation du projet
+Backup software for Windows - ProSoft Project CESI
 
-EasySave est un logiciel de sauvegarde développé dans le cadre d’un projet fil rouge simulant un contexte professionnel au sein de l’éditeur **ProSoft**.  
-L’objectif est de concevoir, maintenir et faire évoluer un logiciel de sauvegarde en respectant des contraintes industrielles fortes : qualité du code, gestion des versions, documentation et maintenabilité.
+> **[Technical Documentation](TECHNICAL_DOC.md)** - Models, interfaces, services, JSON formats
 
-Le projet couvre le développement de **trois versions majeures** du logiciel, accompagnées de versions mineures intermédiaires.
+## Description
+
+EasySave is a console application that lets you create and run backup jobs. It supports:
+- **Full backup**: copies all files
+- **Differential backup**: copies only modified files
+
+You can manage up to 5 backup jobs and run them individually or in batch.
+
+## Requirements
+
+- Windows 10/11
+- .NET 8.0
+
+## Run the project
+
+```
+git clone https://github.com/thiz68/FISA3_2026_G1_GABUS.git
+cd FISA3_2026_G1_GABUS/EasySave
+dotnet run --project EasySave.Console
+```
+
+Or if you have the built exe:
+```
+EasySave.Console.exe
+```
+
+## Usage
+
+### Interactive mode
+
+Just run the app without arguments and you'll see the menu:
+
+```
+=== EasySave v1.0 ===
+
+1. Create backup job
+2. List backup jobs
+3. Execute backup
+4. Change language
+5. Exit
+
+Enter your choice:
+```
+
+### Command line mode
+
+You can also run jobs directly:
+
+```
+EasySave.Console.exe 1       # runs job 1
+EasySave.Console.exe 1-3     # runs jobs 1, 2, 3
+EasySave.Console.exe "1;3"   # runs jobs 1 and 3
+```
+
+## Architecture
+
+### Solution structure
+
+```
+EasySave/
+├── EasySave.slnx                 # Solution file
+│
+├── EasySave.Console/             # Console application (entry point)
+│   ├── Program.cs                # Main entry point
+│   └── EasySave.Console.csproj
+│
+├── EasySave.Core/                # Core business logic library
+│   ├── Enums/
+│   │   └── SaveType.cs           # Backup type enumeration
+│   ├── Interfaces/
+│   │   ├── IJob.cs               # Job contract
+│   │   ├── IJobManager.cs        # Job management contract
+│   │   ├── IConfigManager.cs     # Configuration contract
+│   │   ├── IStateManager.cs      # State management contract
+│   │   ├── ILocalizationService.cs # Localization contract
+│   │   └── ILogger.cs            # Logging contract
+│   ├── Models/
+│   │   ├── SaveJob.cs            # Backup job model
+│   │   ├── JobState.cs           # Real-time state model
+│   │   └── LogEntry.cs           # Log entry model
+│   ├── Services/
+│   │   ├── JobManager.cs         # Job management implementation
+│   │   ├── ConfigManager.cs      # Configuration persistence
+│   │   ├── StateManager.cs       # Real-time state tracking
+│   │   ├── LocalizationService.cs # Multi-language support
+│   │   ├── BackupExecutor.cs     # Backup orchestration
+│   │   └── FileBackupService.cs  # File copy operations
+│   └── EasySave.Core.csproj
+│
+└── EasySaveLog/                  # Logging library (separate DLL)
+    ├── Logger.cs                 # Daily JSON logging implementation
+    └── EasySaveLog.csproj
+```
+
+### Project dependencies
+
+```
+EasySave.Console -> EasySave.Core
+EasySave.Console -> EasySaveLog -> EasySave.Core
+```
+
+### Main components
+
+- **JobManager**: Stores and manages backup jobs (max 5)
+- **ConfigManager**: Saves/loads jobs to `config.json`
+- **StateManager**: Tracks backup progress in real-time
+- **BackupExecutor**: Orchestrates backup execution
+- **FileBackupService**: Does the actual file copying (Full/Differential)
+- **LocalizationService**: Handles EN/FR translations
+- **Logger**: Writes daily log files in JSON format
+
+### Data files
+
+All data is stored in `%APPDATA%\EasySave\`:
+- `config.json` - saved jobs configuration
+- `state.json` - real-time backup state
+- `Logs/YYYY-MM-DD.json` - daily transfer logs
+
+## Limitations (v1.0)
+
+- Max 5 jobs
+- No file encryption
+- No scheduler
+- Sequential execution only
+- Windows only
+
+## What's next
+
+Version 2.0 will add:
+- GUI (WPF)
+- Unlimited jobs
+- File encryption
+- Business software detection
+- Multiple log formats (JSON/XML)
+
+## Git workflow
+
+We use `develop` as the main branch for development.
+
+```
+git checkout -b feature/my-feature
+# do your work
+git commit -m "Add: my feature"
+git push origin feature/my-feature
+# then create a PR to develop
+```
+
+Commit prefixes: `Add:`, `Fix:`, `Update:`, `Remove:`
+
+## FAQ
+
+**Where are my files stored?**
+In `%APPDATA%\EasySave\`
+
+**Full vs Differential?**
+Full copies everything. Differential only copies files that changed since the last backup (compares modification dates).
+
+**Why only 5 jobs?**
+It's a v1.0 requirement from the project specs.
+
+## Troubleshooting
+
+- `Maximum 5 jobs allowed` -> Delete a job first
+- `Job name already exists` -> Pick another name
+- Files not copying (Differential) -> Check that source files are newer
+- Permission denied -> Run as admin
 
 ---
 
-## 🗓️ Organisation et calendrier des livrables
-
-### 🔹 Livrable 0 & Livrable 1 – EasySave v1.0
-- **Jour 1** : Lancement du projet & Cahier des charges v1.0  
-- **Jour 3** : Mise en place de l’environnement de travail et partage des accès Git  
-- **Veille du livrable 1** : Livraison des diagrammes UML  
-- **Jour du livrable 1** : Livraison d’EasySave v1.0 + documentations associées  
-
-### 🔹 Livrable 2 – EasySave v2.0 et v1.1 *(non évalué)*
-- Mise à disposition des cahiers des charges v2.0 et v1.1  
-- Veille du livrable 2 : Diagrammes UML  
-- Jour du livrable 2 : Livraison du livrable  
-
-### 🔹 Livrable 3 – EasySave v3.0
-- Mise à disposition du cahier des charges v3.0  
-- Avant-veille soutenance : Diagrammes UML  
-- Veille soutenance : Livraison du livrable 3  
-- Jour soutenance : Soutenance finale  
-
----
-
-## 💼 Contexte professionnel – ProSoft
-
-Le logiciel EasySave s’inscrit dans la **suite logicielle ProSoft** et respecte la politique tarifaire suivante :
-
-- **Prix unitaire** : 200 € HT  
-- **Contrat de maintenance annuel** (5j/7 – 8h à 17h, mises à jour incluses)  
-  - 12 % du prix d’achat  
-  - Contrat annuel à tacite reconduction  
-  - Revalorisation basée sur l’indice SYNTEC  
-
----
-
-## 🧰 Outils et technologies
-
-### Environnement de développement
-- **IDE** : Visual Studio 2022 ou supérieur  
-- **Langage** : C#  
-- **Framework** : .NET 8.0  
-- **Gestion de version** : GitHub  
-- **UML** : ArgoUML (préconisé)
-
-> Tous les codes et documents du projet sont versionnés sur GitHub.  
-> Le tuteur/pilote du projet est invité au dépôt afin d’assurer le suivi des développements.
-
----
-
-## 🧱 Exigences techniques et qualité
-
-### Lisibilité & maintenabilité
-- Code et documentation **en anglais** (compatibilité filiales internationales)
-- Fonctions de taille raisonnable
-- Aucune duplication inutile de code
-- Respect strict des conventions de nommage
-- Architecture claire et évolutive
-
-### Gestion des versions
-- Versions majeures et mineures clairement identifiées
-- Release notes obligatoires
-- Objectif : faciliter les évolutions futures et les corrections rapides
-
-### Interface utilisateur
-- Logiciel destiné à être distribué chez des clients
-- Une attention particulière est portée à la qualité des IHM
-
----
-
-## 📚 Documentation attendue
-
-### Documentation utilisateur
-- Manuel d’utilisation synthétique
-- **Une seule page maximum**
-
-### Documentation support technique
-- Emplacement par défaut du logiciel
-- Configuration minimale requise
-- Emplacement des fichiers de configuration
-- Informations nécessaires au support client
-
----
-
-## 📦 Livrables attendus
-
-- Code source versionné sur GitHub
-- Diagrammes UML (livrés la veille de chaque livrable)
-- Documentation utilisateur
-- Documentation support
-- Release notes
-- Versions fonctionnelles du logiciel EasySave
-
----
-
-## 🎯 Critères d’évaluation
-
-Une vigilance particulière sera portée sur :
-- La gestion de Git (versioning, commits, travail collaboratif)
-- Le respect des délais
-- La qualité de l’architecture logicielle
-- L’absence de redondance dans le code
-- La maintenabilité et l’évolutivité de la solution
-
----
-
-## 👥 Équipe projet
-
-Projet réalisé dans le cadre d’un travail d’équipe sous la supervision d’un tuteur CESI.
-
----
-
+FISA3 2026 - Group 1 GABUS | CESI

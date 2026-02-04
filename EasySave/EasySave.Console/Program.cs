@@ -1,6 +1,5 @@
 namespace EasySave.ConsoleApp;
 
-using EasySave.Core.Enums;
 using EasySave.Core.Interfaces;
 using EasySave.Core.Models;
 using EasySave.Core.Services;
@@ -117,7 +116,7 @@ public class Program
             // Ask user for save type (full for all files, differential for files that changed)
             Console.Write(_localization.GetString("enter_type"));
             var typeInput = Console.ReadLine()?.Trim();
-            var type = typeInput == "2" ? SaveType.Differential : SaveType.Full;
+            var type = typeInput == "2" ? "full" : "diff";
 
             // Create a job with all infso
             var job = new SaveJob
@@ -157,9 +156,9 @@ public class Program
         {
             var job = _jobManager.Jobs[i];
             Console.WriteLine($"{i + 1}. {job.Name}");
-            Console.WriteLine($"   Source: {job.SourcePath}");
-            Console.WriteLine($"   Target: {job.TargetPath}");
-            Console.WriteLine($"   Type: {job.Type}");
+            Console.WriteLine($"{_localization.GetString("source")}: {job.SourcePath}");
+            Console.WriteLine($"{_localization.GetString("target")}: {job.TargetPath}");
+            Console.WriteLine($"{_localization.GetString("type")}: {_localization.GetString(job.Type)}");
             Console.WriteLine();
         }
     }

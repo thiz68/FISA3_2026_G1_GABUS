@@ -50,7 +50,12 @@ public class LocalizationService : ILocalizationService
             ["invalid_choice"] = "Error: Invalid choice",
             ["job_name_alr_exist"] = "Error : A job with the same name already exists",
 
-
+            //Other
+            ["source"] = "Source",
+            ["target"] = "Target",
+            ["type"] = "Type",
+            ["full"] = "Full",
+            ["diff"] = "Differential",
         },
 
         // French dict
@@ -91,6 +96,13 @@ public class LocalizationService : ILocalizationService
             ["error_not_found"] = "Erreur: Travail non trouve",
             ["invalid_choice"] = "Erreur: Choix invalide",
             ["job_name_alr_exist"] = "Erreur : Un travail portant le meme nom existe deja",
+
+            //Other
+            ["source"] = "Source",
+            ["target"] = "Cible",
+            ["type"] = "Type",
+            ["full"] = "Complete",
+            ["diff"] = "Differentielle",
         }
     };
 

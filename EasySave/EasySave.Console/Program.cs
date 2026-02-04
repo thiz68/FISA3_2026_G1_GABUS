@@ -59,10 +59,11 @@ public class Program
             Console.WriteLine(_localization.GetString("menu_title"));
             Console.WriteLine();
             Console.WriteLine(_localization.GetString("menu_create"));    // Option 1
-            Console.WriteLine(_localization.GetString("menu_list"));      // Option 2
-            Console.WriteLine(_localization.GetString("menu_execute"));   // Option 3
-            Console.WriteLine(_localization.GetString("menu_language"));  // Option 4
-            Console.WriteLine(_localization.GetString("menu_exit"));      // Option 5
+            Console.WriteLine(_localization.GetString("menu_remove"));    // Option 2
+            Console.WriteLine(_localization.GetString("menu_list"));      // Option 3
+            Console.WriteLine(_localization.GetString("menu_execute"));   // Option 4
+            Console.WriteLine(_localization.GetString("menu_language"));  // Option 5
+            Console.WriteLine(_localization.GetString("menu_exit"));      // Option 6
             Console.WriteLine();
             Console.Write(_localization.GetString("enter_choice"));
 
@@ -75,15 +76,18 @@ public class Program
                     CreateJob();      // Launch job creation loop
                     break;
                 case "2":
-                    ListJobs();       // Show all jobs
+                    RemoveJobs();     //Remove a job
                     break;
                 case "3":
-                    ExecuteBackup();  // Select job and run it
+                    ListJobs();       // Show all jobs
                     break;
                 case "4":
+                    ExecuteBackup();  // Select job and run it
+                    break;
+                case "5":
                     ChangeLanguage(); // Chenge the language
                     break;
-                case "5":             // Exit the program
+                case "6":             // Exit the program
                     return;    
                 default:
                     // If wrong input :
@@ -138,6 +142,70 @@ public class Program
         {
             Console.WriteLine($"{_localization.GetString("error_max_jobs")}: {ex.Message}");
         }
+    }
+
+    private static void RemoveJobs()
+    {
+        //Exit if no jobs exist
+        if (_jobManager.Jobs.Count == 0)
+        {
+            Console.WriteLine(_localization.GetString("job_list_empty"));
+            return;
+        }
+
+        //Display all existing jobs
+        ListJobs();
+
+        //Ask user which job to remove (number or name)
+        Console.Write(_localization.GetString("job_to_remove"));
+        var input = Console.ReadLine()?.Trim();
+
+        //Check if input is empty
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            Console.WriteLine(_localization.GetString("error_not_found"));
+            return;
+        }
+
+        //Sob to remove (found by index or name)
+        IJob? jobToRemove = null;
+
+        //Case 1 : user entered a job number
+        if (int.TryParse(input, out int index))
+        {
+            // Check if index is valid
+            if (index < 1 || index > _jobManager.Jobs.Count)
+            {
+                Console.WriteLine(_localization.GetString("error_not_found"));
+                return;
+            }
+
+            //Get job by index
+            jobToRemove = _jobManager.GetJob(index);
+        }
+        //Case 2 : user entered a job name
+        else
+        {
+            // Search job by name (case-insensitive)
+            jobToRemove = _jobManager.Jobs
+                .FirstOrDefault(j => j.Name.Equals(input, StringComparison.OrdinalIgnoreCase));
+
+            //If job does not exist
+            if (jobToRemove == null)
+            {
+                Console.WriteLine(_localization.GetString("error_not_found"));
+                return;
+            }
+        }
+
+        //Remove the selected job
+        _jobManager.RemoveJob(jobToRemove.Name);
+
+        //Save updated jobs list to config file
+        _configManager.SaveJobs(_jobManager);
+
+        //Confirm job removal
+        Console.WriteLine(_localization.GetString("job_removed"));
     }
 
     // Display jobs function

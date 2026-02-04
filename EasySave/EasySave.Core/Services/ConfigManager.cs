@@ -13,16 +13,11 @@ public class ConfigManager : IConfigManager
     //Constructor
     public ConfigManager()
     {
-        //Get AppData folder
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-
-        //Create app folder
-        var configDir = Path.Combine(appData, "EasySave");
-        
-        Directory.CreateDirectory(configDir);
+        //Get the application's directory
+        var appDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
         //Set path to config file
-        _configFilePath = Path.Combine(configDir, "config.json");
+        _configFilePath = Path.Combine(appDirectory, "config.json");
     }
     
     //Load jobs from config file, send to job manager

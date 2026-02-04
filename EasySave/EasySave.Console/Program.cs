@@ -146,44 +146,65 @@ public class Program
 
     private static void RemoveJobs()
     {
-        //Verify jobs
+        //Exit if no jobs exist
         if (_jobManager.Jobs.Count == 0)
         {
             Console.WriteLine(_localization.GetString("job_list_empty"));
             return;
         }
-        
-        //Print jobs
+
+        //Display all existing jobs
         ListJobs();
-        
-        //Ask what jobs to suppress
-        Console.WriteLine(_localization.GetString("job_number_remove"));
-        Console.WriteLine("> ");
-        
+
+        //Ask user which job to remove (number or name)
+        Console.Write(_localization.GetString("job_number_remove"));
         var input = Console.ReadLine()?.Trim();
-        
-        //Verify input
-        if (!int.TryParse(input, out int index))
+
+        //Check if input is empty
+        if (string.IsNullOrWhiteSpace(input))
         {
             Console.WriteLine(_localization.GetString("error_not_found"));
             return;
         }
 
-        if (index < 1 || index >= _jobManager.Jobs.Count)
+        //Sob to remove (found by index or name)
+        IJob? jobToRemove = null;
+
+        //Case 1 : user entered a job number
+        if (int.TryParse(input, out int index))
         {
-            Console.WriteLine(_localization.GetString("error_not_found"));
-            return;
+            // Check if index is valid
+            if (index < 1 || index > _jobManager.Jobs.Count)
+            {
+                Console.WriteLine(_localization.GetString("error_not_found"));
+                return;
+            }
+
+            //Get job by index
+            jobToRemove = _jobManager.GetJob(index);
         }
-        
-        //Return jobs
-        var job = _jobManager.GetJob(index);
-        
-        //Suppress job
-        _jobManager.RemoveJob(job.Name);
-        
-        //Save config
+        //Case 2 : user entered a job name
+        else
+        {
+            // Search job by name (case-insensitive)
+            jobToRemove = _jobManager.Jobs
+                .FirstOrDefault(j => j.Name.Equals(input, StringComparison.OrdinalIgnoreCase));
+
+            //If job does not exist
+            if (jobToRemove == null)
+            {
+                Console.WriteLine(_localization.GetString("error_not_found"));
+                return;
+            }
+        }
+
+        //Remove the selected job
+        _jobManager.RemoveJob(jobToRemove.Name);
+
+        //Save updated jobs list to config file
         _configManager.SaveJobs(_jobManager);
-        
+
+        //Confirm job removal
         Console.WriteLine(_localization.GetString("job_removed"));
     }
 

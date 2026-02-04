@@ -30,6 +30,8 @@ public class LocalizationService : ILocalizationService
             ["enter_source"] = "Enter source path: ",
             ["enter_target"] = "Enter target path: ",
             ["enter_type"] = "Enter type (1=Full, 2=Differential): ",
+            ["press_to_continue"] = "Press any key to continue...",
+            ["enter_job_number"] = "Enter job numbers to execute:",
 
             // Success
             ["job_created"] = "Job successfully created",
@@ -41,10 +43,22 @@ public class LocalizationService : ILocalizationService
             // Infos
             ["job_list_empty"] = "No backup jobs configured",
             ["goodbye"] = "Goodbye!",
+            ["active"] = "Active",
+            ["inactive"] = "Inactive",
+            ["completed"] = "Completed",
 
             // Errors
             ["error_max_jobs"] = "Error: Maximum 5 jobs allowed",
-            ["error_not_found"] = "Error: Job not found"
+            ["error_not_found"] = "Error: Job not found",
+            ["invalid_choice"] = "Error: Invalid choice",
+            ["job_name_alr_exist"] = "Error : A job with the same name already exists",
+
+            //Other
+            ["source"] = "Source",
+            ["target"] = "Target",
+            ["type"] = "Type",
+            ["full"] = "Full",
+            ["diff"] = "Differential",
         },
 
         // French dict
@@ -66,6 +80,8 @@ public class LocalizationService : ILocalizationService
             ["enter_source"] = "Chemin source: ",
             ["enter_target"] = "Chemin cible: ",
             ["enter_type"] = "Type (1=Complet, 2=Differentiel): ",
+            ["press_to_continue"] = "Appuyer sur une touche pour continuer...",
+            ["enter_job_number"] = "Entrez le nombre de travaux a executer:",
 
             // Success
             ["job_created"] = "Travail cree avec succes",
@@ -77,10 +93,22 @@ public class LocalizationService : ILocalizationService
             // Infos
             ["job_list_empty"] = "Aucun travail crees.",
             ["goodbye"] = "A bientot!",
+            ["active"] = "Actif",
+            ["inactive"] = "Inactif",
+            ["completed"] = "Complete",
 
             // Errors
             ["error_max_jobs"] = "Erreur: Maximum 5 travaux autorises",
-            ["error_not_found"] = "Erreur: Travail non trouve"
+            ["error_not_found"] = "Erreur: Travail non trouve",
+            ["invalid_choice"] = "Erreur: Choix invalide",
+            ["job_name_alr_exist"] = "Erreur : Un travail portant le meme nom existe deja",
+
+            //Other
+            ["source"] = "Source",
+            ["target"] = "Cible",
+            ["type"] = "Type",
+            ["full"] = "Complete",
+            ["diff"] = "Differentielle",
         }
     };
 

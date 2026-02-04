@@ -1,7 +1,6 @@
 ﻿namespace EasySave.Core.Services;
 
 using System.Diagnostics;
-using EasySave.Core.Enums;
 using EasySave.Core.Models;
 using EasySave.Core.Interfaces;
 
@@ -9,6 +8,9 @@ using EasySave.Core.Interfaces;
 //It supports full and differential backups
 public class FileBackupService
 {
+    // Translation service
+    private static ILocalizationService _localization = null!;
+
     //Copy an entire dir from source to target
     public void CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger, IStateManager stateManager)
     {
@@ -37,7 +39,7 @@ public class FileBackupService
             var targetFile = Path.Combine(targetDir, fileName);
             
             //DIFFERENTIAL : skip files no changes, compare "last modified" dates to decide.
-            if (job.Type == SaveType.Differential && File.Exists(targetFile))
+            if (job.Type == "diff" && File.Exists(targetFile))
             {
                 if (File.GetLastWriteTime(targetFile) >= File.GetLastWriteTime(sourceFile))
                     continue;
@@ -99,7 +101,7 @@ public class FileBackupService
         return fileSize;
     }
 
-    private (int fileCount, long totalSize) CalculateEligibleFiles(string sourceDir, string targetDir, SaveType type)
+    private (int fileCount, long totalSize) CalculateEligibleFiles(string sourceDir, string targetDir, string type)
     {
         int count = 0;
         long size = 0;
@@ -110,7 +112,7 @@ public class FileBackupService
             var fileInfo = new FileInfo(file);
             
             //DIFFERENTIAL : check file needed backup
-            if (type == SaveType.Differential)
+            if (type == "diff")
             {
                 //Convert absolute path to relative path
                 var relativePath = Path.GetRelativePath(sourceDir, file);
@@ -132,10 +134,11 @@ public class FileBackupService
     private void UpdateStateForFile(IJob job, string currentSource, string currentTarget,
         int remainingFiles, long remainingSize, double progression, IStateManager stateManager)
     {
+        _localization = new LocalizationService();
         // Create state object with all information.
         var state = new JobState
         {
-            State = "Active",
+            State = _localization.GetString("active"),
             NbFilesLeftToDo = remainingFiles,
             NbSizeLeftToDo = remainingSize,
             Progression = progression,

@@ -242,7 +242,6 @@ public class Program
             }
             
             jobToModify = _jobManager.GetJob(index);
-            return;
         }
 
         //CASE 2: Name

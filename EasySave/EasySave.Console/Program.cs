@@ -59,10 +59,11 @@ public class Program
             Console.WriteLine();
             Console.WriteLine(_localization.GetString("menu_create"));    // Option 1
             Console.WriteLine(_localization.GetString("menu_remove"));    // Option 2
-            Console.WriteLine(_localization.GetString("menu_list"));      // Option 3
-            Console.WriteLine(_localization.GetString("menu_execute"));   // Option 4
-            Console.WriteLine(_localization.GetString("menu_language"));  // Option 5
-            Console.WriteLine(_localization.GetString("menu_exit"));      // Option 6
+            Console.WriteLine(_localization.GetString("menu_modify"));    // Option 3
+            Console.WriteLine(_localization.GetString("menu_list"));      // Option 4
+            Console.WriteLine(_localization.GetString("menu_execute"));   // Option 5
+            Console.WriteLine(_localization.GetString("menu_language"));  // Option 6
+            Console.WriteLine(_localization.GetString("menu_exit"));      // Option 7
             Console.WriteLine();
             Console.Write(_localization.GetString("enter_choice"));
 
@@ -78,15 +79,18 @@ public class Program
                     RemoveJobs();     //Remove a job
                     break;
                 case "3":
-                    ListJobs();       // Show all jobs
+                    ModifyJobs();     //Modify a job
                     break;
                 case "4":
-                    ExecuteBackup();  // Select job and run it
+                    ListJobs();       // Show all jobs
                     break;
                 case "5":
+                    ExecuteBackup();  // Select job and run it
+                    break;
+                case "6":
                     ChangeLanguage(); // Chenge the language
                     break;
-                case "6":             // Exit the program
+                case "7":             // Exit the program
                     return;    
                 default:
                     // If wrong input :
@@ -108,6 +112,14 @@ public class Program
             // Ask user for job name
             Console.Write(_localization.GetString("enter_name"));
             var name = Console.ReadLine()?.Trim() ?? "";
+            
+            //Verify collision
+            if (_jobManager.Jobs.Any(j => 
+                    j.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+            {
+                Console.WriteLine(_localization.GetString("job_name_alr_exist"));
+                return;
+            }
 
             // Ask user for source path
             Console.Write(_localization.GetString("enter_source"));
@@ -205,6 +217,85 @@ public class Program
 
         //Confirm job removal
         Console.WriteLine(_localization.GetString("job_removed"));
+    }
+
+    private static void ModifyJobs()
+    {
+        if (_jobManager.Jobs.Count == 0)
+        {
+            Console.WriteLine(_localization.GetString("job_list_empty"));
+            return;
+        }
+        
+        ListJobs();
+        
+        Console.Write(_localization.GetString("job_to_modify"));
+        var input = Console.ReadLine()?.Trim();
+
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            Console.WriteLine(_localization.GetString("error_not_found"));
+            return;
+        }
+        
+        IJob? jobToModify = null;
+        
+        //CASE1 : Index
+        if (int.TryParse(input, out int index))
+        {
+            if (index < 1 || index > _jobManager.Jobs.Count)
+            {
+                Console.WriteLine(_localization.GetString("error_not_found"));
+                return;
+            }
+            
+            jobToModify = _jobManager.GetJob(index);
+        }
+
+        //CASE 2: Name
+        else
+        {
+            jobToModify = _jobManager.Jobs.FirstOrDefault(j => j.Name.Equals(input, StringComparison.OrdinalIgnoreCase));
+
+            if (jobToModify == null)
+            {
+                Console.WriteLine(_localization.GetString("error_not_found"));
+                return;
+            }
+        }
+        
+        //ASK NEW VALUES
+        Console.Write(_localization.GetString("enter_name"));
+        var newName = Console.ReadLine()?.Trim() ?? "";
+        
+        if (_jobManager.Jobs.Any(j =>
+                j != jobToModify &&
+                j.Name.Equals(newName, StringComparison.OrdinalIgnoreCase)))
+        {
+            Console.WriteLine(_localization.GetString("job_name_alr_exist"));
+            return;
+        }
+
+        Console.Write(_localization.GetString("enter_source"));
+        var newSource = Console.ReadLine()?.Trim() ?? "";
+
+        Console.Write(_localization.GetString("enter_target"));
+        var newTarget = Console.ReadLine()?.Trim() ?? "";
+
+        Console.Write(_localization.GetString("enter_type"));
+        var typeInput = Console.ReadLine()?.Trim();
+        var newType = typeInput == "2" ? "full" : "diff";
+
+        //Apply modifications
+        jobToModify.Name = newName;
+        jobToModify.SourcePath = newSource;
+        jobToModify.TargetPath = newTarget;
+        jobToModify.Type = newType;
+
+        //Save config
+        _configManager.SaveJobs(_jobManager);
+
+        Console.WriteLine(_localization.GetString("job_modified"));
     }
 
     // Display jobs function

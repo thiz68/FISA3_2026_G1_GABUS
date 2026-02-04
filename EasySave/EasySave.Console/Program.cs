@@ -59,10 +59,11 @@ public class Program
             Console.WriteLine();
             Console.WriteLine(_localization.GetString("menu_create"));    // Option 1
             Console.WriteLine(_localization.GetString("menu_remove"));    // Option 2
-            Console.WriteLine(_localization.GetString("menu_list"));      // Option 3
-            Console.WriteLine(_localization.GetString("menu_execute"));   // Option 4
-            Console.WriteLine(_localization.GetString("menu_language"));  // Option 5
-            Console.WriteLine(_localization.GetString("menu_exit"));      // Option 6
+            Console.WriteLine(_localization.GetString("menu_modify"));    // Option 3
+            Console.WriteLine(_localization.GetString("menu_list"));      // Option 4
+            Console.WriteLine(_localization.GetString("menu_execute"));   // Option 5
+            Console.WriteLine(_localization.GetString("menu_language"));  // Option 6
+            Console.WriteLine(_localization.GetString("menu_exit"));      // Option 7
             Console.WriteLine();
             Console.Write(_localization.GetString("enter_choice"));
 
@@ -78,15 +79,18 @@ public class Program
                     RemoveJobs();     //Remove a job
                     break;
                 case "3":
-                    ListJobs();       // Show all jobs
+                    ModifyJobs();     //Modify a job
                     break;
                 case "4":
-                    ExecuteBackup();  // Select job and run it
+                    ListJobs();       // Show all jobs
                     break;
                 case "5":
+                    ExecuteBackup();  // Select job and run it
+                    break;
+                case "6":
                     ChangeLanguage(); // Chenge the language
                     break;
-                case "6":             // Exit the program
+                case "7":             // Exit the program
                     return;    
                 default:
                     // If wrong input :

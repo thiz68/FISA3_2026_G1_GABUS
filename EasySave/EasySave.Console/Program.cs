@@ -112,6 +112,14 @@ public class Program
             // Ask user for job name
             Console.Write(_localization.GetString("enter_name"));
             var name = Console.ReadLine()?.Trim() ?? "";
+            
+            //Verify collision
+            if (_jobManager.Jobs.Any(j => 
+                    j.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+            {
+                Console.WriteLine(_localization.GetString("job_name_alr_exist"));
+                return;
+            }
 
             // Ask user for source path
             Console.Write(_localization.GetString("enter_source"));
@@ -259,6 +267,14 @@ public class Program
         //ASK NEW VALUES
         Console.Write(_localization.GetString("enter_name"));
         var newName = Console.ReadLine()?.Trim() ?? "";
+        
+        if (_jobManager.Jobs.Any(j =>
+                j != jobToModify &&
+                j.Name.Equals(newName, StringComparison.OrdinalIgnoreCase)))
+        {
+            Console.WriteLine(_localization.GetString("job_name_alr_exist"));
+            return;
+        }
 
         Console.Write(_localization.GetString("enter_source"));
         var newSource = Console.ReadLine()?.Trim() ?? "";

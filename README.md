@@ -40,10 +40,12 @@ Just run the app without arguments and you'll see the menu:
 === EasySave v1.0 ===
 
 1. Create backup job
-2. List backup jobs
-3. Execute backup
-4. Change language
-5. Exit
+2. Remove backup job
+3. Modify backup job
+4. List backup jobs
+5. Execute backup
+6. Change language
+7. Exit
 
 Enter your choice:
 ```
@@ -71,8 +73,6 @@ EasySave/
 │   └── EasySave.Console.csproj
 │
 ├── EasySave.Core/                # Core business logic library
-│   ├── Enums/
-│   │   └── SaveType.cs           # Backup type enumeration
 │   ├── Interfaces/
 │   │   ├── IJob.cs               # Job contract
 │   │   ├── IJobManager.cs        # Job management contract
@@ -92,6 +92,13 @@ EasySave/
 │   │   ├── BackupExecutor.cs     # Backup orchestration
 │   │   └── FileBackupService.cs  # File copy operations
 │   └── EasySave.Core.csproj
+│
+├── EasySave.Tests/               # Unit tests (xUnit + Moq)
+│   ├── Services/
+│   │   ├── JobManagerTests.cs    # JobManager tests (10 tests)
+│   │   ├── LocalizationServiceTests.cs # LocalizationService tests (8 tests)
+│   │   └── BackupExecutorTests.cs # BackupExecutor tests (5 tests)
+│   └── EasySave.Tests.csproj
 │
 └── EasySaveLog/                  # Logging library (separate DLL)
     ├── Logger.cs                 # Daily JSON logging implementation
@@ -117,10 +124,25 @@ EasySave.Console -> EasySaveLog -> EasySave.Core
 
 ### Data files
 
-All data is stored in `%APPDATA%\EasySave\`:
+All data is stored in the application directory (next to the executable):
 - `config.json` - saved jobs configuration
-- `state.json` - real-time backup state
+- `states.json` - real-time backup state
 - `Logs/YYYY-MM-DD.json` - daily transfer logs
+
+## Unit Tests
+
+The project includes 23 unit tests using xUnit and Moq.
+
+```bash
+cd EasySave
+dotnet test
+```
+
+| Test class | Tests |
+|------------|-------|
+| JobManagerTests | 10 |
+| LocalizationServiceTests | 8 |
+| BackupExecutorTests | 5 |
 
 ## Limitations (v1.0)
 
@@ -156,7 +178,7 @@ Commit prefixes: `Add:`, `Fix:`, `Update:`, `Remove:`
 ## FAQ
 
 **Where are my files stored?**
-In `%APPDATA%\EasySave\`
+In the application directory, next to the executable.
 
 **Full vs Differential?**
 Full copies everything. Differential only copies files that changed since the last backup (compares modification dates).

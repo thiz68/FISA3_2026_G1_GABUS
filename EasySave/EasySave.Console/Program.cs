@@ -66,7 +66,7 @@ public class Program
             Console.WriteLine(_localization.GetString("menu_language"));  // Option 6
             Console.WriteLine(_localization.GetString("menu_exit"));      // Option 7
             Console.WriteLine();
-            Console.WriteLine(_localization.GetString("enter_choice"));
+            Console.Write(_localization.GetString("enter_choice"));
 
             // Get user choice
             var choice = Console.ReadLine()?.Trim();

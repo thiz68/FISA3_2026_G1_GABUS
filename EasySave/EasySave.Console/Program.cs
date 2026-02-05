@@ -66,7 +66,7 @@ public class Program
             Console.WriteLine(_localization.GetString("menu_language"));  // Option 6
             Console.WriteLine(_localization.GetString("menu_exit"));      // Option 7
             Console.WriteLine();
-            Console.Write(_localization.GetString("enter_choice"));
+            Console.WriteLine(_localization.GetString("enter_choice"));
 
             // Get user choice
             var choice = Console.ReadLine()?.Trim();
@@ -121,7 +121,7 @@ public class Program
                 // Check if job name null
                 if (string.IsNullOrWhiteSpace(name))
                 {
-                    Console.WriteLine("Error: Name must have at least 1 character.");
+                    Console.WriteLine(_localization.GetString("input_is_null"));
                 }
                 // Check if job name exist
                 else if (alr_exist)
@@ -147,12 +147,12 @@ public class Program
                 // Check if source path null
                 if (string.IsNullOrWhiteSpace(source))
                 {
-                    Console.WriteLine("Error: Source must have at least 1 character.");
+                    Console.WriteLine(_localization.GetString("input_is_null"));
                 }
                 // Check if source path exist
                 else if (!Directory.Exists(source))
                 {
-                    Console.WriteLine("Error: Source must be an existing directory.");
+                    Console.WriteLine(_localization.GetString("error_invalid_source"));
                 }
             } while (string.IsNullOrWhiteSpace(source) || !Directory.Exists(source));
 
@@ -167,12 +167,12 @@ public class Program
                 // Check if target path null
                 if (string.IsNullOrWhiteSpace(target))
                 {
-                    Console.WriteLine("Error: Target must have at least 1 character.");
+                    Console.WriteLine(_localization.GetString("input_is_null"));
                 }
                 else if (!Path.IsPathRooted(target))
                 {
                     valid_path = false;
-                    Console.Write(_localization.GetString("error_invalid_target")); 
+                    Console.WriteLine(_localization.GetString("error_invalid_target")); 
                 }
                 
             } while (string.IsNullOrWhiteSpace(target) || !valid_path);
@@ -187,7 +187,7 @@ public class Program
                 type = typeInput == "1" ? "full" : "diff";
                 if (typeInput != "1" && typeInput != "2")
                 {
-                    Console.WriteLine("Error: Type must be 1 (Full) or 2 (Differential).");
+                    Console.WriteLine(_localization.GetString("error_invalid_type"));
                 }
             } while (typeInput != "1" && typeInput != "2");
 
@@ -208,9 +208,9 @@ public class Program
 
             Console.WriteLine(_localization.GetString("job_created"));
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error: {ex.Message}");
+            Console.WriteLine(_localization.GetString("critical_error"));
         }
     }
 
@@ -342,7 +342,7 @@ public class Program
                 // Check if job name null
                 if (string.IsNullOrWhiteSpace(name))
                 {
-                    Console.WriteLine("Error: Name must have at least 1 character.");
+                    Console.WriteLine(_localization.GetString("input_is_null"));
                 }
                 // Check if job name exist
                 else if (alr_exist)
@@ -368,40 +368,35 @@ public class Program
                 // Check if source path null
                 if (string.IsNullOrWhiteSpace(source))
                 {
-                    Console.WriteLine("Error: Source must have at least 1 character.");
+                    Console.WriteLine(_localization.GetString("input_is_null"));
                 }
                 // Check if source path exist
                 else if (!Directory.Exists(source))
                 {
-                    Console.WriteLine("Error: Source must be an existing directory.");
+                    Console.WriteLine(_localization.GetString("error_invalid_source"));
                 }
             } while (string.IsNullOrWhiteSpace(source) || !Directory.Exists(source));
 
             string target;
-            bool valid_path = true;
+            bool valid_path;
             do
             {
                 // Ask user for target path
                 Console.Write(_localization.GetString("enter_target"));
                 target = Console.ReadLine()?.Trim() ?? "";
+                valid_path = true;
                 // Check if target path null
                 if (string.IsNullOrWhiteSpace(target))
                 {
-                    Console.WriteLine("Error: Target must have at least 1 character.");
+                    Console.WriteLine(_localization.GetString("input_is_null"));
                 }
-                else
+                else if (!Path.IsPathRooted(target))
                 {
-                    // Check if path is valid
-                    try
-                    {
-                        target = System.IO.Path.GetFullPath(target);
-                    }
-                    catch
-                    {
-                        valid_path = false;
-                    }
+                    valid_path = false;
+                    Console.WriteLine(_localization.GetString("error_invalid_target"));
                 }
-            } while (string.IsNullOrWhiteSpace(target) || valid_path);
+
+            } while (string.IsNullOrWhiteSpace(target) || !valid_path);
 
             string type;
             string typeInput;
@@ -413,7 +408,7 @@ public class Program
                 type = typeInput == "1" ? "full" : "diff";
                 if (typeInput != "1" && typeInput != "2")
                 {
-                    Console.WriteLine("Error: Type must be 1 (Full) or 2 (Differential).");
+                    Console.WriteLine(_localization.GetString("error_invalid_type"));
                 }
             } while (typeInput != "1" && typeInput != "2");
 
@@ -428,9 +423,9 @@ public class Program
 
             Console.WriteLine(_localization.GetString("job_modified"));
 
-        } catch (Exception ex)
+        } catch
         {
-            Console.WriteLine($"Error: {ex.Message}");
+            Console.WriteLine(_localization.GetString("critical_error"));
         }
     }
 

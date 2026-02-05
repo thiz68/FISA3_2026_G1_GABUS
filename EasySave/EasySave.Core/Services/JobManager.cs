@@ -13,7 +13,8 @@ public class JobManager : IJobManager
     private readonly List<IJob> _jobs = new();
 
     // Maximum number of jobs in the list
-    private const int MaxJobs = 5;
+    private const int MaxJobsConst = 5;
+    public int MaxJobs => MaxJobsConst;
 
     // Return a the list of jobs in read only
     public IReadOnlyList<IJob> Jobs => _jobs.AsReadOnly();

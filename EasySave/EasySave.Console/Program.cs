@@ -350,9 +350,12 @@ public class Program
             return;
         }
 
-        // Start the backup
+        //If command invalid, bool false : no backup, if bool true : backup
+        var success = _backupExecutor.ExecuteFromCommand(command, _jobManager, _logger, _stateManager);
+        if (!success)
+            return;
+        
         Console.WriteLine(_localization.GetString("backup_started"));
-        _backupExecutor.ExecuteFromCommand(command, _jobManager, _logger, _stateManager);
         Console.WriteLine(_localization.GetString("backup_completed"));
     }
 

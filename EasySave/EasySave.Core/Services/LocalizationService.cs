@@ -55,6 +55,12 @@ public class LocalizationService : ILocalizationService
             ["error_not_found"] = "Error: Job not found",
             ["invalid_choice"] = "Error: Invalid choice",
             ["job_name_alr_exist"] = "Error : A job with the same name already exists",
+            ["error_invalid_name"] = "Error: Job name must have at least 1 character",
+            ["error_invalid_source"] = "Error: Source must be an existing directory (not a file)",
+            ["error_invalid_target"] = "Error: Target must be a valid path",
+            ["error_invalid_type"] = "Error: Type is not valid must be a valid path with at least 1 character",
+            ["error_file_not_found"] = "Warning: File {0} no longer exists, skipping",
+            ["input_is_null"] = "Error : Input must contans at least 1 character",
 
             //Other
             ["source"] = "Source",
@@ -108,6 +114,11 @@ public class LocalizationService : ILocalizationService
             ["error_not_found"] = "Erreur: Travail non trouve",
             ["invalid_choice"] = "Erreur: Choix invalide",
             ["job_name_alr_exist"] = "Erreur : Un travail portant le meme nom existe deja",
+            ["error_invalid_name"] = "Erreur: Le nom du travail doit avoir au moins 1 caractère",
+            ["error_invalid_source"] = "Erreur: La source doit être un répertoire existant (pas un fichier)",
+            ["error_invalid_target"] = "Erreur: La cible doit être un chemin valide",
+            ["error_file_not_found"] = "Attention: Le fichier {0} n'existe plus, ignoré",
+            ["input_is_null"] = "Erreur : Veuillez entrer au moins 1 caractère",
 
             //Other
             ["source"] = "Source",

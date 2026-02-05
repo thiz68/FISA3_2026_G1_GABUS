@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="EasySave.Console/EasySave.Console.csproj" />
   <Project Path="EasySave.Core/EasySave.Core.csproj" />
+  <Project Path="EasySave.Tests/EasySave.Tests.csproj" />
   <Project Path="EasySaveLog/EasySaveLog.csproj" />
 </Solution>

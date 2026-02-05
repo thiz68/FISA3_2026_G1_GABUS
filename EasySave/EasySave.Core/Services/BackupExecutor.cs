@@ -54,7 +54,7 @@ public class BackupExecutor
         {
             var trimmed = part.Trim();
 
-            // Range : X-Y
+            //Range : X-Y
             if (trimmed.Contains('-'))
             {
                 var bounds = trimmed.Split('-', StringSplitOptions.RemoveEmptyEntries);
@@ -73,7 +73,7 @@ public class BackupExecutor
                 for (int i = start; i <= end; i++)
                     indexes.Add(i);
             }
-            // Single index
+            //Single index
             else
             {
                 if (!int.TryParse(trimmed, out int index))
@@ -86,7 +86,7 @@ public class BackupExecutor
             }
         }
 
-        // Validation des bornes
+        //Validation des bornes
         foreach (var index in indexes)
         {
             if (index < 1 || index > manager.Jobs.Count || index > manager.MaxJobs)
@@ -96,13 +96,13 @@ public class BackupExecutor
             }
         }
 
-        // Récupération des jobs
+        //Récupération des jobs
         var jobsToExecute = indexes
             .OrderBy(i => i)
             .Select(i => manager.GetJob(i))
             .ToList();
 
-        // Exécution séquentielle
+        //Exécution séquentielle
         ExecuteSequential(jobsToExecute, logger, stateManager);
         return true;
     }

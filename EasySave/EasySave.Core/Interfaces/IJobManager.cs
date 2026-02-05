@@ -5,6 +5,9 @@ public interface IJobManager
 {
     // List of all backup jobs (read-only)
     IReadOnlyList<IJob> Jobs { get; }
+    
+    //Variable MaxJobs accessible
+    int MaxJobs { get; }
 
     // Add a new backup job
     void AddJob(IJob job);

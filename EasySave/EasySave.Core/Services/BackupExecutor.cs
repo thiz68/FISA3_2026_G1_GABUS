@@ -42,40 +42,68 @@ public class BackupExecutor
     }
     
     //From command line arguments
-    public void ExecuteFromCommand(string command, IJobManager manager, ILogger logger, IStateManager stateManager)
+    public bool ExecuteFromCommand(string command, IJobManager manager, ILogger logger, IStateManager stateManager)
     {
-        var jobsToExecute = new List<IJob>();
+        _localization = new LocalizationService();
 
-        //Check range format ("1-3")
-        if (command.Contains('-'))
+        var indexes = new HashSet<int>();
+
+        var parts = command.Split(';', StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var part in parts)
         {
-            var parts = command.Split('-');
-            if (parts.Length == 2 && int.TryParse(parts[0], out int start) && int.TryParse(parts[1], out int end))
+            var trimmed = part.Trim();
+
+            //Range : X-Y
+            if (trimmed.Contains('-'))
             {
-                for (int i = start; i <= end; i++)
+                var bounds = trimmed.Split('-', StringSplitOptions.RemoveEmptyEntries);
+
+                if (bounds.Length != 2 ||
+                    !int.TryParse(bounds[0], out int start) ||
+                    !int.TryParse(bounds[1], out int end))
                 {
-                    if (i >= 1 && i <= manager.Jobs.Count)
-                        jobsToExecute.Add(manager.GetJob(i));
+                    Console.WriteLine(_localization.GetString("invalid_choice"));
+                    return false;
                 }
+
+                if (start > end)
+                    (start, end) = (end, start);
+
+                for (int i = start; i <= end; i++)
+                    indexes.Add(i);
             }
-        }
-        //Check for selection format ("1;3")
-        else if (command.Contains(';'))
-        {
-            var parts = command.Split(';');
-            foreach (var part in parts)
+            //Single index
+            else
             {
-                if (int.TryParse(part.Trim(), out int index) && index >= 1 && index <= manager.Jobs.Count)
-                    jobsToExecute.Add(manager.GetJob(index));
+                if (!int.TryParse(trimmed, out int index))
+                {
+                    Console.WriteLine(_localization.GetString("invalid_choice"));
+                    return false;
+                }
+
+                indexes.Add(index);
             }
-        }
-        //Single job ("1")
-        else if (int.TryParse(command, out int index) && index >= 1 && index <= manager.Jobs.Count)
-        {
-            jobsToExecute.Add(manager.GetJob(index));
         }
 
-        //Execute all selected jobs
+        //Validation des bornes
+        foreach (var index in indexes)
+        {
+            if (index < 1 || index > manager.Jobs.Count || index > manager.MaxJobs)
+            {
+                Console.WriteLine(_localization.GetString("error_not_found"));
+                return false;
+            }
+        }
+
+        //Récupération des jobs
+        var jobsToExecute = indexes
+            .OrderBy(i => i)
+            .Select(i => manager.GetJob(i))
+            .ToList();
+
+        //Exécution séquentielle
         ExecuteSequential(jobsToExecute, logger, stateManager);
+        return true;
     }
 }

@@ -42,7 +42,7 @@ public class BackupExecutor
     }
     
     //From command line arguments
-    public void ExecuteFromCommand(string command, IJobManager manager, ILogger logger, IStateManager stateManager)
+    public bool ExecuteFromCommand(string command, IJobManager manager, ILogger logger, IStateManager stateManager)
     {
         _localization = new LocalizationService();
 
@@ -64,7 +64,7 @@ public class BackupExecutor
                     !int.TryParse(bounds[1], out int end))
                 {
                     Console.WriteLine(_localization.GetString("invalid_choice"));
-                    return;
+                    return false;
                 }
 
                 if (start > end)
@@ -79,7 +79,7 @@ public class BackupExecutor
                 if (!int.TryParse(trimmed, out int index))
                 {
                     Console.WriteLine(_localization.GetString("invalid_choice"));
-                    return;
+                    return false;
                 }
 
                 indexes.Add(index);
@@ -92,7 +92,7 @@ public class BackupExecutor
             if (index < 1 || index > manager.Jobs.Count || index > manager.MaxJobs)
             {
                 Console.WriteLine(_localization.GetString("error_not_found"));
-                return;
+                return false;
             }
         }
 
@@ -104,5 +104,6 @@ public class BackupExecutor
 
         // Exécution séquentielle
         ExecuteSequential(jobsToExecute, logger, stateManager);
+        return true;
     }
 }

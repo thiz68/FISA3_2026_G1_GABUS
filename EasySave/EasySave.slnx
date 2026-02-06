@@ -1,5 +1,6 @@
 <Solution>
-  <Project Path="EasySave.Console/EasySave.Console.csproj" Id="b96253db-e279-46b3-ae01-9cca4220defc" />
+  <Project Path="EasySave.Console/EasySave.Console.csproj" />
   <Project Path="EasySave.Core/EasySave.Core.csproj" />
-  <Project Path="EasySaveLog/EasySaveLog.csproj" Id="38aef2f1-e743-4aed-be13-324304dfa580" />
+  <Project Path="EasySave.Tests/EasySave.Tests.csproj" />
+  <Project Path="EasySaveLog/EasySaveLog.csproj" />
 </Solution>

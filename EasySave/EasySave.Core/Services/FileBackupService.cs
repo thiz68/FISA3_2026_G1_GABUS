@@ -97,7 +97,16 @@ public class FileBackupService
             var dirName = Path.GetFileName(sourceSubDir);
             var targetSubDir = Path.Combine(targetDir, dirName);
 
-            Directory.CreateDirectory(targetSubDir);
+            // Try to create subfolder, skip if drive becomes unavailable
+            try
+            {
+                Directory.CreateDirectory(targetSubDir);
+            }
+            catch (IOException)
+            {
+                // Cannot create subdirectory, skip this folder
+                continue;
+            }
 
             CopyDirectoryRecursive(sourceSubDir, targetSubDir, job, logger, stateManager,
                 totalFiles, totalSize, ref filesRemaining, ref sizeRemaining);

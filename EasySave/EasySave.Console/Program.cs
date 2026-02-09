@@ -145,7 +145,7 @@ public class Program
                 // Ask user for source path
                 Console.Write(_localization.GetString("enter_source"));
                 source = Console.ReadLine()?.Trim() ?? "";
-                // Check if source path null
+                // Check if source path is valid
                 if (!IsSourceValid(source)) {
                     Console.WriteLine(_localization.GetString("error_invalid_source"));
                 }
@@ -157,7 +157,7 @@ public class Program
                 // Ask user for target path
                 Console.Write(_localization.GetString("enter_target"));
                 target = Console.ReadLine()?.Trim() ?? "";
-                // Check if target path null
+                // Check if target path is valid
                 if (!IsTargetValid(target))
                 {
                     Console.WriteLine(_localization.GetString("error_invalid_target"));
@@ -353,7 +353,7 @@ public class Program
                 // Ask user for source path
                 Console.Write(_localization.GetString("enter_source"));
                 source = Console.ReadLine()?.Trim() ?? "";
-                // Check if source path null
+                // Check if source path is valid
                 if (!IsSourceValid(source))
                 {
                     Console.WriteLine(_localization.GetString("error_invalid_source"));
@@ -366,7 +366,7 @@ public class Program
                 // Ask user for target path
                 Console.Write(_localization.GetString("enter_target"));
                 target = Console.ReadLine()?.Trim() ?? "";
-                // Check if target path null
+                // Check if target path is valid
                 if (!IsTargetValid(target))
                 {
                     Console.WriteLine(_localization.GetString("error_invalid_target"));

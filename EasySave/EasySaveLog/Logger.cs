@@ -47,35 +47,51 @@ public class Logger : ILogger
             FileSize = fileSize,
             TransferTimeMs = transferTimeMs,
         };
-        
+
         //Path to log file
         var logFilePath = GetDailyLogFilePath();
-        
+
         //Load log entries from the file to a list
         var entries = new List<LogEntry>();
 
-        if (File.Exists(logFilePath))
+        // Try to read existing log file, handle errors if file/drive is unavailable
+        try
         {
-            //Read JSON
-            var existingJson = File.ReadAllText(logFilePath);
-            
-            //Convertion to list
-            var existingEntries = JsonSerializer.Deserialize<List<LogEntry>>(existingJson);
-
-            if (existingEntries != null)
+            if (File.Exists(logFilePath))
             {
-                entries = existingEntries;
+                //Read JSON
+                var existingJson = File.ReadAllText(logFilePath);
+
+                //Convertion to list
+                var existingEntries = JsonSerializer.Deserialize<List<LogEntry>>(existingJson);
+
+                if (existingEntries != null)
+                {
+                    entries = existingEntries;
+                }
             }
         }
-        
+        catch (IOException)
+        {
+            // Could not read log file, start with empty list
+        }
+
         entries.Add(entry);
-        
+
         //Convertion list back to JSON
         var options = new JsonSerializerOptions { WriteIndented = true };
-        
+
         var json = JsonSerializer.Serialize(entries, options);
-        
-        File.WriteAllText(logFilePath, json);
+
+        // Try to write log file, handle errors if drive becomes unavailable
+        try
+        {
+            File.WriteAllText(logFilePath, json);
+        }
+        catch (IOException)
+        {
+            // Could not write log file, skip logging this entry
+        }
     }
     
     //Method returns the path of log file

@@ -25,26 +25,42 @@ public class ConfigManager : IConfigManager
     {
         if (!File.Exists(_configFilePath))
             return;
-        
-        var json = File.ReadAllText(_configFilePath);
-        var jobs = JsonSerializer.Deserialize<List<SaveJob>>(json);
 
-        if (jobs == null)
-            return;
-        
-        foreach (var job in jobs)
-            manager.AddJob(job);
+        // Try to read config file, handle errors if file/drive is unavailable
+        try
+        {
+            var json = File.ReadAllText(_configFilePath);
+            var jobs = JsonSerializer.Deserialize<List<SaveJob>>(json);
+
+            if (jobs == null)
+                return;
+
+            foreach (var job in jobs)
+                manager.AddJob(job);
+        }
+        catch (IOException)
+        {
+            // Could not read config file, start with empty job list
+        }
     }
-    
+
     //Save jobs
     public void SaveJobs(IJobManager manager)
     {
         //JSON output
         var options = new JsonSerializerOptions { WriteIndented = true };
-        
+
         var json = JsonSerializer.Serialize(manager.Jobs, options);
-        
-        //Write JSON to config file
-        File.WriteAllText(_configFilePath, json);
+
+        // Try to write config file, handle errors if drive becomes unavailable
+        try
+        {
+            //Write JSON to config file
+            File.WriteAllText(_configFilePath, json);
+        }
+        catch (IOException)
+        {
+            // Could not save config, changes will be lost
+        }
     }
 }

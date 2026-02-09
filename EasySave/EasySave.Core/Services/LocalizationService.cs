@@ -49,6 +49,8 @@ public class LocalizationService : ILocalizationService
             ["active"] = "Active",
             ["inactive"] = "Inactive",
             ["completed"] = "Completed",
+            ["failed"] = "Failed",
+            ["backup_failed"] = "Backup failed: an I/O error occurred",
 
             // Errors
             ["error_max_jobs"] = "Error: Maximum 5 jobs allowed",
@@ -109,6 +111,8 @@ public class LocalizationService : ILocalizationService
             ["active"] = "Actif",
             ["inactive"] = "Inactif",
             ["completed"] = "Complete",
+            ["failed"] = "Echoue",
+            ["backup_failed"] = "Sauvegarde echouee: une erreur d'entree/sortie s'est produite",
 
             // Errors
             ["error_max_jobs"] = "Erreur: Maximum 5 travaux autorises",

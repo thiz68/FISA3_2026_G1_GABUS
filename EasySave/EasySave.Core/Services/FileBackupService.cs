@@ -21,7 +21,7 @@ public class FileBackupService
         int filesRemaining = totalFiles;
         long sizeRemaining = totalSize;
         
-        //Is the target folder existing ?
+        
         Directory.CreateDirectory(targetDir);
         
         //Copy progress
@@ -86,7 +86,6 @@ public class FileBackupService
             stopwatch.Stop();
             
             //Log successful
-            //Something went wrong
             logger.LogFileTransfer(DateTime.Now, job.Name, sourceFile, targetFile, fileSize, stopwatch.ElapsedMilliseconds);
         }
         catch (Exception)

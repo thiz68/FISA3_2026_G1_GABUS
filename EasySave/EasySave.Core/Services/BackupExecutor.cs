@@ -14,31 +14,47 @@ public class BackupExecutor
         _fileBackupService = new FileBackupService();
     }
 
-    //Single Job    
-    public void ExecuteSingle(IJob job, ILogger logger, IStateManager stateManager)
+    //Single Job
+    //Returns true if backup succeeded, false if it failed
+    public bool ExecuteSingle(IJob job, ILogger logger, IStateManager stateManager)
     {
         _localization = new LocalizationService();
 
         //Initialize the state as Active
         var state = new JobState { State = _localization.GetString("active") };
         stateManager.UpdateJobState(job, state);
-        
+
         //Copy all files from source to target
-        _fileBackupService.CopyDirectory(job.SourcePath, job.TargetPath, job, logger, stateManager);
-        
-        //Mark job as completed
-        state.State = _localization.GetString("completed");
-        state.Progression = 100;
+        bool success = _fileBackupService.CopyDirectory(job.SourcePath, job.TargetPath, job, logger, stateManager);
+
+        if (success)
+        {
+            //Mark job as completed
+            state.State = _localization.GetString("completed");
+            state.Progression = 100;
+        }
+        else
+        {
+            //Mark job as failed (drive unavailable, USB unplugged, etc.)
+            state.State = _localization.GetString("failed");
+            Console.WriteLine($"{job.Name}: {_localization.GetString("backup_failed")}");
+        }
+
         stateManager.UpdateJobState(job, state);
+        return success;
     }
-    
+
     //Multiple jobs
-    public void ExecuteSequential(IEnumerable<IJob> jobs, ILogger logger, IStateManager stateManager)
+    //Returns true if all backups succeeded, false if any failed
+    public bool ExecuteSequential(IEnumerable<IJob> jobs, ILogger logger, IStateManager stateManager)
     {
+        bool allSuccess = true;
         foreach (var job in jobs)
         {
-            ExecuteSingle(job, logger, stateManager);
+            if (!ExecuteSingle(job, logger, stateManager))
+                allSuccess = false;
         }
+        return allSuccess;
     }
     
     //From command line arguments
@@ -102,8 +118,7 @@ public class BackupExecutor
             .Select(i => manager.GetJob(i))
             .ToList();
 
-        //Exécution séquentielle
-        ExecuteSequential(jobsToExecute, logger, stateManager);
-        return true;
+        //Exécution séquentielle, return true if all jobs succeeded
+        return ExecuteSequential(jobsToExecute, logger, stateManager);
     }
 }

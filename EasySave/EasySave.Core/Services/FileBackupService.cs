@@ -12,10 +12,26 @@ public class FileBackupService
     private static ILocalizationService _localization = null!;
 
     //Copy an entire dir from source to target
-    public void CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger, IStateManager stateManager)
+    //Returns true if backup succeeded, false if it failed (drive unavailable, etc.)
+    public bool CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger, IStateManager stateManager)
     {
         //Counting how many files need to copy and total size
         var (totalFiles, totalSize) = CalculateEligibleFiles(sourceDir, targetDir, job.Type);
+
+        // If no files found, drive might be unavailable
+        if (totalFiles == 0 && totalSize == 0)
+        {
+            // Check if source directory is actually empty or if there was an error
+            try
+            {
+                if (!Directory.Exists(sourceDir))
+                    return false;
+            }
+            catch (IOException)
+            {
+                return false;
+            }
+        }
 
         //counters
         int filesRemaining = totalFiles;
@@ -30,16 +46,18 @@ public class FileBackupService
         catch (IOException)
         {
             // Cannot create target directory, abort backup
-            return;
+            return false;
         }
 
         //Copy progress
-        CopyDirectoryRecursive(sourceDir, targetDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining);
+        bool success = true;
+        CopyDirectoryRecursive(sourceDir, targetDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success);
+        return success;
     }
     
     //Copy all files and subfolders /!\ RECURSIVE /!\
     private void CopyDirectoryRecursive(string sourceDir, string targetDir, IJob job, ILogger logger,
-        IStateManager stateManager, int totalFiles, long totalSize, ref int filesRemaining, ref long sizeRemaining)
+        IStateManager stateManager, int totalFiles, long totalSize, ref int filesRemaining, ref long sizeRemaining, ref bool success)
     {
         // Get list of files, handle errors if drive becomes unavailable (USB unplugged)
         string[] files;
@@ -49,7 +67,8 @@ public class FileBackupService
         }
         catch (IOException)
         {
-            // Drive unavailable, stop copying this directory
+            // Drive unavailable, mark as failed and stop
+            success = false;
             return;
         }
 
@@ -87,7 +106,8 @@ public class FileBackupService
         }
         catch (IOException)
         {
-            // Drive unavailable, stop processing subdirectories
+            // Drive unavailable, mark as failed and stop
+            success = false;
             return;
         }
 
@@ -104,12 +124,13 @@ public class FileBackupService
             }
             catch (IOException)
             {
-                // Cannot create subdirectory, skip this folder
+                // Cannot create subdirectory, mark as failed and skip
+                success = false;
                 continue;
             }
 
             CopyDirectoryRecursive(sourceSubDir, targetSubDir, job, logger, stateManager,
-                totalFiles, totalSize, ref filesRemaining, ref sizeRemaining);
+                totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success);
         }
     }
     

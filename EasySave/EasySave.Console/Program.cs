@@ -504,7 +504,7 @@ public class Program
         }
 
         // Check if source is executable folder
-        string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "";
+        string exePath = AppContext.BaseDirectory;
         string fullSource = Path.GetFullPath(sourcePath);
         string fullExe = Path.GetFullPath(exePath);
 

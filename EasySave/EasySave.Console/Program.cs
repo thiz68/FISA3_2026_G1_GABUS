@@ -22,6 +22,9 @@ public class Program
 
     public static void Main(string[] args)
     {
+        // Global exception handler to prevent crashes from unexpected errors (like USB disconnection)
+        AppDomain.CurrentDomain.UnhandledException += HandleUnhandledException;
+
         // Services
         _jobManager = new JobManager();
         _configManager = new ConfigManager();
@@ -510,5 +513,27 @@ public class Program
                 _localization.SetLanguage("fr");
                 break;
         }
+    }
+
+    // Handles unexpected errors that are not caught elsewhere
+    // This prevents the app from crashing when USB drives are plugged/unplugged
+    private static void HandleUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        var exception = e.ExceptionObject as Exception;
+
+        // Display error message to user
+        Console.WriteLine();
+        Console.WriteLine("========================================");
+        Console.WriteLine(_localization?.GetString("critical_error") ?? "A critical error occurred");
+
+        // Show exception details for debugging
+        if (exception != null)
+        {
+            Console.WriteLine($"Error: {exception.Message}");
+        }
+
+        Console.WriteLine("========================================");
+        Console.WriteLine(_localization?.GetString("press_to_continue") ?? "Press any key to continue...");
+        Console.ReadKey();
     }
 }

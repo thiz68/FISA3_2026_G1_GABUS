@@ -48,7 +48,15 @@ public class StateManager : IStateManager
 
         //Dictionaries to Json
         var json = JsonSerializer.Serialize(_states.Values.ToList(), options);
-        
-        File.WriteAllText(_stateFilePath, json);
+
+        // Try to write file, catch errors if drive becomes unavailable (USB unplugged, etc.)
+        try
+        {
+            File.WriteAllText(_stateFilePath, json);
+        }
+        catch (IOException)
+        {
+            // File write failed, probably due to drive issue - we just skip saving state
+        }
     }
 }

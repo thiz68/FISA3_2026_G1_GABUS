@@ -49,6 +49,8 @@ public class LocalizationService : ILocalizationService
             ["active"] = "Active",
             ["inactive"] = "Inactive",
             ["completed"] = "Completed",
+            ["failed"] = "Failed",
+            ["backup_failed"] = "Backup failed: an I/O error occurred",
 
             // Errors
             ["error_max_jobs"] = "Error: Maximum 5 jobs allowed",
@@ -56,7 +58,7 @@ public class LocalizationService : ILocalizationService
             ["invalid_choice"] = "Error: Invalid choice",
             ["job_name_alr_exist"] = "Error : A job with the same name already exists",
             ["error_invalid_name"] = "Error: Job name must have at least 1 character",
-            ["error_invalid_source"] = "Error: Source must be an existing directory (not a file)",
+            ["error_invalid_source"] = "Error: Source must be an existing directory and cannot be the executable directory",
             ["error_invalid_target"] = "Error: Target must be a valid path",
             ["error_invalid_type"] = "Error: Type is not valid",
             ["error_file_not_found"] = "Warning: File {0} no longer exists, skipping",
@@ -109,6 +111,8 @@ public class LocalizationService : ILocalizationService
             ["active"] = "Actif",
             ["inactive"] = "Inactif",
             ["completed"] = "Complete",
+            ["failed"] = "Echoue",
+            ["backup_failed"] = "Sauvegarde echouee: une erreur d'entree/sortie s'est produite",
 
             // Errors
             ["error_max_jobs"] = "Erreur: Maximum 5 travaux autorises",
@@ -116,7 +120,7 @@ public class LocalizationService : ILocalizationService
             ["invalid_choice"] = "Erreur: Choix invalide",
             ["job_name_alr_exist"] = "Erreur : Un travail portant le meme nom existe deja",
             ["error_invalid_name"] = "Erreur: Le nom du travail doit avoir au moins 1 caractère",
-            ["error_invalid_source"] = "Erreur: La source doit être un répertoire existant (pas un fichier)",
+            ["error_invalid_source"] = "Erreur: La source doit être un répertoire existant et ne peut pas être le répertoire contenant l'executable",
             ["error_invalid_target"] = "Erreur: La cible doit être un chemin valide",
             ["error_invalid_type"] = "Erreur: Le type entré n'est pas valide",
             ["error_file_not_found"] = "Attention: Le fichier {0} n'existe plus, ignoré",

@@ -12,32 +12,72 @@ public class FileBackupService
     private static ILocalizationService _localization = null!;
 
     //Copy an entire dir from source to target
-    public void CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger, IStateManager stateManager)
+    //Returns true if backup succeeded, false if it failed (drive unavailable, etc.)
+    public bool CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger, IStateManager stateManager)
     {
         //Counting how many files need to copy and total size
         var (totalFiles, totalSize) = CalculateEligibleFiles(sourceDir, targetDir, job.Type);
-        
+
+        // If no files found, drive might be unavailable
+        if (totalFiles == 0 && totalSize == 0)
+        {
+            // Check if source directory is actually empty or if there was an error
+            try
+            {
+                if (!Directory.Exists(sourceDir))
+                    return false;
+            }
+            catch (IOException)
+            {
+                return false;
+            }
+        }
+
         //counters
         int filesRemaining = totalFiles;
         long sizeRemaining = totalSize;
-        
-        //Is the target folder existing ?
-        Directory.CreateDirectory(targetDir);
-        
+
+        // Try to create target folder, handle errors if drive is unavailable
+        try
+        {
+            //Is the target folder existing ?
+            Directory.CreateDirectory(targetDir);
+        }
+        catch (IOException)
+        {
+            // Cannot create target directory, abort backup
+            return false;
+        }
+
         //Copy progress
-        CopyDirectoryRecursive(sourceDir, targetDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining);
+        bool success = true;
+        CopyDirectoryRecursive(sourceDir, targetDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success);
+        return success;
     }
     
     //Copy all files and subfolders /!\ RECURSIVE /!\
     private void CopyDirectoryRecursive(string sourceDir, string targetDir, IJob job, ILogger logger,
-        IStateManager stateManager, int totalFiles, long totalSize, ref int filesRemaining, ref long sizeRemaining)
+        IStateManager stateManager, int totalFiles, long totalSize, ref int filesRemaining, ref long sizeRemaining, ref bool success)
     {
+        // Get list of files, handle errors if drive becomes unavailable (USB unplugged)
+        string[] files;
+        try
+        {
+            files = Directory.GetFiles(sourceDir);
+        }
+        catch (IOException)
+        {
+            // Drive unavailable, mark as failed and stop
+            success = false;
+            return;
+        }
+
         //Copy all files in the current folder
-        foreach (var sourceFile in Directory.GetFiles(sourceDir))
+        foreach (var sourceFile in files)
         {
             var fileName = Path.GetFileName(sourceFile);
             var targetFile = Path.Combine(targetDir, fileName);
-            
+
             //DIFFERENTIAL : skip files no changes, compare "last modified" dates to decide.
             if (job.Type == "diff" && File.Exists(targetFile))
             {
@@ -46,28 +86,51 @@ public class FileBackupService
             }
 
             var fileSize = CopyFile(sourceFile, targetFile, job, logger, stateManager);
-            
+
             //update counters
             filesRemaining--;
             sizeRemaining -= fileSize;
-            
+
             //Calculate % complete, and preventing division / 0
             double progression = totalSize > 0 ? ((totalSize - sizeRemaining) * 100.0 / totalSize) : 100;
-            
+
             //Tell state manager about the progess
             UpdateStateForFile(job, sourceFile, targetFile, filesRemaining, sizeRemaining, progression, stateManager);
         }
-        
+
+        // Get list of subdirectories, handle errors if drive becomes unavailable
+        string[] subDirs;
+        try
+        {
+            subDirs = Directory.GetDirectories(sourceDir);
+        }
+        catch (IOException)
+        {
+            // Drive unavailable, mark as failed and stop
+            success = false;
+            return;
+        }
+
         //Process all subfolders
-        foreach (var sourceSubDir in Directory.GetDirectories(sourceDir))
+        foreach (var sourceSubDir in subDirs)
         {
             var dirName = Path.GetFileName(sourceSubDir);
             var targetSubDir = Path.Combine(targetDir, dirName);
-            
-            Directory.CreateDirectory(targetSubDir);
-            
+
+            // Try to create subfolder, skip if drive becomes unavailable
+            try
+            {
+                Directory.CreateDirectory(targetSubDir);
+            }
+            catch (IOException)
+            {
+                // Cannot create subdirectory, mark as failed and skip
+                success = false;
+                continue;
+            }
+
             CopyDirectoryRecursive(sourceSubDir, targetSubDir, job, logger, stateManager,
-                totalFiles, totalSize, ref filesRemaining, ref sizeRemaining);
+                totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success);
         }
     }
     
@@ -86,7 +149,6 @@ public class FileBackupService
             stopwatch.Stop();
             
             //Log successful
-            //Something went wrong
             logger.LogFileTransfer(DateTime.Now, job.Name, sourceFile, targetFile, fileSize, stopwatch.ElapsedMilliseconds);
         }
         catch (Exception)
@@ -105,12 +167,24 @@ public class FileBackupService
     {
         int count = 0;
         long size = 0;
-        
+
+        // Get all files recursively, handle errors if drive becomes unavailable
+        string[] allFiles;
+        try
+        {
+            allFiles = Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories);
+        }
+        catch (IOException)
+        {
+            // Drive unavailable, return zero files
+            return (0, 0);
+        }
+
         //Recursive Search
-        foreach (var file in Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories))
+        foreach (var file in allFiles)
         {
             var fileInfo = new FileInfo(file);
-            
+
             //DIFFERENTIAL : check file needed backup
             if (type == "diff")
             {
@@ -122,11 +196,11 @@ public class FileBackupService
                 if (File.Exists(targetFile) && File.GetLastWriteTime(targetFile) >= File.GetLastWriteTime(file))
                     continue;
             }
-            
+
             count++;
             size += fileInfo.Length;
         }
-        
+
         return (count, size);
     }
     

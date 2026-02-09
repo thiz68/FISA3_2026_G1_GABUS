@@ -5,6 +5,7 @@ using EasySave.Core.Models;
 using EasySave.Core.Services;
 using EasySaveLog;
 using System.IO;
+using System.Reflection;
 
 // Stop conflict with EasySaveConsole namespace
 using Console = System.Console;
@@ -22,6 +23,9 @@ public class Program
 
     public static void Main(string[] args)
     {
+        // Global exception handler to prevent crashes from unexpected errors (like USB disconnection)
+        AppDomain.CurrentDomain.UnhandledException += HandleUnhandledException;
+
         // Services
         _jobManager = new JobManager();
         _configManager = new ConfigManager();
@@ -133,7 +137,7 @@ public class Program
             // Verify job name not already exist
             if (_jobManager.Jobs.Any(j =>
                     j.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
-            {
+            {   
                 Console.WriteLine(_localization.GetString("job_name_alr_exist"));
                 return;
             }
@@ -144,38 +148,25 @@ public class Program
                 // Ask user for source path
                 Console.Write(_localization.GetString("enter_source"));
                 source = Console.ReadLine()?.Trim() ?? "";
-                // Check if source path null
-                if (string.IsNullOrWhiteSpace(source))
-                {
-                    Console.WriteLine(_localization.GetString("input_is_null"));
-                }
-                // Check if source path exist
-                else if (!Directory.Exists(source))
-                {
+                // Check if source path is valid
+                if (!IsSourceValid(source)) {
                     Console.WriteLine(_localization.GetString("error_invalid_source"));
                 }
-            } while (string.IsNullOrWhiteSpace(source) || !Directory.Exists(source));
+            } while (!IsSourceValid(source));
 
             string target;
-            bool valid_path;
             do
             {
                 // Ask user for target path
                 Console.Write(_localization.GetString("enter_target"));
                 target = Console.ReadLine()?.Trim() ?? "";
-                valid_path = true;
-                // Check if target path null
-                if (string.IsNullOrWhiteSpace(target))
+                // Check if target path is valid
+                if (!IsTargetValid(target))
                 {
-                    Console.WriteLine(_localization.GetString("input_is_null"));
+                    Console.WriteLine(_localization.GetString("error_invalid_target"));
                 }
-                else if (!Path.IsPathRooted(target))
-                {
-                    valid_path = false;
-                    Console.WriteLine(_localization.GetString("error_invalid_target")); 
-                }
-                
-            } while (string.IsNullOrWhiteSpace(target) || !valid_path);
+
+            } while (!IsTargetValid(target));
 
             string type;
             string typeInput;
@@ -365,38 +356,26 @@ public class Program
                 // Ask user for source path
                 Console.Write(_localization.GetString("enter_source"));
                 source = Console.ReadLine()?.Trim() ?? "";
-                // Check if source path null
-                if (string.IsNullOrWhiteSpace(source))
-                {
-                    Console.WriteLine(_localization.GetString("input_is_null"));
-                }
-                // Check if source path exist
-                else if (!Directory.Exists(source))
+                // Check if source path is valid
+                if (!IsSourceValid(source))
                 {
                     Console.WriteLine(_localization.GetString("error_invalid_source"));
                 }
-            } while (string.IsNullOrWhiteSpace(source) || !Directory.Exists(source));
+            } while (!IsSourceValid(source));
 
             string target;
-            bool valid_path;
             do
             {
                 // Ask user for target path
                 Console.Write(_localization.GetString("enter_target"));
                 target = Console.ReadLine()?.Trim() ?? "";
-                valid_path = true;
-                // Check if target path null
-                if (string.IsNullOrWhiteSpace(target))
+                // Check if target path is valid
+                if (!IsTargetValid(target))
                 {
-                    Console.WriteLine(_localization.GetString("input_is_null"));
-                }
-                else if (!Path.IsPathRooted(target))
-                {
-                    valid_path = false;
                     Console.WriteLine(_localization.GetString("error_invalid_target"));
                 }
 
-            } while (string.IsNullOrWhiteSpace(target) || !valid_path);
+            } while (!IsTargetValid(target));
 
             string type;
             string typeInput;
@@ -490,6 +469,7 @@ public class Program
         Console.WriteLine(_localization.GetString("backup_completed"));
     }
 
+
     // Change language function
     private static void ChangeLanguage()
     {
@@ -510,5 +490,72 @@ public class Program
                 _localization.SetLanguage("fr");
                 break;
         }
+    }
+
+
+
+    // Checks if the source path is valid: exists and does not contain the executable 
+    private static bool IsSourceValid(string sourcePath)
+    {
+        // Check if source exist
+        if (string.IsNullOrWhiteSpace(sourcePath) || !Directory.Exists(sourcePath))
+        {
+            return false;
+        }
+
+        // Check if source is executable folder
+        string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "";
+        string fullSource = Path.GetFullPath(sourcePath);
+        string fullExe = Path.GetFullPath(exePath);
+
+        bool isInside = fullExe.Equals(fullSource, StringComparison.OrdinalIgnoreCase) ||
+                        fullExe.StartsWith(fullSource + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+
+        return !isInside;
+    }
+
+    // Checks if the target path is valid: can create a directory within it
+    private static bool IsTargetValid(string targetPath)
+    {
+        // Check if target is absolute 
+        if (string.IsNullOrWhiteSpace(targetPath) || !Path.IsPathRooted(targetPath))
+        {
+            return false;
+        }
+
+        // Check if directory can be created in target
+        string testDir = Path.Combine(targetPath, Guid.NewGuid().ToString());
+        try
+        {
+            Directory.CreateDirectory(testDir);
+            Directory.Delete(testDir);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    // Handles unexpected errors that are not caught elsewhere
+    // This prevents the app from crashing when USB drives are plugged/unplugged
+    private static void HandleUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        var exception = e.ExceptionObject as Exception;
+
+        // Display error message to user
+        Console.WriteLine();
+        Console.WriteLine("========================================");
+        Console.WriteLine(_localization?.GetString("critical_error") ?? "A critical error occurred");
+
+        // Show exception details for debugging
+        if (exception != null)
+        {
+            Console.WriteLine($"Error: {exception.Message}");
+        }
+
+        Console.WriteLine("========================================");
+        Console.WriteLine(_localization?.GetString("press_to_continue") ?? "Press any key to continue...");
+        Console.ReadKey();
     }
 }

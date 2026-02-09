@@ -149,7 +149,6 @@ public class FileBackupService
             stopwatch.Stop();
             
             //Log successful
-            //Something went wrong
             logger.LogFileTransfer(DateTime.Now, job.Name, sourceFile, targetFile, fileSize, stopwatch.ElapsedMilliseconds);
         }
         catch (Exception)

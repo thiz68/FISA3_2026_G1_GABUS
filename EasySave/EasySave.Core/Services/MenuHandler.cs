@@ -130,7 +130,7 @@ public class MenuHandler
     private void RemoveJob()
     {
         Console.Clear();
-        ListJobs(true);
+        ListJobs(true, true);
         Console.WriteLine(_localization.GetString("job_to_remove"));
         var input = Console.ReadLine()?.Trim();
         if (string.IsNullOrWhiteSpace(input))
@@ -160,7 +160,7 @@ public class MenuHandler
     private void ModifyJob()
     {
         Console.Clear();
-        ListJobs(true);
+        ListJobs(true, true);
         Console.WriteLine(_localization.GetString("job_to_modify"));
         var input = Console.ReadLine()?.Trim();
         if (string.IsNullOrWhiteSpace(input))
@@ -227,7 +227,7 @@ public class MenuHandler
         Console.ReadKey();
     }
     
-    private void ListJobs(bool withNumbers = false)
+    private void ListJobs(bool withNumbers = false, bool bypassPTC = false)
     {
         Console.Clear();
         if (_jobManager.Jobs.Count == 0)
@@ -249,16 +249,20 @@ public class MenuHandler
             Console.WriteLine($"  {_localization.GetString("type")}: {(job.Type == "full" ? _localization.GetString("full") : _localization.GetString("diff"))}");
             Console.WriteLine();
         }
+        if (bypassPTC == false)
+        {
+            Console.WriteLine(_localization.GetString("press_to_continue"));
+            Console.ReadKey();
+        }
         
-        Console.WriteLine(_localization.GetString("press_to_continue"));
-        Console.ReadKey();
     }
     
     private void ExecuteBackup()
     {
         Console.Clear();
-        ListJobs(true);
+        ListJobs(true, true);
         Console.WriteLine(_localization.GetString("enter_job_number"));
+        Console.WriteLine("Ex : 1 | 2;5 | 2-4");
         var input = Console.ReadLine()?.Trim();
         
         if (string.IsNullOrWhiteSpace(input))

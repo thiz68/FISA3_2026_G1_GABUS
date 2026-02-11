@@ -3,6 +3,7 @@
 using EasySave.Core.Interfaces;
 using EasySave.Core.Models;
 using EasySave.Core.Services;
+using System.Xml.Linq;
 
 public class MenuHandler
 {
@@ -14,7 +15,7 @@ public class MenuHandler
     private readonly IStateManager _stateManager;
     private readonly PathValidator _pathValidator;
     public MenuHandler(ILocalizationService localization, IJobManager jobManager, IConfigManager configManager,
-    
+
         BackupExecutor backupExecutor, ILogger logger, IStateManager stateManager, PathValidator pathValidator)
     {
         _localization = localization;
@@ -25,7 +26,7 @@ public class MenuHandler
         _stateManager = stateManager;
         _pathValidator = pathValidator;
     }
-    
+
     public void ShowMenu()
     {
         while (true)
@@ -77,41 +78,103 @@ public class MenuHandler
             }
         }
     }
-    
+
+
     private void CreateJob()
     {
         Console.Clear();
-        Console.WriteLine(_localization.GetString("enter_name"));
-        var name = Console.ReadLine()?.Trim();
-        if (string.IsNullOrWhiteSpace(name))
+        string name = null;
+        string source = null;
+        string target = null;
+        string type = null;
+
+        // Add name
+        while (true)
         {
-            Console.WriteLine(_localization.GetString("error_invalid_name"));
-            Console.ReadKey();
-            return;
+            Console.Write(_localization.GetString("enter_name"));
+            name = Console.ReadLine()?.Trim();
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                Console.WriteLine(_localization.GetString("input_is_null"));
+            }
+            else if (_jobManager.Jobs.Any(j => j.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+            {
+                Console.WriteLine(_localization.GetString("job_name_alr_exist"));
+            }
+            else
+            {
+                break;
+            }
+
         }
-        
-        Console.WriteLine(_localization.GetString("enter_source"));
-        var source = Console.ReadLine()?.Trim();
-        if (!_pathValidator.IsSourceValid(source))
+
+        // Add target
+        while (true)
         {
-            Console.WriteLine(_localization.GetString("error_invalid_source"));
-            Console.ReadKey();
-            return;
+            Console.Write(_localization.GetString("enter_source"));
+            source = Console.ReadLine()?.Trim();
+            if (string.IsNullOrWhiteSpace(source))
+            {
+                Console.WriteLine(_localization.GetString("input_is_null"));
+            }
+            else if (!_pathValidator.IsSourceValid(source))
+            {
+                Console.WriteLine(_localization.GetString("error_invalid_source"));
+            }
+            else
+            {
+                break;
+            }
+
         }
-        
-        Console.WriteLine(_localization.GetString("enter_target"));
-        var target = Console.ReadLine()?.Trim();
-        if (!_pathValidator.IsTargetValid(target))
+
+        // Add target
+        while (true)
         {
-            Console.WriteLine(_localization.GetString("error_invalid_target"));
-            Console.ReadKey();
-            return;
+            Console.Write(_localization.GetString("enter_target"));
+            target = Console.ReadLine()?.Trim();
+            if (string.IsNullOrWhiteSpace(target))
+            {
+                Console.WriteLine(_localization.GetString("input_is_null"));
+            }
+            else if (!_pathValidator.IsTargetValid(target))
+            {
+                Console.WriteLine(_localization.GetString("error_invalid_target"));
+            }
+            else
+            {
+                break;
+            }
+
         }
-        
-        Console.WriteLine(_localization.GetString("enter_type"));
-        var typeInput = Console.ReadLine()?.Trim();
-        string type = typeInput == "2" ? "diff" : "full";
-        var job = new SaveJob { Name = name, SourcePath = source!, TargetPath = target!, Type = type };
+
+        // Add type
+        while (true)
+        {
+            Console.Write(_localization.GetString("enter_type"));
+            type = Console.ReadLine()?.Trim();
+            if (string.IsNullOrWhiteSpace(type))
+            {
+                Console.WriteLine(_localization.GetString("input_is_null"));
+            }
+            else if (type == "1" || type == "full")
+            {
+                type = "full";
+                break;
+            }
+            else if (type == "2" || type == "diff")
+            {
+                type = "diff";
+                break;
+            }
+            else
+            {
+                Console.WriteLine(_localization.GetString("error_invalid_type"));
+            }
+        }
+
+        // Create job
+        var job = new SaveJob { Name = name, SourcePath = source, TargetPath = target, Type = type };
         try
         {
             _jobManager.AddJob(job);
@@ -122,32 +185,44 @@ public class MenuHandler
         {
             Console.WriteLine(ex.Message);
         }
-        
+
         Console.WriteLine(_localization.GetString("press_to_continue"));
         Console.ReadKey();
     }
+
+    
     
     private void RemoveJob()
     {
         Console.Clear();
         ListJobs(true, true);
-        Console.WriteLine(_localization.GetString("job_to_remove"));
+        Console.Write(_localization.GetString("job_to_remove"));
         var input = Console.ReadLine()?.Trim();
         if (string.IsNullOrWhiteSpace(input))
             return;
         try
         {
+            // User entered a number
             if (int.TryParse(input, out int index) && index >= 1 && index <= _jobManager.Jobs.Count)
             {
                 var job = _jobManager.GetJob(index);
                 _jobManager.RemoveJob(job.Name);
+                _configManager.SaveJobs(_jobManager);
+                Console.WriteLine(_localization.GetString("job_removed"));
+            }
+            // User entered a name
+            else if (_jobManager.Jobs.FirstOrDefault(j => j.Name.Equals(input, StringComparison.OrdinalIgnoreCase)) != null)
+            {
+                var job = _jobManager.GetJob(input);
+                _jobManager.RemoveJob(job.Name);
+                _configManager.SaveJobs(_jobManager);
+                Console.WriteLine(_localization.GetString("job_removed"));
             }
             else
             {
-                _jobManager.RemoveJob(input);
+                Console.WriteLine(_localization.GetString("error_not_found"));
             }
-            _configManager.SaveJobs(_jobManager);
-            Console.WriteLine(_localization.GetString("job_removed"));
+            
         }
         catch
         {
@@ -156,75 +231,113 @@ public class MenuHandler
         Console.WriteLine(_localization.GetString("press_to_continue"));
         Console.ReadKey();
     }
-    
+
+
     private void ModifyJob()
     {
         Console.Clear();
         ListJobs(true, true);
-        Console.WriteLine(_localization.GetString("job_to_modify"));
+        Console.Write(_localization.GetString("job_to_modify"));
         var input = Console.ReadLine()?.Trim();
+        IJob? job = null;
         if (string.IsNullOrWhiteSpace(input))
             return;
-        
-        IJob job;
         try
         {
+            // User entered a number
             if (int.TryParse(input, out int index) && index >= 1 && index <= _jobManager.Jobs.Count)
             {
                 job = _jobManager.GetJob(index);
             }
-            else
+            // User entered a name
+            else if (_jobManager.Jobs.FirstOrDefault(j => j.Name.Equals(input, StringComparison.OrdinalIgnoreCase)) != null)
             {
                 job = _jobManager.GetJob(input);
+            }
+            else
+            {
+                Console.WriteLine(_localization.GetString("error_not_found"));
+            }
+
+            if (job != null) {
+                
+                // Edit name
+                while (true)
+                {
+                    Console.Write(_localization.GetString("enter_name"));
+                    var newName = Console.ReadLine()?.Trim();
+                    if (string.IsNullOrWhiteSpace(newName))
+                    {
+                        break;
+                    }
+                    else if (_jobManager.Jobs.Any(j => j != job && j.Name.Equals(newName, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        Console.WriteLine(_localization.GetString("job_name_alr_exist"));
+                    }
+                    else
+                    {
+                        job.Name = newName;
+                        break;
+                    }
+
+                }
+
+                // Edit target
+                while (true)
+                {
+                    Console.Write(_localization.GetString("enter_source"));
+                    var newSource = Console.ReadLine()?.Trim();
+                    if (string.IsNullOrWhiteSpace(newSource)) {
+                        break;
+                    }
+                    else if (!_pathValidator.IsSourceValid(newSource)){
+                        Console.WriteLine(_localization.GetString("error_invalid_source"));
+                    }
+                    else
+                    {
+                        job.SourcePath = newSource;
+                        break;
+                    }
+                     
+                }
+
+                // Edit target
+                while (true)
+                {
+                    Console.Write(_localization.GetString("enter_target"));
+                    var newTarget = Console.ReadLine()?.Trim();
+                    if (string.IsNullOrWhiteSpace(newTarget))
+                    {
+                        break;
+                    }
+                    else if (!_pathValidator.IsTargetValid(newTarget))
+                    {
+                        Console.WriteLine(_localization.GetString("error_invalid_target"));
+                    }
+                    else
+                    {
+                        job.TargetPath = newTarget;
+                        break;
+                    }
+
+                }
+
+                Console.Write(_localization.GetString("enter_type"));
+                var typeInput = Console.ReadLine()?.Trim();
+
+                if (!string.IsNullOrWhiteSpace(typeInput))
+                    job.Type = typeInput == "2" ? "diff" : "full";
+
+                _configManager.SaveJobs(_jobManager);
+                Console.WriteLine(_localization.GetString("job_modified"));
+                Console.WriteLine(_localization.GetString("press_to_continue"));
+                Console.ReadKey();
             }
         }
         catch
         {
             Console.WriteLine(_localization.GetString("error_not_found"));
-            Console.ReadKey();
-            return;
         }
-        
-        Console.WriteLine(_localization.GetString("enter_name"));
-        var newName = Console.ReadLine()?.Trim();
-        
-        if (!string.IsNullOrWhiteSpace(newName))
-            job.Name = newName;
-        
-        Console.WriteLine(_localization.GetString("enter_source"));
-        var newSource = Console.ReadLine()?.Trim();
-        
-        if (!string.IsNullOrWhiteSpace(newSource) && _pathValidator.IsSourceValid(newSource))
-            job.SourcePath = newSource;
-        else if (!string.IsNullOrWhiteSpace(newSource))
-        {
-            Console.WriteLine(_localization.GetString("error_invalid_source"));
-            Console.ReadKey();
-            return;
-        }
-        
-        Console.WriteLine(_localization.GetString("enter_target"));
-        var newTarget = Console.ReadLine()?.Trim();
-        
-        if (!string.IsNullOrWhiteSpace(newTarget) && _pathValidator.IsTargetValid(newTarget))
-            job.TargetPath = newTarget;
-        else if (!string.IsNullOrWhiteSpace(newTarget))
-        {
-            Console.WriteLine(_localization.GetString("error_invalid_target"));
-            Console.ReadKey();
-            return;
-        }
-        
-        Console.WriteLine(_localization.GetString("enter_type"));
-        var typeInput = Console.ReadLine()?.Trim();
-        
-        if (!string.IsNullOrWhiteSpace(typeInput))
-            job.Type = typeInput == "2" ? "diff" : "full";
-        
-        _configManager.SaveJobs(_jobManager);
-        Console.WriteLine(_localization.GetString("job_modified"));
-        Console.WriteLine(_localization.GetString("press_to_continue"));
-        Console.ReadKey();
     }
     
     private void ListJobs(bool withNumbers = false, bool bypassPTC = false)

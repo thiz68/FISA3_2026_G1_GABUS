@@ -18,6 +18,7 @@ public class JobManager : IJobManager
     
     // Return a the list of jobs in read only
     public IReadOnlyList<IJob> Jobs => _jobs.AsReadOnly();
+    
     public JobManager(ILocalizationService localization)
     {
         _localization = localization;

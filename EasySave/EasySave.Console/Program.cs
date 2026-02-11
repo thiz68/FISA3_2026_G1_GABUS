@@ -4,9 +4,6 @@ using EasySave.Core.Interfaces;
 using EasySave.Core.Services;
 using EasySaveLog;
 
-// Stop conflict with EasySaveConsole namespace
-using Console = System.Console;
-
 public class Program
 {
     public static void Main(string[] args)
@@ -29,8 +26,8 @@ public class Program
         
         // Load all exisiting jobs
         configManager.LoadJobs(jobManager);
-        // Select mode to run
         
+        // Select mode to run
         if (args.Length > 0)
         {
             backupExecutor.ExecuteFromCommand(args[0], jobManager, logger, stateManager, localization);

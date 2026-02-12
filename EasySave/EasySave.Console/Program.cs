@@ -6,7 +6,7 @@ using EasySaveLog;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static void Main(string args)
     {
         // Global exception handler to prevent crashes from unexpected errors (like USB disconnection)
         AppDomain.CurrentDomain.UnhandledException += ExceptionHandler.HandleUnhandledException;
@@ -30,7 +30,23 @@ public class Program
         // Select mode to run
         if (args.Length > 0)
         {
-            backupExecutor.ExecuteFromCommand(args[0], jobManager, logger, stateManager, localization);
+            var formatter = new BackupListFormatter();
+            var (success, message, jobs) = formatter.FormatJobList(args, jobManager);
+
+            // Run backup if args are correct
+            if (success == false)
+            {
+                Console.WriteLine(message);
+                Console.WriteLine(localization.GetString("press_to_continue"));
+                Console.ReadKey();
+            }
+            else
+            {
+                Console.WriteLine(localization.GetString("backup_started"));
+                var result = backupExecutor.ExecuteSequential(jobs, logger, stateManager);
+                Console.WriteLine(localization.GetString("press_to_continue"));
+                Console.ReadKey();
+            }
             return;
         }
         

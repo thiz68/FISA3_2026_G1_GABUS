@@ -50,8 +50,7 @@ public class LocalizationService : ILocalizationService
             ["inactive"] = "Inactive",
             ["completed"] = "Completed",
             ["failed"] = "Failed",
-            ["backup_failed"] = "Backup failed: an I/O error occurred",
-
+            
             // Errors
             ["error_max_jobs"] = "Error: Maximum 5 jobs allowed",
             ["error_not_found"] = "Error: Job not found",
@@ -64,6 +63,7 @@ public class LocalizationService : ILocalizationService
             ["error_file_not_found"] = "Warning: File {0} no longer exists, skipping",
             ["input_is_null"] = "Error : Input must contans at least 1 character",
             ["critical_error"] = "Error : A critical error happened, please try again",
+            ["backup_failed"] = "Backup failed: an I/O error occurred",
 
             //Other
             ["source"] = "Source",
@@ -112,8 +112,7 @@ public class LocalizationService : ILocalizationService
             ["inactive"] = "Inactif",
             ["completed"] = "Complete",
             ["failed"] = "Echoue",
-            ["backup_failed"] = "Sauvegarde echouee: une erreur d'entree/sortie s'est produite",
-
+            
             // Errors
             ["error_max_jobs"] = "Erreur: Maximum 5 travaux autorises",
             ["error_not_found"] = "Erreur: Travail non trouve",
@@ -126,6 +125,7 @@ public class LocalizationService : ILocalizationService
             ["error_file_not_found"] = "Attention: Le fichier {0} n'existe plus, ignoré",
             ["input_is_null"] = "Erreur : Veuillez entrer au moins 1 caractère",
             ["critical_error"] = "Erreur : Une erreur critique est survenue, veuillez reessayer",
+            ["backup_failed"] = "Sauvegarde echouee: une erreur d'entree/sortie s'est produite",
 
             //Other
             ["source"] = "Source",

@@ -6,7 +6,7 @@ using EasySaveLog;
 
 public class Program
 {
-    public static void Main(string args)
+    public static void Main(string[] args)
     {
         // Global exception handler to prevent crashes from unexpected errors (like USB disconnection)
         AppDomain.CurrentDomain.UnhandledException += ExceptionHandler.HandleUnhandledException;
@@ -31,7 +31,7 @@ public class Program
         if (args.Length > 0)
         {
             var formatter = new BackupListFormatter();
-            var (success, message, jobs) = formatter.FormatJobList(args, jobManager);
+            var (success, message, jobs) = formatter.FormatJobList(args[0], jobManager);
 
             // Run backup if args are correct
             if (success == false)

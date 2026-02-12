@@ -1,6 +1,6 @@
 namespace EasySave.Core.Interfaces;
 
-// Interface for managing backup jobs (max 5 in v1.0)
+// Interface for managing backup jobs
 public interface IJobManager
 {
     // List of all backup jobs (read-only)

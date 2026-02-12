@@ -44,6 +44,7 @@ public class Program
             {
                 Console.WriteLine(localization.GetString("backup_started"));
                 var result = backupExecutor.ExecuteSequential(jobs, logger, stateManager);
+                Console.WriteLine(localization.GetString(result));
                 Console.WriteLine(localization.GetString("press_to_continue"));
                 Console.ReadKey();
             }

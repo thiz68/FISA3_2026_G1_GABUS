@@ -380,12 +380,25 @@ public class MenuHandler
         
         if (string.IsNullOrWhiteSpace(input))
             return;
-        
-        Console.WriteLine(_localization.GetString("backup_started"));
-        var success = _backupExecutor.ExecuteFromCommand(input, _jobManager, _logger, _stateManager, _localization);
-        Console.WriteLine(success ? _localization.GetString("backup_completed") : _localization.GetString("backup_failed"));
-        Console.WriteLine(_localization.GetString("press_to_continue"));
-        Console.ReadKey();
+
+        var formatter = new BackupListFormatter();
+        var (success, message, jobs) = formatter.FormatJobList(input, _jobManager);
+
+        // Executer les backup si la liste entree par utilisateur est correcte
+        if (success == false)
+        {
+            Console.WriteLine(message);
+            Console.WriteLine(_localization.GetString("press_to_continue"));
+            Console.ReadKey();
+        }
+        else
+        {
+            Console.WriteLine(_localization.GetString("backup_started"));
+            var result = _backupExecutor.ExecuteSequential(jobs, _logger, _stateManager);
+            Console.WriteLine(_localization.GetString("press_to_continue"));
+            Console.ReadKey();
+        }
+
     }
     
     private void ChangeLanguage()

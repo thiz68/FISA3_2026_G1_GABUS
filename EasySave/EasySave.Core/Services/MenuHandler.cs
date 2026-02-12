@@ -395,6 +395,7 @@ public class MenuHandler
         {
             Console.WriteLine(_localization.GetString("backup_started"));
             var result = _backupExecutor.ExecuteSequential(jobs, _logger, _stateManager);
+            Console.WriteLine(_localization.GetString(result));
             Console.WriteLine(_localization.GetString("press_to_continue"));
             Console.ReadKey();
         }

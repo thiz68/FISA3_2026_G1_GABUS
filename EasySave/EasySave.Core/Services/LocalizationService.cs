@@ -61,7 +61,7 @@ public class LocalizationService : ILocalizationService
             ["error_invalid_target"] = "Error: Target must be a valid path",
             ["error_invalid_type"] = "Error: Type is not valid",
             ["error_file_not_found"] = "Warning: File {0} no longer exists, skipping",
-            ["input_is_null"] = "Error : Input must contans at least 1 character",
+            ["input_is_null"] = "Error : Input must contains at least 1 character",
             ["critical_error"] = "Error : A critical error happened, please try again",
             ["backup_failed"] = "Backup failed: an I/O error occurred",
 

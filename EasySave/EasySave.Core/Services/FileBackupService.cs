@@ -1,4 +1,4 @@
-﻿namespace EasySave.Core.Services;
+namespace EasySave.Core.Services;
 
 using System.Diagnostics;
 using EasySave.Core.Models;
@@ -14,7 +14,7 @@ public class FileBackupService
     {
         //Counting how many files need to copy and total size
         var (totalFiles, totalSize) = CalculateEligibleFiles(sourceDir, targetDir, job.Type);
-        
+
         // If no files found, drive might be unavailable
         if (totalFiles == 0 && totalSize == 0)
         {
@@ -29,11 +29,11 @@ public class FileBackupService
                 return false;
             }
         }
-        
+
         //counters
         int filesRemaining = totalFiles;
         long sizeRemaining = totalSize;
-        
+
         // Try to create target folder, handle errors if drive is unavailable
         try
         {
@@ -44,13 +44,13 @@ public class FileBackupService
             // Cannot create target directory, abort backup
             return false;
         }
-        
+
         //Copy progress
         bool success = true;
         CopyDirectoryRecursive(sourceDir, targetDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, localization);
         return success;
     }
-    
+
     //Copy all files and subfolders
     private void CopyDirectoryRecursive(string sourceDir, string targetDir, IJob job, ILogger logger,
     IStateManager stateManager, int totalFiles, long totalSize, ref int filesRemaining, ref long sizeRemaining, ref bool success, ILocalizationService localization)
@@ -67,7 +67,7 @@ public class FileBackupService
             success = false;
             return;
         }
-        
+
         //Copy all files in the current folder
         foreach (var sourceFile in files)
         {
@@ -79,23 +79,23 @@ public class FileBackupService
                 if (File.Exists(targetFile) && File.GetLastWriteTime(targetFile) >= File.GetLastWriteTime(sourceFile))
                     continue;
             }
-            
+
             // Update state before copying
             var progression = totalFiles > 0 ? Math.Round((1 - (double)filesRemaining / totalFiles) * 100, 2) : 0;
             UpdateStateForFile(job, sourceFile, targetFile, filesRemaining, sizeRemaining, progression, stateManager, localization);
-            
+
             // Copy the file and log
             long fileSize = CopyFile(sourceFile, targetFile, logger, job);
-            
+
             // Update counters
             filesRemaining--;
             sizeRemaining -= fileSize;
-            
+
             // Update progression after copy
             progression = totalFiles > 0 ? Math.Round((1 - (double)filesRemaining / totalFiles) * 100, 2) : 0;
             UpdateStateForFile(job, sourceFile, targetFile, filesRemaining, sizeRemaining, progression, stateManager, localization);
         }
-        
+
         // Get subdirectories, handle errors
         string[] subDirs;
         try
@@ -107,7 +107,7 @@ public class FileBackupService
             success = false;
             return;
         }
-        
+
         // Recurse into subdirectories
         foreach (var subDir in subDirs)
         {
@@ -126,7 +126,7 @@ public class FileBackupService
             if (!success) return;
         }
     }
-    
+
     //Copy a single file from source to target
     //Returns the size of the file copied
     private long CopyFile(string sourceFile, string targetFile, ILogger logger, IJob job)
@@ -134,13 +134,13 @@ public class FileBackupService
         var fileInfo = new FileInfo(sourceFile);
         long fileSize = fileInfo.Length;
         var stopwatch = Stopwatch.StartNew();
-        
+
         try
         {
             //Copy the file. "overwrite: true" means replace if it exists.
             File.Copy(sourceFile, targetFile, overwrite: true);
             stopwatch.Stop();
-            
+
             //Log successful
             logger.LogFileTransfer(DateTime.Now, job.Name, sourceFile, targetFile, fileSize, stopwatch.ElapsedMilliseconds);
         }
@@ -153,12 +153,12 @@ public class FileBackupService
         }
         return fileSize;
     }
-    
+
     private (int fileCount, long totalSize) CalculateEligibleFiles(string sourceDir, string targetDir, string type)
     {
         int count = 0;
         long size = 0;
-        
+
         // Get all files recursively, handle errors if drive becomes unavailable
         string[] allFiles;
         try
@@ -170,7 +170,7 @@ public class FileBackupService
             // Drive unavailable, return zero files
             return (0, 0);
         }
-        
+
         foreach (var file in allFiles)
         {
             var fileInfo = new FileInfo(file);
@@ -181,13 +181,13 @@ public class FileBackupService
                 if (File.Exists(targetFile) && File.GetLastWriteTime(targetFile) >= File.GetLastWriteTime(file))
                     continue;
             }
-            
+
             count++;
             size += fileInfo.Length;
         }
         return (count, size);
     }
-    
+
     // Update  state manager progress information.
     private void UpdateStateForFile(IJob job, string currentSource, string currentTarget,
     int remainingFiles, long remainingSize, double progression, IStateManager stateManager, ILocalizationService localization)
@@ -202,7 +202,7 @@ public class FileBackupService
             CurrentSourceFilePath = currentSource,
             CurrentTargetFilePath = currentTarget
         };
-        
+
         //Update state manager
         stateManager.UpdateJobState(job, state);
     }

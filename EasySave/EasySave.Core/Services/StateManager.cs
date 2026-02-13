@@ -1,4 +1,4 @@
-﻿namespace EasySave.Core.Services;
+namespace EasySave.Core.Services;
 
 using System.Text.Json;
 using EasySave.Core.Interfaces;
@@ -8,11 +8,11 @@ using EasySave.Core.Models;
 public class StateManager : IStateManager
 {
     private readonly string _stateFilePath;
-    
+
     //Dictionary to store the state of each job
     //Key = job name, Value = job state information
     private readonly Dictionary<string, JobState> _states = new();
-    
+
     //Constructor
     public StateManager()
     {
@@ -20,7 +20,7 @@ public class StateManager : IStateManager
         var appDirectory = AppDomain.CurrentDomain.BaseDirectory;
         _stateFilePath = Path.Combine(appDirectory, "states.json");
     }
-    
+
     //Update state for job
     public void UpdateJobState(IJob job, JobState state)
     {
@@ -28,23 +28,23 @@ public class StateManager : IStateManager
         state.Name = job.Name;
         state.JobSourcePath = job.SourcePath;
         state.JobTargetPath = job.TargetPath;
-        
+
         //Record update
         state.Timestamp = DateTime.Now;
-       
+
         //Record or update state in dictionary
         _states[job.Name] = state;
         SaveState();
     }
-    
+
     // Save all job states to the JSON file
     public void SaveState()
     {
         var options = new JsonSerializerOptions { WriteIndented = true };
-        
+
         //Dictionaries to Json
         var json = JsonSerializer.Serialize(_states.Values.ToList(), options);
-        
+
         // Try to write file, catch errors if drive becomes unavailable (USB unplugged, etc.)
         try
         {
@@ -54,5 +54,22 @@ public class StateManager : IStateManager
         {
             // File write failed, probably due to drive issue - we just skip saving state
         }
+    }
+
+    // Read the current state file content (for dashboard display)
+    public string ReadStateFileContent()
+    {
+        try
+        {
+            if (File.Exists(_stateFilePath))
+            {
+                return File.ReadAllText(_stateFilePath);
+            }
+        }
+        catch (IOException)
+        {
+            // Ignore read errors
+        }
+        return string.Empty;
     }
 }

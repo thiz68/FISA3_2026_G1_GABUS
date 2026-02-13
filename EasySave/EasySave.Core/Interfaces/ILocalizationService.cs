@@ -8,4 +8,10 @@ public interface ILocalizationService
 
     // Change the current language
     void SetLanguage(string languageCode);
+
+    // Get current language code
+    string CurrentLanguage { get; }
+
+    // Event fired when language changes
+    event EventHandler? LanguageChanged;
 }

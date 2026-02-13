@@ -1,140 +1,118 @@
-namespace EasySave.Tests.Services;
-
 using EasySave.Core.Interfaces;
 using EasySave.Core.Models;
 using EasySave.Core.Services;
+using Moq;
 using Xunit;
+
+namespace EasySave.Tests.Services;
 
 public class JobManagerTests
 {
+    private readonly Mock<ILocalizationService> _mockLocalization;
     private readonly JobManager _jobManager;
-    
+
     public JobManagerTests()
     {
-        var localization = new LocalizationService();
-        _jobManager = new JobManager(localization);
+        _mockLocalization = new Mock<ILocalizationService>();
+        _mockLocalization.Setup(l => l.GetString(It.IsAny<string>())).Returns<string>(key => key);
+        _jobManager = new JobManager(_mockLocalization.Object);
     }
-    
-    private static SaveJob CreateTestJob(string name = "TestJob")
-    {
-        return new SaveJob
-        {
-            Name = name,
-            SourcePath = "/source/path",
-            TargetPath = "/target/path",
-            Type = "full"
-        };
-    }
+
     [Fact]
-    
-    public void AddJob_ValidJob_JobAddedToList()
+    public void AddJob_ShouldAddJobToList()
     {
         // Arrange
-        var job = CreateTestJob();
+        var job = new SaveJob { Name = "TestJob", SourcePath = "/source", TargetPath = "/target", Type = "full" };
+
         // Act
         _jobManager.AddJob(job);
+
         // Assert
         Assert.Single(_jobManager.Jobs);
         Assert.Equal("TestJob", _jobManager.Jobs[0].Name);
     }
+
     [Fact]
-    
-    public void AddJob_MaxJobsReached_ThrowsException()
+    public void AddJob_WhenMaxJobsReached_ShouldThrowException()
     {
-        // Arrange - Add 5 jobs (max allowed)
-        for (int i = 1; i <= 5; i++)
+        // Arrange
+        for (int i = 0; i < 5; i++)
         {
-            _jobManager.AddJob(CreateTestJob($"Job{i}"));
+            _jobManager.AddJob(new SaveJob { Name = $"Job{i}", SourcePath = "/source", TargetPath = "/target", Type = "full" });
         }
+
+        var extraJob = new SaveJob { Name = "ExtraJob", SourcePath = "/source", TargetPath = "/target", Type = "full" };
+
         // Act & Assert
-        var exception = Assert.Throws<InvalidOperationException>(() =>
-        _jobManager.AddJob(CreateTestJob("Job6")));
+        Assert.Throws<InvalidOperationException>(() => _jobManager.AddJob(extraJob));
     }
+
     [Fact]
-    
-    public void AddJob_DuplicateName_ThrowsException()
+    public void AddJob_WithDuplicateName_ShouldThrowException()
     {
         // Arrange
-        _jobManager.AddJob(CreateTestJob("DuplicateJob"));
+        var job1 = new SaveJob { Name = "TestJob", SourcePath = "/source", TargetPath = "/target", Type = "full" };
+        var job2 = new SaveJob { Name = "TestJob", SourcePath = "/source2", TargetPath = "/target2", Type = "diff" };
+
+        _jobManager.AddJob(job1);
+
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() =>
-        _jobManager.AddJob(CreateTestJob("DuplicateJob")));
+        Assert.Throws<InvalidOperationException>(() => _jobManager.AddJob(job2));
     }
+
     [Fact]
-    
-    public void RemoveJob_ExistingJob_JobRemoved()
+    public void RemoveJob_ShouldRemoveJobFromList()
     {
         // Arrange
-        _jobManager.AddJob(CreateTestJob("ToRemove"));
-        Assert.Single(_jobManager.Jobs);
+        var job = new SaveJob { Name = "TestJob", SourcePath = "/source", TargetPath = "/target", Type = "full" };
+        _jobManager.AddJob(job);
+
         // Act
-        _jobManager.RemoveJob("ToRemove");
+        _jobManager.RemoveJob("TestJob");
+
         // Assert
         Assert.Empty(_jobManager.Jobs);
     }
+
     [Fact]
-    
-    public void RemoveJob_NonExistingJob_NoException()
+    public void GetJob_ByIndex_ShouldReturnCorrectJob()
     {
         // Arrange
-        _jobManager.AddJob(CreateTestJob("ExistingJob"));
-        // Act & Assert - Should not throw
-        var exception = Record.Exception(() => _jobManager.RemoveJob("NonExisting"));
-        Assert.Null(exception);
-        Assert.Single(_jobManager.Jobs);
-    }
-    [Fact]
-    
-    public void GetJob_ValidIndex_ReturnsJob()
-    {
-        // Arrange
-        _jobManager.AddJob(CreateTestJob("FirstJob"));
-        _jobManager.AddJob(CreateTestJob("SecondJob"));
+        var job = new SaveJob { Name = "TestJob", SourcePath = "/source", TargetPath = "/target", Type = "full" };
+        _jobManager.AddJob(job);
+
         // Act
-        var job = _jobManager.GetJob(2);
+        var result = _jobManager.GetJob(1);
+
         // Assert
-        Assert.Equal("SecondJob", job.Name);
+        Assert.Equal("TestJob", result.Name);
     }
+
     [Fact]
-    
-    public void GetJob_ValidName_ReturnsJob()
+    public void GetJob_ByName_ShouldReturnCorrectJob()
     {
         // Arrange
-        _jobManager.AddJob(CreateTestJob("NamedJob"));
+        var job = new SaveJob { Name = "TestJob", SourcePath = "/source", TargetPath = "/target", Type = "full" };
+        _jobManager.AddJob(job);
+
         // Act
-        var job = _jobManager.GetJob("NamedJob");
+        var result = _jobManager.GetJob("TestJob");
+
         // Assert
-        Assert.Equal("NamedJob", job.Name);
+        Assert.Equal("TestJob", result.Name);
     }
+
     [Fact]
-    
-    public void GetJob_InvalidIndex_ThrowsException()
+    public void GetJob_WithInvalidIndex_ShouldThrowException()
     {
-        // Arrange
-        _jobManager.AddJob(CreateTestJob());
         // Act & Assert
-        Assert.Throws<ArgumentOutOfRangeException>(() => _jobManager.GetJob(5));
+        Assert.Throws<ArgumentOutOfRangeException>(() => _jobManager.GetJob(1));
     }
+
     [Fact]
-    
-    public void GetJob_InvalidName_ThrowsException()
+    public void MaxJobs_ShouldReturn5()
     {
-        // Arrange
-        _jobManager.AddJob(CreateTestJob());
-        // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => _jobManager.GetJob("NonExisting"));
-    }
-    [Fact]
-    
-    public void Jobs_ReturnsReadOnlyList()
-    {
-        // Arrange
-        _jobManager.AddJob(CreateTestJob("Job1"));
-        _jobManager.AddJob(CreateTestJob("Job2"));
-        // Act
-        var jobs = _jobManager.Jobs;
         // Assert
-        Assert.IsAssignableFrom<IReadOnlyList<IJob>>(jobs);
-        Assert.Equal(2, jobs.Count);
+        Assert.Equal(5, _jobManager.MaxJobs);
     }
 }

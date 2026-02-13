@@ -1,4 +1,4 @@
-﻿namespace EasySave.Core.Services;
+namespace EasySave.Core.Services;
 
 using System.Text.Json;
 using EasySave.Core.Interfaces;
@@ -9,7 +9,8 @@ public class ConfigManager : IConfigManager
 {
     //Path to configuration file
     private readonly string _configFilePath;
-    
+    private readonly string _settingsFilePath;
+
     //Constructor
     public ConfigManager()
     {
@@ -18,8 +19,9 @@ public class ConfigManager : IConfigManager
 
         //Set path to config file
         _configFilePath = Path.Combine(appDirectory, "config.json");
+        _settingsFilePath = Path.Combine(appDirectory, "settings.json");
     }
-    
+
     //Load jobs from config file, send to job manager
     public void LoadJobs(IJobManager manager)
     {
@@ -61,6 +63,39 @@ public class ConfigManager : IConfigManager
         catch (IOException)
         {
             // Could not save config, changes will be lost
+        }
+    }
+
+    // Load application settings
+    public AppSettings LoadSettings()
+    {
+        if (!File.Exists(_settingsFilePath))
+            return new AppSettings();
+
+        try
+        {
+            var json = File.ReadAllText(_settingsFilePath);
+            return JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+        }
+        catch (IOException)
+        {
+            return new AppSettings();
+        }
+    }
+
+    // Save application settings
+    public void SaveSettings(AppSettings settings)
+    {
+        var options = new JsonSerializerOptions { WriteIndented = true };
+        var json = JsonSerializer.Serialize(settings, options);
+
+        try
+        {
+            File.WriteAllText(_settingsFilePath, json);
+        }
+        catch (IOException)
+        {
+            // Could not save settings
         }
     }
 }

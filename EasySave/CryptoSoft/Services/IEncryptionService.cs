@@ -1,6 +1,6 @@
 ﻿namespace CryptoSoft.Services;
 
-public class IEncryptionService
+public interface IEncryptionService
 {
-    
+    void EncryptFile(string inputFilePath);
 }

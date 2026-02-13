@@ -1,6 +1,9 @@
 ﻿namespace CryptoSoft.Utils;
 
-public class ArgumentParser
+public static class ArgumentParser
 {
-    
+    public static List<string> Parse(string[] args)
+    {
+        return args.ToList();
+    }
 }

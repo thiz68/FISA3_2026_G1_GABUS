@@ -10,18 +10,20 @@ public class AesEncryptionService : IEncryptionService
 
     public AesEncryptionService()
     {
-        _key = Encoding.UTF8.GetBytes("12345678901234567890123456789012"); // 32 bytes
+        _key = Encoding.UTF8.GetBytes("12345678901234567890123456789012"); // 32 bytes AES-256
         _iv = Encoding.UTF8.GetBytes("1234567890123456"); // 16 bytes
     }
 
     public void EncryptFile(string inputFilePath)
     {
-        if (!File.Exists(inputFilePath))
-            throw new FileNotFoundException("Fichier introuvable.", inputFilePath);
+        string normalizedPath = NormalizePath(inputFilePath);
 
-        string outputFilePath = inputFilePath + ".crypt";
+        if (!File.Exists(normalizedPath))
+            throw new FileNotFoundException("Fichier introuvable.", normalizedPath);
 
-        using FileStream inputFileStream = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read);
+        string outputFilePath = normalizedPath + ".crypt";
+
+        using FileStream inputFileStream = new FileStream(normalizedPath, FileMode.Open, FileAccess.Read);
         using FileStream outputFileStream = new FileStream(outputFilePath, FileMode.Create, FileAccess.Write);
 
         using Aes aes = Aes.Create();
@@ -39,15 +41,17 @@ public class AesEncryptionService : IEncryptionService
 
     public void DecryptFile(string inputFilePath)
     {
-        if (!File.Exists(inputFilePath))
-            throw new FileNotFoundException("Fichier introuvable.", inputFilePath);
+        string normalizedPath = NormalizePath(inputFilePath);
 
-        if (!inputFilePath.EndsWith(".crypt"))
+        if (!File.Exists(normalizedPath))
+            throw new FileNotFoundException("Fichier introuvable.", normalizedPath);
+
+        if (!normalizedPath.EndsWith(".crypt", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Le fichier doit avoir l'extension .crypt");
 
-        string outputFilePath = inputFilePath.Replace(".crypt", "");
+        string outputFilePath = normalizedPath[..^6]; // enlève ".crypt"
 
-        using FileStream inputFileStream = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read);
+        using FileStream inputFileStream = new FileStream(normalizedPath, FileMode.Open, FileAccess.Read);
         using FileStream outputFileStream = new FileStream(outputFilePath, FileMode.Create, FileAccess.Write);
 
         using Aes aes = Aes.Create();
@@ -60,5 +64,19 @@ public class AesEncryptionService : IEncryptionService
             CryptoStreamMode.Read);
 
         cryptoStream.CopyTo(outputFileStream);
+    }
+
+    private string NormalizePath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            throw new ArgumentException("Chemin vide.");
+
+        // Supprime les guillemets éventuels
+        path = path.Trim().Trim('"');
+
+        // Normalise le chemin absolu
+        path = Path.GetFullPath(path);
+
+        return path;
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace EasySave.Core.Services;
+namespace EasySave.Core.Services;
 
 using EasySave.Core.Interfaces;
 using EasySave.Core.Models;

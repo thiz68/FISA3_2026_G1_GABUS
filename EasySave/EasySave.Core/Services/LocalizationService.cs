@@ -8,13 +8,19 @@ public class LocalizationService : ILocalizationService
     // Current language (english default)
     private string _currentLanguage = "en";
 
+    // Event fired when language changes (for MVVM binding updates)
+    public event EventHandler? LanguageChanged;
+
+    // Get current language code
+    public string CurrentLanguage => _currentLanguage;
+
     // Dictionnary : Key and associated text
     private readonly Dictionary<string, Dictionary<string, string>> _resources = new()
     {
         // English dict
         ["en"] = new Dictionary<string, string>
         {
-            // Menu 
+            // Menu
             ["menu_title"] = "=== EasySave v1.0 ===",
             ["menu_create"] = "1. Create backup job",
             ["menu_remove"] = "2. Remove backup job",
@@ -50,7 +56,7 @@ public class LocalizationService : ILocalizationService
             ["inactive"] = "Inactive",
             ["completed"] = "Completed",
             ["failed"] = "Failed",
-            
+
             // Errors
             ["error_max_jobs"] = "Error: Maximum 5 jobs allowed",
             ["error_not_found"] = "Error: Job not found",
@@ -71,6 +77,34 @@ public class LocalizationService : ILocalizationService
             ["type"] = "Type",
             ["full"] = "Full",
             ["diff"] = "Differential",
+
+            // WPF specific
+            ["app_title"] = "EasySave 2.0",
+            ["dashboard"] = "Dashboard",
+            ["backup_jobs"] = "Backup Jobs",
+            ["settings"] = "Settings",
+            ["exit"] = "Exit",
+            ["add_job"] = "Add Job",
+            ["execute_all"] = "Execute All",
+            ["execute_selected"] = "Execute Selected",
+            ["delete"] = "Delete",
+            ["edit"] = "Edit",
+            ["name"] = "Name",
+            ["actions"] = "Actions",
+            ["state_file_preview"] = "Real-Time State File (Preview)",
+            ["log_file_preview"] = "Daily Log File (Preview)",
+            ["state_preview_placeholder"] = "State.json preview will appear here...",
+            ["log_preview_placeholder"] = "Log.json preview will appear here...",
+            ["general_settings"] = "General Settings",
+            ["log_format"] = "Log Format",
+            ["save_settings"] = "Save Settings",
+            ["settings_saved"] = "Settings saved successfully",
+            ["cancel"] = "Cancel",
+            ["save"] = "Save",
+            ["confirm_delete"] = "Are you sure you want to delete this job?",
+            ["confirm_delete_title"] = "Confirm Delete",
+            ["no_jobs_selected"] = "No jobs selected",
+            ["select_jobs_to_execute"] = "Please select jobs to execute",
         },
 
         // French dict
@@ -89,8 +123,8 @@ public class LocalizationService : ILocalizationService
             // User input
             ["enter_choice"] = "Entrez votre choix: ",
             ["enter_name"] = "Nom du travail: ",
-            ["job_to_remove"] = "Entrez le nom ou le numéro du travail a supprimer: ",
-            ["job_to_modify"] = "Entrez le nom ou le numéro du travail à modifier : ",
+            ["job_to_remove"] = "Entrez le nom ou le numero du travail a supprimer: ",
+            ["job_to_modify"] = "Entrez le nom ou le numero du travail a modifier : ",
             ["enter_source"] = "Chemin source: ",
             ["enter_target"] = "Chemin cible: ",
             ["enter_type"] = "Type (1=Complet, 2=Differentiel): ",
@@ -100,7 +134,7 @@ public class LocalizationService : ILocalizationService
             // Success
             ["job_created"] = "Travail cree avec succes",
             ["job_removed"] = "Travail supprime avec succes",
-            ["job_modified"] = "Travail modifié avec succès",
+            ["job_modified"] = "Travail modifie avec succes",
             ["backup_started"] = "Sauvegarde demarree...",
             ["backup_completed"] = "Sauvegarde terminee",
             ["file_copied"] = "Fichiers copies: {0}",
@@ -112,18 +146,18 @@ public class LocalizationService : ILocalizationService
             ["inactive"] = "Inactif",
             ["completed"] = "Complete",
             ["failed"] = "Echoue",
-            
+
             // Errors
             ["error_max_jobs"] = "Erreur: Maximum 5 travaux autorises",
             ["error_not_found"] = "Erreur: Travail non trouve",
             ["invalid_choice"] = "Erreur: Choix invalide",
             ["job_name_alr_exist"] = "Erreur : Un travail portant le meme nom existe deja",
-            ["error_invalid_name"] = "Erreur: Le nom du travail doit avoir au moins 1 caractère",
-            ["error_invalid_source"] = "Erreur: La source doit être un répertoire existant et ne peut pas être le répertoire contenant l'executable",
-            ["error_invalid_target"] = "Erreur: La cible doit être un chemin valide",
-            ["error_invalid_type"] = "Erreur: Le type entré n'est pas valide",
-            ["error_file_not_found"] = "Attention: Le fichier {0} n'existe plus, ignoré",
-            ["input_is_null"] = "Erreur : Veuillez entrer au moins 1 caractère",
+            ["error_invalid_name"] = "Erreur: Le nom du travail doit avoir au moins 1 caractere",
+            ["error_invalid_source"] = "Erreur: La source doit etre un repertoire existant et ne peut pas etre le repertoire contenant l'executable",
+            ["error_invalid_target"] = "Erreur: La cible doit etre un chemin valide",
+            ["error_invalid_type"] = "Erreur: Le type entre n'est pas valide",
+            ["error_file_not_found"] = "Attention: Le fichier {0} n'existe plus, ignore",
+            ["input_is_null"] = "Erreur : Veuillez entrer au moins 1 caractere",
             ["critical_error"] = "Erreur : Une erreur critique est survenue, veuillez reessayer",
             ["backup_failed"] = "Sauvegarde echouee: une erreur d'entree/sortie s'est produite",
 
@@ -133,21 +167,45 @@ public class LocalizationService : ILocalizationService
             ["type"] = "Type",
             ["full"] = "Complete",
             ["diff"] = "Differentielle",
+
+            // WPF specific
+            ["app_title"] = "EasySave 2.0",
+            ["dashboard"] = "Tableau de bord",
+            ["backup_jobs"] = "Travaux de sauvegarde",
+            ["settings"] = "Parametres",
+            ["exit"] = "Quitter",
+            ["add_job"] = "Ajouter",
+            ["execute_all"] = "Executer tout",
+            ["execute_selected"] = "Executer selection",
+            ["delete"] = "Supprimer",
+            ["edit"] = "Modifier",
+            ["name"] = "Nom",
+            ["actions"] = "Actions",
+            ["state_file_preview"] = "Fichier d'etat temps reel (Apercu)",
+            ["log_file_preview"] = "Fichier Log journalier (Apercu)",
+            ["state_preview_placeholder"] = "L'apercu de state.json apparaitra ici...",
+            ["log_preview_placeholder"] = "L'apercu du log apparaitra ici...",
+            ["general_settings"] = "Parametres generaux",
+            ["log_format"] = "Format du Log",
+            ["save_settings"] = "Enregistrer",
+            ["settings_saved"] = "Parametres enregistres avec succes",
+            ["cancel"] = "Annuler",
+            ["save"] = "Enregistrer",
+            ["confirm_delete"] = "Etes-vous sur de vouloir supprimer ce travail ?",
+            ["confirm_delete_title"] = "Confirmer la suppression",
+            ["no_jobs_selected"] = "Aucun travail selectionne",
+            ["select_jobs_to_execute"] = "Veuillez selectionner des travaux a executer",
         }
     };
 
     // Get text from key
     public string GetString(string key)
     {
-        if (_resources[_currentLanguage][key] != null)
+        if (_resources[_currentLanguage].TryGetValue(key, out var value))
         {
-            return _resources[_currentLanguage][key];
+            return value;
         }
-
-        else
-        {
-            return key;
-        }
+        return key;
     }
 
     // Change current language
@@ -155,6 +213,10 @@ public class LocalizationService : ILocalizationService
     {
         // Check if language id exist before change
         if (_resources.ContainsKey(languageCode))
+        {
             _currentLanguage = languageCode;
+            // Notify subscribers that language has changed
+            LanguageChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 }

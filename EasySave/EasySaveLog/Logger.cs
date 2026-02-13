@@ -1,4 +1,4 @@
-﻿namespace EasySaveLog;
+namespace EasySaveLog;
 
 using System.Text.Json;
 using EasySave.Core.Interfaces;
@@ -78,9 +78,9 @@ public class Logger : ILogger
 
         //Convertion list back to JSON
         var options = new JsonSerializerOptions { WriteIndented = true };
-        
+
         var json = JsonSerializer.Serialize(entries, options);
-        
+
         // Try to write log file, handle errors if drive becomes unavailable
         try
         {
@@ -97,5 +97,23 @@ public class Logger : ILogger
     {
         var fileName = DateTime.Now.ToString("yyyy-MM-dd") + ".json";
         return Path.Combine(_logDirectory, fileName);
+    }
+
+    // Read the current day's log file content (for dashboard display)
+    public string ReadLogFileContent()
+    {
+        try
+        {
+            var logFilePath = GetDailyLogFilePath();
+            if (File.Exists(logFilePath))
+            {
+                return File.ReadAllText(logFilePath);
+            }
+        }
+        catch (IOException)
+        {
+            // Ignore read errors
+        }
+        return string.Empty;
     }
 }

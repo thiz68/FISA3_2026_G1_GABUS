@@ -1,4 +1,4 @@
-﻿namespace EasySave.Core.Services;
+namespace EasySave.Core.Services;
 
 using EasySave.Core.Interfaces;
 using EasySave.Core.Models;
@@ -42,6 +42,40 @@ public class BackupExecutor
                 // Mark job as failed (drive unavailable, USB unplugged, etc.)
                 state.State = _localization.GetString("failed");
                 Console.WriteLine($"{job.Name}: {_localization.GetString("backup_failed")}");
+                allSuccess = false;
+            }
+
+            stateManager.UpdateJobState(job, state);
+        }
+
+        return allSuccess ? "backup_completed" : "backup_failed";
+    }
+
+    // Execute jobs sequentially with provided localization service (for WPF)
+    public string ExecuteSequential(List<IJob> jobs, ILogger logger, IStateManager stateManager, ILocalizationService localization)
+    {
+        _localization = localization;
+        bool allSuccess = true;
+
+        foreach (var job in jobs)
+        {
+            // Initialize the state as Active
+            var state = new JobState { State = _localization.GetString("active") };
+            stateManager.UpdateJobState(job, state);
+
+            // Copy all files from source to target
+            bool success = _fileBackupService.CopyDirectory(job.SourcePath, job.TargetPath, job, logger, stateManager, _localization);
+
+            if (success)
+            {
+                // Mark job as completed
+                state.State = _localization.GetString("completed");
+                state.Progression = 100;
+            }
+            else
+            {
+                // Mark job as failed (drive unavailable, USB unplugged, etc.)
+                state.State = _localization.GetString("failed");
                 allSuccess = false;
             }
 

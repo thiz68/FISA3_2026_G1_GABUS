@@ -1,23 +1,27 @@
 namespace EasySaveLog;
 
-using System.Text.Json;
-using System.Xml.Serialization;
 using EasySave.Core.Interfaces;
 using EasySave.Core.Models;
+using EasySave.Core.Services;
+using System.Text.Json;
+using System.Xml.Serialization;
 
 // This class handles logging for the backup application
 public class Logger : ILogger
 {
+    private readonly ConfigManager _configManager;
     private readonly string _logDirectory;
     private string _logFormat = "json"; // Default format
 
     // Constructor
-    public Logger()
+    public Logger(ConfigManager configManager)
     {
+        _configManager = configManager;
         // Get the application's base directory
         var appDirectory = AppDomain.CurrentDomain.BaseDirectory;
         // Build Logs folder path
         _logDirectory = Path.Combine(appDirectory, "Logs");
+        RefreshFormat();
     }
 
     // Get log format
@@ -36,6 +40,11 @@ public class Logger : ILogger
         Directory.CreateDirectory(_logDirectory);
     }
 
+    private void RefreshFormat()
+    {
+        _logFormat = _configManager.LoadSettings().LogFormat.ToLower();
+    }
+
     // Logs file transfer information
     // - timestamp: when the transfer happened
     // - jobName: name of the backup job
@@ -46,6 +55,9 @@ public class Logger : ILogger
     public void LogFileTransfer(DateTime timestamp, string jobName, string sourceFile, string targetFile, long fileSize,
         long transferTimeMs)
     {
+
+        RefreshFormat();
+
         var entry = new LogEntry
         {
             Timestamp = timestamp,
@@ -134,6 +146,9 @@ public class Logger : ILogger
     // Reads the current log file content (for dashbaord)
     public string ReadLogFileContent()
     {
+ 
+        RefreshFormat();
+
         try
         {
             var logFilePath = GetDailyLogFilePath();
@@ -144,7 +159,6 @@ public class Logger : ILogger
         }
         catch (IOException)
         {
-            // Ignore read errors
         }
         return string.Empty;
     }

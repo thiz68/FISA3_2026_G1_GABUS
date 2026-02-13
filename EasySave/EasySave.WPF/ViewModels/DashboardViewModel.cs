@@ -62,7 +62,7 @@ public class DashboardViewModel : BaseViewModel
         RefreshContent();
     }
 
-    // Refresh state and log file content
+    // Rafraichir le contenu en fonction du settings de format de log
     public void RefreshContent()
     {
         var stateContent = _stateManager.ReadStateFileContent();
@@ -70,32 +70,39 @@ public class DashboardViewModel : BaseViewModel
             ? _localization.GetString("state_preview_placeholder")
             : stateContent;
 
+        // Log content + placeholder
         var logContent = _logger.ReadLogFileContent();
+        var format = _logger.GetCurrentLogFormat();
+
+        string placeholderKey = format == "xml"
+            ? "log_preview_placeholder_xml"
+            : "log_preview_placeholder_json";
+
         LogContent = string.IsNullOrEmpty(logContent)
-            ? (_configManager.LoadSettings().LogFormat == "json" 
-            ? _localization.GetString("log_preview_placeholder") : _localization.GetString("log_preview_placeholder_xml"))
+            ? _localization.GetString(placeholderKey)
             : logContent;
+
+        var formatUpper = format.ToUpper();
+        LogFileTitle = $"{_localization.GetString("log_file_preview")} ({formatUpper})";
     }
 
-    // Update localized strings when language changes
+    // Update localized strings when language changes or after settings update
     public void UpdateLocalizedStrings()
     {
         DashboardTitle = _localization.GetString("dashboard");
         StateFileTitle = _localization.GetString("state_file_preview");
-        LogFileTitle = _localization.GetString("log_file_preview");
 
-        // Update placeholders if content is empty
-        if (string.IsNullOrEmpty(_stateManager.ReadStateFileContent()))
+        var format = _logger.GetCurrentLogFormat().ToUpper();
+        LogFileTitle = $"{_localization.GetString("log_file_preview")} ({format})";
+
+        // Re-apply placeholder if empty
+        var logContent = _logger.ReadLogFileContent();
+        if (string.IsNullOrEmpty(logContent))
         {
-            StateContent = _localization.GetString("state_preview_placeholder");
-        }
-        if (string.IsNullOrEmpty(_logger.ReadLogFileContent()))
-        {
-            var logContent = _logger.ReadLogFileContent();
-            LogContent = string.IsNullOrEmpty(logContent)
-            ? (_configManager.LoadSettings().LogFormat == "json"
-            ? _localization.GetString("log_preview_placeholder") : _localization.GetString("log_preview_placeholder_xml"))
-            : logContent;
+            string placeholderKey = format.ToLower() == "xml"
+                ? "log_preview_placeholder_xml"
+                : "log_preview_placeholder_json";
+            LogContent = _localization.GetString(placeholderKey);
         }
     }
 }

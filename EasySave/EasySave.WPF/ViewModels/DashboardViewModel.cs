@@ -4,6 +4,7 @@ using EasySave.Core.Interfaces;
 using EasySave.Core.Services;
 using EasySaveLog;
 
+
 // ViewModel for the Dashboard view
 // Displays real-time state and log file previews
 public class DashboardViewModel : BaseViewModel
@@ -11,6 +12,7 @@ public class DashboardViewModel : BaseViewModel
     private readonly ILocalizationService _localization;
     private readonly StateManager _stateManager;
     private readonly Logger _logger;
+    private readonly ConfigManager _configManager;
 
     // Localized strings
     private string _dashboardTitle = string.Empty;
@@ -49,11 +51,12 @@ public class DashboardViewModel : BaseViewModel
         set => SetProperty(ref _logContent, value);
     }
 
-    public DashboardViewModel(ILocalizationService localization, StateManager stateManager, Logger logger)
+    public DashboardViewModel(ILocalizationService localization, StateManager stateManager, Logger logger, ConfigManager configManager)
     {
         _localization = localization;
         _stateManager = stateManager;
         _logger = logger;
+        _configManager = configManager;
 
         UpdateLocalizedStrings();
         RefreshContent();
@@ -69,7 +72,8 @@ public class DashboardViewModel : BaseViewModel
 
         var logContent = _logger.ReadLogFileContent();
         LogContent = string.IsNullOrEmpty(logContent)
-            ? _localization.GetString("log_preview_placeholder")
+            ? (_configManager.LoadSettings().LogFormat == "json" 
+            ? _localization.GetString("log_preview_placeholder") : _localization.GetString("log_preview_placeholder_xml"))
             : logContent;
     }
 
@@ -87,7 +91,11 @@ public class DashboardViewModel : BaseViewModel
         }
         if (string.IsNullOrEmpty(_logger.ReadLogFileContent()))
         {
-            LogContent = _localization.GetString("log_preview_placeholder");
+            var logContent = _logger.ReadLogFileContent();
+            LogContent = string.IsNullOrEmpty(logContent)
+            ? (_configManager.LoadSettings().LogFormat == "json"
+            ? _localization.GetString("log_preview_placeholder") : _localization.GetString("log_preview_placeholder_xml"))
+            : logContent;
         }
     }
 }

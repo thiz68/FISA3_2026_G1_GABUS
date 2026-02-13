@@ -88,6 +88,7 @@ public class MainViewModel : BaseViewModel
 
         // Initialize logger
         _logger.Initialize();
+        _logger.SetLogFormat(_configManager.LoadSettings().LogFormat);
 
         // Load existing jobs from config
         _configManager.LoadJobs(_jobManager);
@@ -100,7 +101,7 @@ public class MainViewModel : BaseViewModel
         _localization.LanguageChanged += OnLanguageChanged;
 
         // Initialize child ViewModels
-        DashboardViewModel = new DashboardViewModel(_localization, _stateManager, _logger);
+        DashboardViewModel = new DashboardViewModel(_localization, _stateManager, _logger, _configManager);
         JobsViewModel = new JobsViewModel(_localization, _jobManager, _configManager, _backupExecutor, _logger, _stateManager, _pathValidator);
         SettingsViewModel = new SettingsViewModel(_localization, _configManager);
 

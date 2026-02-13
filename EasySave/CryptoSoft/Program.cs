@@ -6,7 +6,6 @@ internal class Program
 {
     static void Main(string[] args)
     {
-        // 🔹 Important pour gérer correctement les caractères spéciaux
         Console.OutputEncoding = System.Text.Encoding.UTF8;
         Console.InputEncoding = System.Text.Encoding.UTF8;
 
@@ -22,7 +21,7 @@ internal class Program
                 try
                 {
                     encryptionService.EncryptFile(file);
-                    Console.WriteLine($"Fichier chiffré : {file}");
+                    Console.WriteLine($"Fichier chiffré et original supprimé : {file}");
                 }
                 catch (Exception ex)
                 {
@@ -34,43 +33,52 @@ internal class Program
         }
 
         // =========================
-        // MODE STANDALONE
+        // MODE STANDALONE (boucle)
         // =========================
-        Console.WriteLine("=== CryptoSoft ===");
-        Console.WriteLine("1 - Chiffrer un fichier");
-        Console.WriteLine("2 - Déchiffrer un fichier");
-        Console.Write("Votre choix : ");
-
-        string? choice = Console.ReadLine();
-
-        Console.Write("Entrez le chemin complet du fichier : ");
-        string? filePath = Console.ReadLine();
-
-        try
+        while (true)
         {
-            switch (choice)
+            Console.Clear();
+
+            Console.WriteLine("=== CryptoSoft ===");
+            Console.WriteLine("1 - Chiffrer un fichier");
+            Console.WriteLine("2 - Déchiffrer un fichier");
+            Console.WriteLine("0 - Quitter");
+            Console.Write("Votre choix : ");
+
+            string? choice = Console.ReadLine();
+
+            if (choice == "0")
+                return;
+
+            Console.Write("Entrez le chemin complet du fichier : ");
+            string? filePath = Console.ReadLine();
+
+            try
             {
-                case "1":
-                    encryptionService.EncryptFile(filePath!);
-                    Console.WriteLine("Chiffrement terminé.");
-                    break;
+                switch (choice)
+                {
+                    case "1":
+                        encryptionService.EncryptFile(filePath!);
+                        Console.WriteLine("\nChiffrement terminé. Fichier original supprimé.");
+                        break;
 
-                case "2":
-                    encryptionService.DecryptFile(filePath!);
-                    Console.WriteLine("Déchiffrement terminé.");
-                    break;
+                    case "2":
+                        encryptionService.DecryptFile(filePath!);
+                        Console.WriteLine("\nDéchiffrement terminé. Fichier .crypt supprimé.");
+                        break;
 
-                default:
-                    Console.WriteLine("Choix invalide.");
-                    break;
+                    default:
+                        Console.WriteLine("\nChoix invalide.");
+                        break;
+                }
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Erreur : {ex.Message}");
-        }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"\nErreur : {ex.Message}");
+            }
 
-        Console.WriteLine("Appuyez sur une touche pour quitter...");
-        Console.ReadKey();
+            Console.WriteLine("\nAppuyez sur une touche pour revenir au menu...");
+            Console.ReadKey();
+        }
     }
 }

@@ -1,29 +1,26 @@
-﻿namespace EasySave.Core.Services;
+namespace EasySave.Core.Services;
 
 using System.Text.Json;
 using EasySave.Core.Interfaces;
 using EasySave.Core.Models;
 
 //Manages real Time state of backup jobs, write state.json
-
 public class StateManager : IStateManager
 {
     private readonly string _stateFilePath;
-    
+
     //Dictionary to store the state of each job
     //Key = job name, Value = job state information
     private readonly Dictionary<string, JobState> _states = new();
-    
-    //Constructor
 
+    //Constructor
     public StateManager()
     {
         //Get the application's directory
         var appDirectory = AppDomain.CurrentDomain.BaseDirectory;
-
         _stateFilePath = Path.Combine(appDirectory, "states.json");
     }
-    
+
     //Update state for job
     public void UpdateJobState(IJob job, JobState state)
     {
@@ -37,10 +34,9 @@ public class StateManager : IStateManager
 
         //Record or update state in dictionary
         _states[job.Name] = state;
-        
         SaveState();
     }
-    
+
     // Save all job states to the JSON file
     public void SaveState()
     {
@@ -58,5 +54,22 @@ public class StateManager : IStateManager
         {
             // File write failed, probably due to drive issue - we just skip saving state
         }
+    }
+
+    // Read the current state file content (for dashboard display)
+    public string ReadStateFileContent()
+    {
+        try
+        {
+            if (File.Exists(_stateFilePath))
+            {
+                return File.ReadAllText(_stateFilePath);
+            }
+        }
+        catch (IOException)
+        {
+            // Ignore read errors
+        }
+        return string.Empty;
     }
 }

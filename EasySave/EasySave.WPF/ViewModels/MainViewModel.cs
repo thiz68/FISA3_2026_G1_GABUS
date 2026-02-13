@@ -81,7 +81,7 @@ public class MainViewModel : BaseViewModel
         _localization = new LocalizationService();
         _jobManager = new JobManager(_localization);
         _configManager = new ConfigManager();
-        _logger = new Logger();
+        _logger = new Logger(_configManager);
         _stateManager = new StateManager();
         _backupExecutor = new BackupExecutor();
         _pathValidator = new PathValidator();
@@ -173,4 +173,5 @@ public class MainViewModel : BaseViewModel
         SettingsText = _localization.GetString("settings");
         ExitText = _localization.GetString("exit");
     }
+
 }

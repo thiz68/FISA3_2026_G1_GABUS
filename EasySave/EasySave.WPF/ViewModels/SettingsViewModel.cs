@@ -91,6 +91,7 @@ public class SettingsViewModel : BaseViewModel
         settings.LogFormat = SelectedLogFormat;
         _configManager.SaveSettings(settings);
 
+
         MessageBox.Show(_localization.GetString("settings_saved"), "Success", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 

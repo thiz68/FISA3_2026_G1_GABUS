@@ -15,7 +15,7 @@ public class Program
         var localization = new LocalizationService();
         var jobManager = new JobManager(localization);
         var configManager = new ConfigManager();
-        var logger = new Logger();
+        var logger = new Logger(configManager);
         var stateManager = new StateManager();
         var backupExecutor = new BackupExecutor();
         var pathValidator = new PathValidator();

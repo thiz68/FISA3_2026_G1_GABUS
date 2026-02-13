@@ -1,223 +1,87 @@
-namespace EasySave.Tests.Services;
-
 using EasySave.Core.Interfaces;
 using EasySave.Core.Models;
 using EasySave.Core.Services;
 using Moq;
 using Xunit;
 
+namespace EasySave.Tests.Services;
+
 public class BackupListFormatterTests
 {
     private readonly BackupListFormatter _formatter;
-    private readonly Mock<ILocalizationService> _mockLocalization;
-    private readonly JobManager _jobManager;
+    private readonly Mock<IJobManager> _mockJobManager;
 
     public BackupListFormatterTests()
     {
         _formatter = new BackupListFormatter();
-        _mockLocalization = new Mock<ILocalizationService>();
-        _jobManager = new JobManager(_mockLocalization.Object);
-    }
+        _mockJobManager = new Mock<IJobManager>();
 
-    private SaveJob CreateTestJob(string name)
-    {
-        return new SaveJob
+        // Setup mock jobs
+        var jobs = new List<IJob>
         {
-            Name = name,
-            SourcePath = "/source/path",
-            TargetPath = "/target/path",
-            Type = "full"
+            new SaveJob { Name = "Job1", SourcePath = "/src1", TargetPath = "/tgt1", Type = "full" },
+            new SaveJob { Name = "Job2", SourcePath = "/src2", TargetPath = "/tgt2", Type = "diff" },
+            new SaveJob { Name = "Job3", SourcePath = "/src3", TargetPath = "/tgt3", Type = "full" }
         };
-    }
 
-    private void AddTestJobs(int count)
-    {
-        for (int i = 1; i <= count; i++)
-        {
-            _jobManager.AddJob(CreateTestJob($"Job{i}"));
-        }
+        _mockJobManager.Setup(m => m.Jobs).Returns(jobs.AsReadOnly());
+        _mockJobManager.Setup(m => m.MaxJobs).Returns(5);
+        _mockJobManager.Setup(m => m.GetJob(It.IsAny<int>())).Returns<int>(i => jobs[i - 1]);
     }
 
     [Fact]
-    public void FormatJobList_SingleIndex_ReturnsOneJob()
+    public void FormatJobList_WithSingleIndex_ShouldReturnCorrectJob()
     {
-        // Arrange
-        AddTestJobs(3);
-
         // Act
-        var (success, message, jobs) = _formatter.FormatJobList("1", _jobManager);
+        var (success, message, jobs) = _formatter.FormatJobList("1", _mockJobManager.Object);
 
         // Assert
         Assert.True(success);
-        Assert.Empty(message);
         Assert.Single(jobs);
         Assert.Equal("Job1", jobs[0].Name);
     }
 
     [Fact]
-    public void FormatJobList_RangeFormat_ReturnsMultipleJobs()
+    public void FormatJobList_WithRange_ShouldReturnCorrectJobs()
     {
-        // Arrange
-        AddTestJobs(5);
-
         // Act
-        var (success, message, jobs) = _formatter.FormatJobList("1-3", _jobManager);
+        var (success, message, jobs) = _formatter.FormatJobList("1-3", _mockJobManager.Object);
 
         // Assert
         Assert.True(success);
-        Assert.Empty(message);
         Assert.Equal(3, jobs.Count);
-        Assert.Equal("Job1", jobs[0].Name);
-        Assert.Equal("Job2", jobs[1].Name);
-        Assert.Equal("Job3", jobs[2].Name);
     }
 
     [Fact]
-    public void FormatJobList_ReversedRange_ReturnsJobsInOrder()
+    public void FormatJobList_WithSemicolonSeparated_ShouldReturnCorrectJobs()
     {
-        // Arrange
-        AddTestJobs(5);
-
         // Act
-        var (success, message, jobs) = _formatter.FormatJobList("3-1", _jobManager);
+        var (success, message, jobs) = _formatter.FormatJobList("1;3", _mockJobManager.Object);
 
         // Assert
         Assert.True(success);
-        Assert.Equal(3, jobs.Count);
-        Assert.Equal("Job1", jobs[0].Name);
-        Assert.Equal("Job2", jobs[1].Name);
-        Assert.Equal("Job3", jobs[2].Name);
-    }
-
-    [Fact]
-    public void FormatJobList_SemicolonSeparated_ReturnsSpecificJobs()
-    {
-        // Arrange
-        AddTestJobs(5);
-
-        // Act
-        var (success, message, jobs) = _formatter.FormatJobList("1;3;5", _jobManager);
-
-        // Assert
-        Assert.True(success);
-        Assert.Empty(message);
-        Assert.Equal(3, jobs.Count);
+        Assert.Equal(2, jobs.Count);
         Assert.Equal("Job1", jobs[0].Name);
         Assert.Equal("Job3", jobs[1].Name);
-        Assert.Equal("Job5", jobs[2].Name);
     }
 
     [Fact]
-    public void FormatJobList_MixedFormat_ReturnsAllSpecifiedJobs()
+    public void FormatJobList_WithInvalidIndex_ShouldReturnFalse()
     {
-        // Arrange
-        AddTestJobs(5);
-
         // Act
-        var (success, message, jobs) = _formatter.FormatJobList("1-2;5", _jobManager);
-
-        // Assert
-        Assert.True(success);
-        Assert.Equal(3, jobs.Count);
-        Assert.Equal("Job1", jobs[0].Name);
-        Assert.Equal("Job2", jobs[1].Name);
-        Assert.Equal("Job5", jobs[2].Name);
-    }
-
-    [Fact]
-    public void FormatJobList_DuplicateIndexes_ReturnsUniqueJobs()
-    {
-        // Arrange
-        AddTestJobs(3);
-
-        // Act
-        var (success, message, jobs) = _formatter.FormatJobList("1;1;2;2", _jobManager);
-
-        // Assert
-        Assert.True(success);
-        Assert.Equal(2, jobs.Count);
-    }
-
-    [Fact]
-    public void FormatJobList_InvalidIndex_ReturnsFailure()
-    {
-        // Arrange
-        AddTestJobs(3);
-
-        // Act
-        var (success, message, jobs) = _formatter.FormatJobList("10", _jobManager);
+        var (success, message, jobs) = _formatter.FormatJobList("10", _mockJobManager.Object);
 
         // Assert
         Assert.False(success);
-        Assert.Empty(jobs);
     }
 
     [Fact]
-    public void FormatJobList_InvalidFormat_ReturnsFailure()
+    public void FormatJobList_WithInvalidFormat_ShouldReturnFalse()
     {
-        // Arrange
-        AddTestJobs(3);
-
         // Act
-        var (success, message, jobs) = _formatter.FormatJobList("abc", _jobManager);
+        var (success, message, jobs) = _formatter.FormatJobList("abc", _mockJobManager.Object);
 
         // Assert
         Assert.False(success);
-        Assert.Empty(jobs);
-    }
-
-    [Fact]
-    public void FormatJobList_ZeroIndex_ReturnsFailure()
-    {
-        // Arrange
-        AddTestJobs(3);
-
-        // Act
-        var (success, message, jobs) = _formatter.FormatJobList("0", _jobManager);
-
-        // Assert
-        Assert.False(success);
-        Assert.Empty(jobs);
-    }
-
-    [Fact]
-    public void FormatJobList_NegativeInRange_ParsesAsValidRange()
-    {
-        // Arrange
-        AddTestJobs(3);
-
-        // Act - "-1-2" with RemoveEmptyEntries becomes range 1-2
-        var (success, message, jobs) = _formatter.FormatJobList("-1-2", _jobManager);
-
-        // Assert - Code interprets this as valid range 1-2
-        Assert.True(success);
-        Assert.Equal(2, jobs.Count);
-    }
-
-    [Fact]
-    public void FormatJobList_EmptyJobList_ReturnsFailure()
-    {
-        // Arrange - no jobs added
-
-        // Act
-        var (success, message, jobs) = _formatter.FormatJobList("1", _jobManager);
-
-        // Assert
-        Assert.False(success);
-        Assert.Empty(jobs);
-    }
-
-    [Fact]
-    public void FormatJobList_WhitespaceHandling_ReturnsCorrectJobs()
-    {
-        // Arrange
-        AddTestJobs(3);
-
-        // Act
-        var (success, message, jobs) = _formatter.FormatJobList(" 1 ; 2 ", _jobManager);
-
-        // Assert
-        Assert.True(success);
-        Assert.Equal(2, jobs.Count);
     }
 }

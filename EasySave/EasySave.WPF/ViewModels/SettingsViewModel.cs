@@ -91,6 +91,9 @@ public class SettingsViewModel : BaseViewModel
         settings.LogFormat = SelectedLogFormat;
         _configManager.SaveSettings(settings);
 
+        //var logger = ServiceLocator.Get<ILogger>();
+        //logger.SetLogFormat(SelectedLogFormat);
+
         MessageBox.Show(_localization.GetString("settings_saved"), "Success", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 

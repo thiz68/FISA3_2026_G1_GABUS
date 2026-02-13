@@ -7,16 +7,14 @@ internal class Program
 {
     static void Main(string[] args)
     {
-        Console.WriteLine("=== CryptoSoft ===");
-
         IEncryptionService encryptionService = new AesEncryptionService();
 
-        // Mode 1 : appelé par EasySave
+        // ============================================
+        // MODE EASY SAVE (arguments présents)
+        // ============================================
         if (args.Length > 0)
         {
-            var files = ArgumentParser.Parse(args);
-
-            foreach (var file in files)
+            foreach (var file in args)
             {
                 try
                 {
@@ -28,12 +26,20 @@ internal class Program
                     Console.WriteLine($"Erreur pour {file} : {ex.Message}");
                 }
             }
-
             return;
         }
 
-        // Mode 2 : standalone
-        Console.WriteLine("Entrez le chemin complet du fichier à crypter : ");
+        // ============================================
+        // MODE STANDALONE
+        // ============================================
+        Console.WriteLine("=== CryptoSoft ===");
+        Console.WriteLine("1 - Chiffrer un fichier");
+        Console.WriteLine("2 - Déchiffrer un fichier");
+        Console.Write("Votre choix : ");
+
+        string? choice = Console.ReadLine();
+
+        Console.Write("Entrez le chemin complet du fichier : ");
         string? filePath = Console.ReadLine();
 
         if (string.IsNullOrWhiteSpace(filePath))
@@ -44,8 +50,22 @@ internal class Program
 
         try
         {
-            encryptionService.EncryptFile(filePath);
-            Console.WriteLine("Chiffrement terminé.");
+            switch (choice)
+            {
+                case "1":
+                    encryptionService.EncryptFile(filePath);
+                    Console.WriteLine("Chiffrement terminé.");
+                    break;
+
+                case "2":
+                    encryptionService.DecryptFile(filePath);
+                    Console.WriteLine("Déchiffrement terminé.");
+                    break;
+
+                default:
+                    Console.WriteLine("Choix invalide.");
+                    break;
+            }
         }
         catch (Exception ex)
         {

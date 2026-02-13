@@ -8,22 +8,22 @@ public class JobManager : IJobManager
 {
     //Translation
     private readonly ILocalizationService _localization;
-    
+
     // List that contains all saved jobs
     private readonly List<IJob> _jobs = new();
-   
+
     // Maximum number of jobs in the list
     private const int MaxJobsConst = 5;
     public int MaxJobs => MaxJobsConst;
-    
+
     // Return a the list of jobs in read only
     public IReadOnlyList<IJob> Jobs => _jobs.AsReadOnly();
-    
+
     public JobManager(ILocalizationService localization)
     {
         _localization = localization;
     }
-    
+
     // Add job to the list fucntion
     public void AddJob(IJob job)
     {
@@ -36,7 +36,7 @@ public class JobManager : IJobManager
         // -> Add the job
         _jobs.Add(job);
     }
-    
+
     // Remove a job from the list function
     public void RemoveJob(string name)
     {
@@ -46,7 +46,7 @@ public class JobManager : IJobManager
         if (job != null)
             _jobs.Remove(job);
     }
-    
+
     // Get job object with index
     public IJob GetJob(int index)
     {
@@ -54,7 +54,7 @@ public class JobManager : IJobManager
             throw new ArgumentOutOfRangeException(nameof(index));
         return _jobs[index - 1];
     }
-    
+
     // Get job object with name
     public IJob GetJob(string name)
     {

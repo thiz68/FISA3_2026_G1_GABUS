@@ -1,4 +1,4 @@
-namespace EasySave.ConsoleApp;
+namespace EasySave.Console;
 
 using EasySave.Core.Interfaces;
 using EasySave.Core.Services;
@@ -10,7 +10,7 @@ public class Program
     {
         // Global exception handler to prevent crashes from unexpected errors (like USB disconnection)
         AppDomain.CurrentDomain.UnhandledException += ExceptionHandler.HandleUnhandledException;
-        
+
         // Services
         var localization = new LocalizationService();
         var jobManager = new JobManager(localization);
@@ -20,13 +20,17 @@ public class Program
         var backupExecutor = new BackupExecutor();
         var pathValidator = new PathValidator();
         var menuHandler = new MenuHandler(localization, jobManager, configManager, backupExecutor, logger, stateManager, pathValidator);
-        
+
         // Logger init
         logger.Initialize();
-        
+
         // Load all exisiting jobs
         configManager.LoadJobs(jobManager);
-        
+
+        // Load settings and apply language
+        var settings = configManager.LoadSettings();
+        localization.SetLanguage(settings.Language);
+
         // Select mode to run
         if (args.Length > 0)
         {
@@ -36,21 +40,21 @@ public class Program
             // Run backup if args are correct
             if (success == false)
             {
-                Console.WriteLine(message);
-                Console.WriteLine(localization.GetString("press_to_continue"));
-                Console.ReadKey();
+                System.Console.WriteLine(message);
+                System.Console.WriteLine(localization.GetString("press_to_continue"));
+                System.Console.ReadKey();
             }
             else
             {
-                Console.WriteLine(localization.GetString("backup_started"));
+                System.Console.WriteLine(localization.GetString("backup_started"));
                 var result = backupExecutor.ExecuteSequential(jobs, logger, stateManager);
-                Console.WriteLine(localization.GetString(result));
-                Console.WriteLine(localization.GetString("press_to_continue"));
-                Console.ReadKey();
+                System.Console.WriteLine(localization.GetString(result));
+                System.Console.WriteLine(localization.GetString("press_to_continue"));
+                System.Console.ReadKey();
             }
             return;
         }
-        
+
         // Show menu to user
         menuHandler.ShowMenu();
     }

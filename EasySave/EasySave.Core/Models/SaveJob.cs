@@ -8,7 +8,7 @@ public class SaveJob : IJob
     // Name of the job
     public string Name { get; set; } = string.Empty;
 
-    // Source path 
+    // Source path
     public string SourcePath { get; set; } = string.Empty;
 
     // Target path

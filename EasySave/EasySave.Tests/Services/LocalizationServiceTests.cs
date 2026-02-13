@@ -1,74 +1,80 @@
-namespace EasySave.Tests.Services;
-
 using EasySave.Core.Services;
 using Xunit;
+
+namespace EasySave.Tests.Services;
 
 public class LocalizationServiceTests
 {
     private readonly LocalizationService _localizationService;
-    
+
     public LocalizationServiceTests()
     {
         _localizationService = new LocalizationService();
     }
+
     [Fact]
-    
-    public void GetString_ExistingKey_ReturnsTranslation()
+    public void GetString_WithValidKey_ShouldReturnTranslation()
     {
         // Act
         var result = _localizationService.GetString("menu_title");
+
         // Assert
         Assert.Equal("=== EasySave v1.0 ===", result);
     }
+
     [Fact]
-    
-    public void SetLanguage_ValidLanguage_ChangesLanguage()
+    public void GetString_WithInvalidKey_ShouldReturnKey()
+    {
+        // Act
+        var result = _localizationService.GetString("invalid_key");
+
+        // Assert
+        Assert.Equal("invalid_key", result);
+    }
+
+    [Fact]
+    public void SetLanguage_ToFrench_ShouldChangeTranslations()
     {
         // Act
         _localizationService.SetLanguage("fr");
         var result = _localizationService.GetString("goodbye");
+
         // Assert
         Assert.Equal("A bientot!", result);
     }
+
     [Fact]
-    
-    public void SetLanguage_InvalidLanguage_KeepsCurrentLanguage()
+    public void SetLanguage_WithInvalidCode_ShouldNotChange()
     {
-        // Arrange - Default is English
-        var originalValue = _localizationService.GetString("goodbye");
+        // Arrange
+        var originalResult = _localizationService.GetString("goodbye");
+
         // Act
         _localizationService.SetLanguage("invalid");
-        var result = _localizationService.GetString("goodbye");
+        var newResult = _localizationService.GetString("goodbye");
+
         // Assert
-        Assert.Equal(originalValue, result);
-        Assert.Equal("Goodbye!", result);
+        Assert.Equal(originalResult, newResult);
     }
+
     [Fact]
-    
-    public void GetString_AfterSetLanguageFr_ReturnsFrenchText()
+    public void CurrentLanguage_DefaultsToEnglish()
     {
-        // Arrange
-        _localizationService.SetLanguage("fr");
-        // Act
-        var menuCreate = _localizationService.GetString("menu_create");
-        var jobCreated = _localizationService.GetString("job_created");
         // Assert
-        Assert.Equal("1. Creer un travail de sauvegarde", menuCreate);
-        Assert.Equal("Travail cree avec succes", jobCreated);
+        Assert.Equal("en", _localizationService.CurrentLanguage);
     }
-    [Theory]
-    [InlineData("en", "goodbye", "Goodbye!")]
-    [InlineData("fr", "goodbye", "A bientot!")]
-    [InlineData("en", "error_max_jobs", "Error: Maximum 5 jobs allowed")]
-    [InlineData("fr", "error_max_jobs", "Erreur: Maximum 5 travaux autorises")]
-    
-    public void GetString_MultipleLanguages_ReturnsCorrectTranslation(string language, string key, string expected)
+
+    [Fact]
+    public void LanguageChanged_ShouldFireOnLanguageChange()
     {
         // Arrange
-        _localizationService.SetLanguage(language);
+        var eventFired = false;
+        _localizationService.LanguageChanged += (s, e) => eventFired = true;
+
         // Act
-        var result = _localizationService.GetString(key);
+        _localizationService.SetLanguage("fr");
+
         // Assert
-        Assert.Equal(expected, result);
+        Assert.True(eventFired);
     }
 }

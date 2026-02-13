@@ -1,4 +1,4 @@
-﻿namespace EasySave.ConsoleApp;
+namespace EasySave.Core.Services;
 
 using System.IO;
 using System.Reflection;
@@ -13,7 +13,7 @@ public class PathValidator
         {
             return false;
         }
-        
+
         // Check if source is executable folder
         string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "";
         string fullSource = Path.GetFullPath(sourcePath);
@@ -22,7 +22,7 @@ public class PathValidator
         fullExe.StartsWith(fullSource + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
         return !isInside;
     }
-    
+
     // Checks if the target path is valid: can create a directory within it
     public bool IsTargetValid(string? targetPath)
     {
@@ -31,7 +31,7 @@ public class PathValidator
         {
             return false;
         }
-        
+
         // Check if directory can be created in target
         string testDir = Path.Combine(targetPath, Guid.NewGuid().ToString());
         try

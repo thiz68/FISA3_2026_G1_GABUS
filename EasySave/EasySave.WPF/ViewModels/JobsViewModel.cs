@@ -64,6 +64,7 @@ public class JobsViewModel : BaseViewModel
     private readonly Logger _logger;
     private readonly StateManager _stateManager;
     private readonly PathValidator _pathValidator;
+    private readonly CryptoSoftRunner _cryptoRunner;
 
     // Observable collection of jobs for DataGrid binding
     public ObservableCollection<JobItemViewModel> Jobs { get; } = new();
@@ -197,7 +198,7 @@ public class JobsViewModel : BaseViewModel
     public ICommand CancelDialogCommand { get; }
 
     public JobsViewModel(ILocalizationService localization, IJobManager jobManager, ConfigManager configManager,
-        BackupExecutor backupExecutor, Logger logger, StateManager stateManager, PathValidator pathValidator)
+        BackupExecutor backupExecutor, Logger logger, StateManager stateManager, PathValidator pathValidator, CryptoSoftRunner cryptoRunner)
     {
         _localization = localization;
         _jobManager = jobManager;
@@ -206,6 +207,7 @@ public class JobsViewModel : BaseViewModel
         _logger = logger;
         _stateManager = stateManager;
         _pathValidator = pathValidator;
+        _cryptoRunner = cryptoRunner;
 
         // Initialize commands
         AddJobCommand = new RelayCommand(_ => OpenAddDialog());
@@ -359,12 +361,38 @@ public class JobsViewModel : BaseViewModel
     // Execute a list of jobs
     private void ExecuteJobs(List<IJob> jobs)
     {
-        MessageBox.Show(_localization.GetString("backup_started"), "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+        //Vérification CryptoSoft
+        if (!_cryptoRunner.IsCryptoSoftAvailable())
+        {
+            var result = MessageBox.Show(
+                _localization.GetString("cryptosoft_missing"),
+                "CryptoSoft",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
 
-        var result = _backupExecutor.ExecuteSequential(jobs, _logger, _stateManager, _localization);
+            if (result == MessageBoxResult.No)
+                return;
+        }
 
-        MessageBox.Show(_localization.GetString(result), "Result", MessageBoxButton.OK,
-            result == "backup_completed" ? MessageBoxImage.Information : MessageBoxImage.Warning);
+        MessageBox.Show(
+            _localization.GetString("backup_started"),
+            "Info",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
+
+        var executionResult = _backupExecutor.ExecuteSequential(
+            jobs,
+            _logger,
+            _stateManager,
+            _localization);
+
+        MessageBox.Show(
+            _localization.GetString(executionResult),
+            "Result",
+            MessageBoxButton.OK,
+            executionResult == "backup_completed"
+                ? MessageBoxImage.Information
+                : MessageBoxImage.Warning);
     }
 
     // Delete a job

@@ -42,9 +42,9 @@ public class MenuHandler
             System.Console.WriteLine(_localization.GetString("menu_list"));      // Option 4
             System.Console.WriteLine(_localization.GetString("menu_execute"));   // Option 5
             System.Console.WriteLine(_localization.GetString("menu_language"));  // Option 6
-            System.Console.WriteLine(_localization.GetString("menu_log_format"));      // Option 7
+            System.Console.WriteLine(_localization.GetString("menu_log_format"));         // Option 7
             System.Console.WriteLine(_localization.GetString("menu_business_software"));  // Option 8
-            System.Console.WriteLine(_localization.GetString("menu_exit"));      // Option 9
+            System.Console.WriteLine(_localization.GetString("menu_exit"));               // Option 9
             System.Console.WriteLine();
             System.Console.Write("> ");
             var choice = System.Console.ReadLine()?.Trim();

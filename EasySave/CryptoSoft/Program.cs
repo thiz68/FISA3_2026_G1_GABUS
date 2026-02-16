@@ -10,10 +10,8 @@ internal class Program
         Console.InputEncoding = System.Text.Encoding.UTF8;
 
         IEncryptionService encryptionService = new AesEncryptionService();
-
-        // =========================
-        // MODE EASY SAVE (arguments)
-        // =========================
+        
+        // MODE EASY SAVE
         if (args.Length > 0)
         {
             foreach (var file in args)
@@ -31,10 +29,8 @@ internal class Program
 
             return;
         }
-
-        // =========================
-        // MODE STANDALONE (boucle)
-        // =========================
+        
+        // MODE STANDALONE
         while (true)
         {
             Console.Clear();

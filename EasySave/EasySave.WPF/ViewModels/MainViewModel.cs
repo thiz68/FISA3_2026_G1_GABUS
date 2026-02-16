@@ -17,6 +17,7 @@ public class MainViewModel : BaseViewModel
     private readonly Logger _logger;
     private readonly StateManager _stateManager;
     private readonly PathValidator _pathValidator;
+    private readonly CryptoSoftRunner _cryptoRunner;
 
     // Current view displayed in the main content area
     private BaseViewModel _currentViewModel = null!;
@@ -85,6 +86,7 @@ public class MainViewModel : BaseViewModel
         _stateManager = new StateManager();
         _backupExecutor = new BackupExecutor();
         _pathValidator = new PathValidator();
+        _cryptoRunner = new CryptoSoftRunner();
 
         // Initialize logger
         _logger.Initialize();
@@ -102,7 +104,7 @@ public class MainViewModel : BaseViewModel
 
         // Initialize child ViewModels
         DashboardViewModel = new DashboardViewModel(_localization, _stateManager, _logger, _configManager);
-        JobsViewModel = new JobsViewModel(_localization, _jobManager, _configManager, _backupExecutor, _logger, _stateManager, _pathValidator);
+        JobsViewModel = new JobsViewModel(_localization, _jobManager, _configManager, _backupExecutor, _logger, _stateManager, _pathValidator, _cryptoRunner);
         SettingsViewModel = new SettingsViewModel(_localization, _configManager);
 
         // Initialize commands

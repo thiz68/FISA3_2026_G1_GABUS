@@ -19,4 +19,6 @@ public class LogEntry
 
     // Time taken to transfer in milliseconds
     public long TransferTimeMs { get; set; }
+    
+    public long EncryptionTimeMs { get; set; }
 }

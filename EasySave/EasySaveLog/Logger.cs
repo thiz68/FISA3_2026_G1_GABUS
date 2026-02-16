@@ -52,8 +52,9 @@ public class Logger : ILogger
     // - targetFile: destination file path
     // - fileSize: size of the file in bytes
     // - transferTimeMs: how long the transfer took in milliseconds
+    // - encryptionTimeMs: how long the encryption was going
     public void LogFileTransfer(DateTime timestamp, string jobName, string sourceFile, string targetFile, long fileSize,
-        long transferTimeMs)
+        long transferTimeMs, long encryptionTimeMs = 0)
     {
 
         RefreshFormat();
@@ -66,6 +67,7 @@ public class Logger : ILogger
             TargetFile = targetFile,
             FileSize = fileSize,
             TransferTimeMs = transferTimeMs,
+            EncryptionTimeMs = encryptionTimeMs
         };
 
         //Path to log file

@@ -401,8 +401,19 @@ public class JobsViewModel : BaseViewModel
             _stateManager,
             shouldStop);
 
+        // Show specific message if stopped due to business software
+        string messageKey;
+        if (executionResult == "backup_failed" && shouldStop())
+        {
+            messageKey = "business_software_stopped";
+        }
+        else
+        {
+            messageKey = executionResult;
+        }
+
         MessageBox.Show(
-            _localization.GetString(executionResult),
+            _localization.GetString(messageKey),
             "Result",
             MessageBoxButton.OK,
             executionResult == "backup_completed"

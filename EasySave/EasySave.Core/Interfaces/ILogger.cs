@@ -4,7 +4,7 @@ namespace EasySave.Core.Interfaces;
 public interface ILogger
 {
     // Log a single file transfer with all its details
-    void LogFileTransfer(DateTime timestamp, string jobName, string sourceFile, string targetFile, long fileSize, long transferTimeMs);
+    void LogFileTransfer(DateTime timestamp, string jobName, string sourceFile, string targetFile, long fileSize, long transferTimeMs, long encryptionTimeMs);
 
     // Set the log format
     void SetLogFormat(string format);

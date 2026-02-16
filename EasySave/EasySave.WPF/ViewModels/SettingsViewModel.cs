@@ -82,6 +82,23 @@ public class SettingsViewModel : BaseViewModel
         var settings = _configManager.LoadSettings();
         SelectedLogFormat = settings.LogFormat;
         SelectedLogFormatIndex = settings.LogFormat == "json" ? 0 : 1;
+        
+        ExtensionsToEncrypt = settings.ExtensionsToEncrypt;
+    }
+    
+    // Properties + Label Encrypt Extensions
+    private string _extensionsToEncrypt = string.Empty;
+    public string ExtensionsToEncrypt
+    {
+        get => _extensionsToEncrypt;
+        set => SetProperty(ref _extensionsToEncrypt, value);
+    }
+
+    private string _extensionsToEncryptLabel = string.Empty;
+    public string ExtensionsToEncryptLabel
+    {
+        get => _extensionsToEncryptLabel;
+        set => SetProperty(ref _extensionsToEncryptLabel, value);
     }
 
     // Save settings to config
@@ -89,6 +106,8 @@ public class SettingsViewModel : BaseViewModel
     {
         var settings = _configManager.LoadSettings();
         settings.LogFormat = SelectedLogFormat;
+        settings.ExtensionsToEncrypt = ExtensionsToEncrypt ?? string.Empty;
+        
         _configManager.SaveSettings(settings);
 
 
@@ -100,6 +119,7 @@ public class SettingsViewModel : BaseViewModel
     {
         GeneralSettingsTitle = _localization.GetString("general_settings");
         LogFormatLabel = _localization.GetString("log_format");
+        ExtensionsToEncryptLabel = _localization.GetString("extensions_to_encrypt");
         SaveSettingsText = _localization.GetString("save_settings");
     }
 }

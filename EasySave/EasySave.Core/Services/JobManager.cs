@@ -28,8 +28,13 @@ public class JobManager : IJobManager
     public void AddJob(IJob job)
     {
         // Check if list full
+        
+        //Unused condition to limit jobs
+        /*
         if (_jobs.Count >= MaxJobs)
             throw new InvalidOperationException(_localization.GetString("error_max_jobs"));
+        */
+
         // Check if job with the same name already exist
         if (_jobs.Any(j => j.Name == job.Name))
             throw new InvalidOperationException(_localization.GetString("job_name_alr_exist"));

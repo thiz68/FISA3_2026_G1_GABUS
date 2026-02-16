@@ -43,7 +43,8 @@ public class MenuHandler
             System.Console.WriteLine(_localization.GetString("menu_execute"));   // Option 5
             System.Console.WriteLine(_localization.GetString("menu_language"));  // Option 6
             System.Console.WriteLine(_localization.GetString("menu_log_format"));      // Option 7
-            System.Console.WriteLine(_localization.GetString("menu_exit"));      // Option 8
+            System.Console.WriteLine(_localization.GetString("menu_business_software"));  // Option 8
+            System.Console.WriteLine(_localization.GetString("menu_exit"));      // Option 9
             System.Console.WriteLine();
             System.Console.Write("> ");
             var choice = System.Console.ReadLine()?.Trim();
@@ -71,6 +72,9 @@ public class MenuHandler
                     ChangeLogFormat();
                     break;
                 case "8":
+                    ChangeBusinessSoftware();
+                    break;
+                case "9":
                     System.Console.WriteLine(_localization.GetString("goodbye"));
                     _configManager.SaveJobs(_jobManager);
                     return;
@@ -414,9 +418,40 @@ public class MenuHandler
         }
         else
         {
+            // Load settings to get business software name
+            var settings = _configManager.LoadSettings();
+            var checker = new BusinessSoftwareChecker();
+
+            // Check BEFORE starting: if business software is running, block the backup
+            if (!string.IsNullOrWhiteSpace(settings.BusinessSoftware) &&
+                checker.IsBusinessSoftwareRunning(settings.BusinessSoftware))
+            {
+                System.Console.WriteLine(_localization.GetString("business_software_detected"));
+                System.Console.WriteLine(_localization.GetString("press_to_continue"));
+                System.Console.ReadKey();
+                return;
+            }
+
             System.Console.WriteLine(_localization.GetString("backup_started"));
-            var result = _backupExecutor.ExecuteSequential(jobs, _logger, _stateManager);
-            System.Console.WriteLine(_localization.GetString(result));
+
+            // Create callback to check if business software starts during backup
+            Func<bool>? shouldStop = null;
+            if (!string.IsNullOrWhiteSpace(settings.BusinessSoftware))
+            {
+                shouldStop = () => checker.IsBusinessSoftwareRunning(settings.BusinessSoftware);
+            }
+
+            var result = _backupExecutor.ExecuteSequential(jobs, _logger, _stateManager, shouldStop);
+
+            // Show specific message if stopped due to business software
+            if (result == "backup_failed" && shouldStop?.Invoke() == true)
+            {
+                System.Console.WriteLine(_localization.GetString("business_software_stopped"));
+            }
+            else
+            {
+                System.Console.WriteLine(_localization.GetString(result));
+            }
             System.Console.WriteLine(_localization.GetString("press_to_continue"));
             System.Console.ReadKey();
         }
@@ -488,6 +523,27 @@ public class MenuHandler
         _configManager.SaveSettings(settings);
 
         System.Console.WriteLine(_localization.GetString("log_format_changed") + " " + newFormat.ToUpper());
+        System.Console.WriteLine(_localization.GetString("press_to_continue"));
+        System.Console.ReadKey();
+    }
+
+    private void ChangeBusinessSoftware()
+    {
+        System.Console.Clear();
+        var settings = _configManager.LoadSettings();
+
+        System.Console.WriteLine(_localization.GetString("business_software") + ": " +
+            (string.IsNullOrWhiteSpace(settings.BusinessSoftware) ? "-" : settings.BusinessSoftware));
+        System.Console.WriteLine();
+        System.Console.WriteLine(_localization.GetString("enter_business_software"));
+        System.Console.Write("> ");
+
+        var input = System.Console.ReadLine()?.Trim();
+
+        settings.BusinessSoftware = input ?? string.Empty;
+        _configManager.SaveSettings(settings);
+
+        System.Console.WriteLine(_localization.GetString("settings_saved"));
         System.Console.WriteLine(_localization.GetString("press_to_continue"));
         System.Console.ReadKey();
     }

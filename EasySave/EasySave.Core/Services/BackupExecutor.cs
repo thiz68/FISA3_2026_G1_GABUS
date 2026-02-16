@@ -18,8 +18,8 @@ public class BackupExecutor
 
     // Execute jobs sequentially
     // Returns "backup_completed" if all succeeded, "backup_failed" if any failed
-    
-    public string ExecuteSequential(List<IJob> jobs, ILogger logger, IStateManager stateManager)
+
+    public string ExecuteSequential(List<IJob> jobs, ILogger logger, IStateManager stateManager, Func<bool>? shouldStop = null)
     {
         bool allSuccess = true;
 
@@ -30,7 +30,7 @@ public class BackupExecutor
             stateManager.UpdateJobState(job, state);
 
             // Copy all files from source to target
-            bool success = _fileBackupService.CopyDirectory(job.SourcePath, job.TargetPath, job, logger, stateManager, _localization);
+            bool success = _fileBackupService.CopyDirectory(job.SourcePath, job.TargetPath, job, logger, stateManager, _localization, shouldStop);
 
             if (success)
             {
@@ -40,7 +40,7 @@ public class BackupExecutor
             }
             else
             {
-                // Mark job as failed (drive unavailable, USB unplugged, etc.)
+                // Mark job as failed (drive unavailable, USB unplugged, business software detected, etc.)
                 state.State = _localization.GetString("failed");
                 allSuccess = false;
             }

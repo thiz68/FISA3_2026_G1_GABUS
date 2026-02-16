@@ -101,6 +101,9 @@ public class FileBackupService
             // Check if we should stop (business software detected)
             if (shouldStop?.Invoke() == true)
             {
+                // Log the stop immediately (before user might close the business software)
+                var settings = new ConfigManager().LoadSettings();
+                logger.LogBusinessSoftwareStop(DateTime.Now, job.Name, settings.BusinessSoftware);
                 success = false;
                 return;
             }

@@ -39,7 +39,7 @@ public class AesEncryptionService : IEncryptionService
             cryptoStream.FlushFinalBlock();
         }
 
-        // Suppression définitive du fichier original
+        // Suppression definitive du fichier original
         File.Delete(normalizedPath);
     }
 
@@ -70,7 +70,7 @@ public class AesEncryptionService : IEncryptionService
             cryptoStream.CopyTo(outputFileStream);
         }
 
-        // Suppression définitive du fichier .crypt
+        // Suppression definitive du fichier .crypt
         File.Delete(normalizedPath);
     }
 

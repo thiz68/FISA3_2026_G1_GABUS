@@ -11,10 +11,12 @@ public class BackupExecutorTests
     private readonly BackupExecutor _backupExecutor;
     private readonly Mock<ILogger> _mockLogger;
     private readonly Mock<IStateManager> _mockStateManager;
+    private static ILocalizationService? _localization;
 
-    public BackupExecutorTests()
+    public BackupExecutorTests(ILocalizationService localization)
     {
-        _backupExecutor = new BackupExecutor();
+        _localization = localization;
+        _backupExecutor = new BackupExecutor(_localization);
         _mockLogger = new Mock<ILogger>();
         _mockStateManager = new Mock<IStateManager>();
     }

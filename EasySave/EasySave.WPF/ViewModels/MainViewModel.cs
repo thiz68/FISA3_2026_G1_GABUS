@@ -83,7 +83,7 @@ public class MainViewModel : BaseViewModel
         _configManager = new ConfigManager();
         _logger = new Logger(_configManager);
         _stateManager = new StateManager();
-        _backupExecutor = new BackupExecutor();
+        _backupExecutor = new BackupExecutor(_localization);
         _pathValidator = new PathValidator();
 
         // Initialize logger

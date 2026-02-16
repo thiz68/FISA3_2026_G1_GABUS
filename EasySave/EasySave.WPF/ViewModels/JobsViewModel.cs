@@ -82,6 +82,37 @@ public class JobsViewModel : BaseViewModel
     public ICommand ExecuteSelectedCommand { get; }
     public ICommand DeleteJobCommand { get; }
     public ICommand EditJobCommand { get; }
+    public ICommand StopBackupCommand { get; }
+
+    // Backup running state
+    private bool _isBackupRunning;
+    public bool IsBackupRunning
+    {
+        get => _isBackupRunning;
+        set => SetProperty(ref _isBackupRunning, value);
+    }
+
+    // Stop notification popup
+    private bool _stopNotificationVisible;
+    public bool StopNotificationVisible
+    {
+        get => _stopNotificationVisible;
+        set => SetProperty(ref _stopNotificationVisible, value);
+    }
+
+    private string _stopNotificationText = string.Empty;
+    public string StopNotificationText
+    {
+        get => _stopNotificationText;
+        set => SetProperty(ref _stopNotificationText, value);
+    }
+
+    private string _stopJobText = string.Empty;
+    public string StopJobText
+    {
+        get => _stopJobText;
+        set => SetProperty(ref _stopJobText, value);
+    }
 
     // Localized strings
     private string _addJobText = string.Empty;
@@ -208,13 +239,14 @@ public class JobsViewModel : BaseViewModel
         _pathValidator = pathValidator;
 
         // Initialize commands
-        AddJobCommand = new RelayCommand(_ => OpenAddDialog());
-        ExecuteAllCommand = new RelayCommand(_ => ExecuteAll(), _ => Jobs.Count > 0);
-        ExecuteSelectedCommand = new RelayCommand(_ => ExecuteSelected(), _ => Jobs.Any(j => j.IsSelected));
-        DeleteJobCommand = new RelayCommand(param => DeleteJob(param as JobItemViewModel));
-        EditJobCommand = new RelayCommand(param => OpenEditDialog(param as JobItemViewModel));
+        AddJobCommand = new RelayCommand(_ => OpenAddDialog(), _ => !IsBackupRunning);
+        ExecuteAllCommand = new RelayCommand(_ => ExecuteAll(), _ => Jobs.Count > 0 && !IsBackupRunning);
+        ExecuteSelectedCommand = new RelayCommand(_ => ExecuteSelected(), _ => Jobs.Any(j => j.IsSelected) && !IsBackupRunning);
+        DeleteJobCommand = new RelayCommand(param => DeleteJob(param as JobItemViewModel), _ => !IsBackupRunning);
+        EditJobCommand = new RelayCommand(param => OpenEditDialog(param as JobItemViewModel), _ => !IsBackupRunning);
         SaveJobCommand = new RelayCommand(_ => SaveJob());
         CancelDialogCommand = new RelayCommand(_ => CloseDialog());
+        StopBackupCommand = new RelayCommand(_ => StopBackup(), _ => IsBackupRunning);
 
         UpdateLocalizedStrings();
         RefreshJobs();
@@ -356,15 +388,40 @@ public class JobsViewModel : BaseViewModel
         ExecuteJobs(selectedJobs);
     }
 
-    // Execute a list of jobs
-    private void ExecuteJobs(List<IJob> jobs)
+    // Execute a list of jobs asynchronously
+    private async void ExecuteJobs(List<IJob> jobs)
     {
+        IsBackupRunning = true;
         MessageBox.Show(_localization.GetString("backup_started"), "Info", MessageBoxButton.OK, MessageBoxImage.Information);
 
-        var result = _backupExecutor.ExecuteSequential(jobs, _logger, _stateManager, _localization);
+        // Run backup in background thread to keep UI responsive
+        var result = await Task.Run(() => _backupExecutor.ExecuteSequential(jobs, _logger, _stateManager, _localization));
+
+        IsBackupRunning = false;
+
+        // Show stop notification if backup was stopped
+        if (result == "backup_stopped")
+        {
+            ShowStopNotification();
+        }
 
         MessageBox.Show(_localization.GetString(result), "Result", MessageBoxButton.OK,
             result == "backup_completed" ? MessageBoxImage.Information : MessageBoxImage.Warning);
+    }
+
+    // Stop the current backup execution
+    private void StopBackup()
+    {
+        _backupExecutor.RequestStop();
+    }
+
+    // Show the stop notification popup for 3 seconds
+    private async void ShowStopNotification()
+    {
+        StopNotificationText = _localization.GetString("job_stopped_notification");
+        StopNotificationVisible = true;
+        await Task.Delay(3000);
+        StopNotificationVisible = false;
     }
 
     // Delete a job
@@ -400,6 +457,7 @@ public class JobsViewModel : BaseViewModel
         ActionsHeader = _localization.GetString("actions");
         DeleteText = _localization.GetString("delete");
         EditText = _localization.GetString("edit");
+        StopJobText = _localization.GetString("stop_job");
 
         // Update job type displays
         foreach (var job in Jobs)

@@ -35,6 +35,13 @@
                     Margin="5"
                     Style="{StaticResource ActionButtonStyle}"
                     Command="{Binding ExecuteSelectedCommand}"/>
+
+            <Button Content="{Binding StopJobText}"
+                    Width="100"
+                    Margin="5"
+                    Style="{StaticResource DangerButtonStyle}"
+                    Command="{Binding StopBackupCommand}"
+                    Visibility="{Binding IsBackupRunning, Converter={StaticResource BooleanToVisibilityConverter}}"/>
         </StackPanel>
 
         <!-- Jobs DataGrid -->
@@ -174,5 +181,20 @@
                 </StackPanel>
             </Border>
         </Grid>
+
+        <!-- Stop Notification Popup (bottom-left) -->
+        <Border Grid.RowSpan="2"
+                VerticalAlignment="Bottom"
+                HorizontalAlignment="Left"
+                Background="#E74C3C"
+                CornerRadius="5"
+                Padding="15,10"
+                Margin="10,0,0,10"
+                Visibility="{Binding StopNotificationVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <TextBlock Text="{Binding StopNotificationText}"
+                       Foreground="White"
+                       FontWeight="Bold"
+                       FontSize="14"/>
+        </Border>
     </Grid>
 </UserControl>

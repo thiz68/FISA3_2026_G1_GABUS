@@ -106,6 +106,10 @@ public class LocalizationService : ILocalizationService
             ["confirm_delete_title"] = "Confirm Delete",
             ["no_jobs_selected"] = "No jobs selected",
             ["select_jobs_to_execute"] = "Please select jobs to execute",
+            ["stop_job"] = "Stop",
+            ["backup_stopped"] = "Backup stopped",
+            ["job_stopped_notification"] = "You stopped the job",
+            ["stopped"] = "Stopped",
         },
 
         // French dict
@@ -184,7 +188,7 @@ public class LocalizationService : ILocalizationService
             ["actions"] = "Actions",
             ["state_file_preview"] = "Fichier d'etat temps reel (Apercu)",
             ["log_file_preview"] = "Fichier Log journalier (Apercu)",
-            ["state_preview_placeholder"] = "L'apercu de l'état apparaitra ici...",
+            ["state_preview_placeholder"] = "L'apercu de l'ï¿½tat apparaitra ici...",
             ["log_preview_placeholder_json"] = "L'apercu des logs en json apparaitra ici...",
             ["log_preview_placeholder_xml"] = "L'apercu des logs en xml apparaitra ici...",
             ["general_settings"] = "Parametres generaux",
@@ -197,6 +201,10 @@ public class LocalizationService : ILocalizationService
             ["confirm_delete_title"] = "Confirmer la suppression",
             ["no_jobs_selected"] = "Aucun travail selectionne",
             ["select_jobs_to_execute"] = "Veuillez selectionner des travaux a executer",
+            ["stop_job"] = "Arreter",
+            ["backup_stopped"] = "Sauvegarde arretee",
+            ["job_stopped_notification"] = "Vous avez coupe le travail",
+            ["stopped"] = "Arrete",
         }
     };
 

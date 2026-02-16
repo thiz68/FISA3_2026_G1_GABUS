@@ -19,4 +19,7 @@ public class LogEntry
 
     // Time taken to transfer in milliseconds
     public long TransferTimeMs { get; set; }
+
+    // Reason for stopping the job (null if not stopped)
+    public string? StopReason { get; set; }
 }

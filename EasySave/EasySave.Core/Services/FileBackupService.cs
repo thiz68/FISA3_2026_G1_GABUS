@@ -12,6 +12,14 @@ public class FileBackupService
     //Returns true if backup succeeded, false if it failed (drive unavailable, etc.)
     public bool CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger, IStateManager stateManager, ILocalizationService localization)
     {
+        var (success, _) = CopyDirectory(sourceDir, targetDir, job, logger, stateManager, localization, CancellationToken.None);
+        return success;
+    }
+
+    //Copy an entire dir from source to target with cancellation support
+    //Returns (success, wasStopped) - success=true if completed, wasStopped=true if user requested stop
+    public (bool success, bool wasStopped) CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger, IStateManager stateManager, ILocalizationService localization, CancellationToken cancellationToken)
+    {
         //Counting how many files need to copy and total size
         var (totalFiles, totalSize) = CalculateEligibleFiles(sourceDir, targetDir, job.Type);
 
@@ -22,11 +30,11 @@ public class FileBackupService
             try
             {
                 if (!Directory.Exists(sourceDir))
-                    return false;
+                    return (false, false);
             }
             catch (IOException)
             {
-                return false;
+                return (false, false);
             }
         }
 
@@ -42,18 +50,19 @@ public class FileBackupService
         catch (IOException)
         {
             // Cannot create target directory, abort backup
-            return false;
+            return (false, false);
         }
 
         //Copy progress
         bool success = true;
-        CopyDirectoryRecursive(sourceDir, targetDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, localization);
-        return success;
+        bool wasStopped = false;
+        CopyDirectoryRecursive(sourceDir, targetDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, ref wasStopped, localization, cancellationToken);
+        return (success, wasStopped);
     }
 
     //Copy all files and subfolders
     private void CopyDirectoryRecursive(string sourceDir, string targetDir, IJob job, ILogger logger,
-    IStateManager stateManager, int totalFiles, long totalSize, ref int filesRemaining, ref long sizeRemaining, ref bool success, ILocalizationService localization)
+    IStateManager stateManager, int totalFiles, long totalSize, ref int filesRemaining, ref long sizeRemaining, ref bool success, ref bool wasStopped, ILocalizationService localization, CancellationToken cancellationToken)
     {
         // Get list of files, handle errors if drive becomes unavailable (USB unplugged)
         string[] files;
@@ -94,6 +103,13 @@ public class FileBackupService
             // Update progression after copy
             progression = totalFiles > 0 ? Math.Round((1 - (double)filesRemaining / totalFiles) * 100, 2) : 0;
             UpdateStateForFile(job, sourceFile, targetFile, filesRemaining, sizeRemaining, progression, stateManager, localization);
+
+            // Check if stop was requested after completing the current file
+            if (cancellationToken.IsCancellationRequested)
+            {
+                wasStopped = true;
+                return;
+            }
         }
 
         // Get subdirectories, handle errors
@@ -111,6 +127,13 @@ public class FileBackupService
         // Recurse into subdirectories
         foreach (var subDir in subDirs)
         {
+            // Check if stop was requested before processing next subdirectory
+            if (cancellationToken.IsCancellationRequested)
+            {
+                wasStopped = true;
+                return;
+            }
+
             var relativePath = Path.GetRelativePath(sourceDir, subDir);
             var targetSubDir = Path.Combine(targetDir, relativePath);
             try
@@ -122,8 +145,8 @@ public class FileBackupService
                 success = false;
                 return;
             }
-            CopyDirectoryRecursive(subDir, targetSubDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, localization);
-            if (!success) return;
+            CopyDirectoryRecursive(subDir, targetSubDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, ref wasStopped, localization, cancellationToken);
+            if (!success || wasStopped) return;
         }
     }
 

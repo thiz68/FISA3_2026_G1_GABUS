@@ -14,4 +14,7 @@ public interface ILogger
 
     // Initialize the logger (create log file if needed)
     void Initialize();
+
+    // Log when a job is stopped by user
+    void LogJobStopped(DateTime timestamp, string jobName, string reason);
 }

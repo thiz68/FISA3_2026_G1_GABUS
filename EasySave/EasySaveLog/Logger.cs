@@ -143,6 +143,28 @@ public class Logger : ILogger
         return Path.Combine(_logDirectory, fileName);
     }
 
+    // Log when a job is stopped by user
+    public void LogJobStopped(DateTime timestamp, string jobName, string reason)
+    {
+        RefreshFormat();
+
+        var entry = new LogEntry
+        {
+            Timestamp = timestamp,
+            JobName = jobName,
+            SourceFile = string.Empty,
+            TargetFile = string.Empty,
+            FileSize = 0,
+            TransferTimeMs = 0,
+            StopReason = reason
+        };
+
+        var logFilePath = GetDailyLogFilePath();
+        var entries = LoadExistingEntries(logFilePath);
+        entries.Add(entry);
+        SaveEntries(logFilePath, entries);
+    }
+
     // Reads the current log file content (for dashbaord)
     public string ReadLogFileContent()
     {

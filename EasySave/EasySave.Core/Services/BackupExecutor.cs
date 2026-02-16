@@ -9,29 +9,60 @@ public class BackupExecutor
 {
     private readonly FileBackupService _fileBackupService;
     private static ILocalizationService _localization = null!;
+    private CancellationTokenSource? _cancellationTokenSource;
 
     public BackupExecutor()
     {
         _fileBackupService = new FileBackupService();
     }
 
+    // Request to stop the current backup execution
+    public void RequestStop()
+    {
+        _cancellationTokenSource?.Cancel();
+    }
+
+    // Check if backup is currently running
+    public bool IsRunning => _cancellationTokenSource != null && !_cancellationTokenSource.IsCancellationRequested;
+
     // Execute jobs sequentially
-    // Returns "backup_completed" if all succeeded, "backup_failed" if any failed
+    // Returns "backup_completed" if all succeeded, "backup_failed" if any failed, "backup_stopped" if stopped by user
     public string ExecuteSequential(List<IJob> jobs, ILogger logger, IStateManager stateManager)
     {
         _localization = new LocalizationService();
+        _cancellationTokenSource = new CancellationTokenSource();
+        var token = _cancellationTokenSource.Token;
         bool allSuccess = true;
 
         foreach (var job in jobs)
         {
+            // Check if stop was requested before starting next job
+            if (token.IsCancellationRequested)
+            {
+                logger.LogJobStopped(DateTime.Now, job.Name, "stop by application");
+                var stoppedState = new JobState { State = _localization.GetString("stopped") };
+                stateManager.UpdateJobState(job, stoppedState);
+                _cancellationTokenSource = null;
+                return "backup_stopped";
+            }
+
             // Initialize the state as Active
             var state = new JobState { State = _localization.GetString("active") };
             stateManager.UpdateJobState(job, state);
 
             // Copy all files from source to target
-            bool success = _fileBackupService.CopyDirectory(job.SourcePath, job.TargetPath, job, logger, stateManager, _localization);
+            var (success, wasStopped) = _fileBackupService.CopyDirectory(job.SourcePath, job.TargetPath, job, logger, stateManager, _localization, token);
 
-            if (success)
+            if (wasStopped)
+            {
+                // Log the stop and update state
+                logger.LogJobStopped(DateTime.Now, job.Name, "stop by application");
+                state.State = _localization.GetString("stopped");
+                stateManager.UpdateJobState(job, state);
+                _cancellationTokenSource = null;
+                return "backup_stopped";
+            }
+            else if (success)
             {
                 // Mark job as completed
                 state.State = _localization.GetString("completed");
@@ -48,6 +79,7 @@ public class BackupExecutor
             stateManager.UpdateJobState(job, state);
         }
 
+        _cancellationTokenSource = null;
         return allSuccess ? "backup_completed" : "backup_failed";
     }
 
@@ -55,18 +87,39 @@ public class BackupExecutor
     public string ExecuteSequential(List<IJob> jobs, ILogger logger, IStateManager stateManager, ILocalizationService localization)
     {
         _localization = localization;
+        _cancellationTokenSource = new CancellationTokenSource();
+        var token = _cancellationTokenSource.Token;
         bool allSuccess = true;
 
         foreach (var job in jobs)
         {
+            // Check if stop was requested before starting next job
+            if (token.IsCancellationRequested)
+            {
+                logger.LogJobStopped(DateTime.Now, job.Name, "stop by application");
+                var stoppedState = new JobState { State = _localization.GetString("stopped") };
+                stateManager.UpdateJobState(job, stoppedState);
+                _cancellationTokenSource = null;
+                return "backup_stopped";
+            }
+
             // Initialize the state as Active
             var state = new JobState { State = _localization.GetString("active") };
             stateManager.UpdateJobState(job, state);
 
             // Copy all files from source to target
-            bool success = _fileBackupService.CopyDirectory(job.SourcePath, job.TargetPath, job, logger, stateManager, _localization);
+            var (success, wasStopped) = _fileBackupService.CopyDirectory(job.SourcePath, job.TargetPath, job, logger, stateManager, _localization, token);
 
-            if (success)
+            if (wasStopped)
+            {
+                // Log the stop and update state
+                logger.LogJobStopped(DateTime.Now, job.Name, "stop by application");
+                state.State = _localization.GetString("stopped");
+                stateManager.UpdateJobState(job, state);
+                _cancellationTokenSource = null;
+                return "backup_stopped";
+            }
+            else if (success)
             {
                 // Mark job as completed
                 state.State = _localization.GetString("completed");
@@ -82,6 +135,7 @@ public class BackupExecutor
             stateManager.UpdateJobState(job, state);
         }
 
+        _cancellationTokenSource = null;
         return allSuccess ? "backup_completed" : "backup_failed";
     }
 }

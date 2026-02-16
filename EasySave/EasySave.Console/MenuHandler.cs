@@ -14,8 +14,8 @@ public class MenuHandler
     private readonly ILogger _logger;
     private readonly IStateManager _stateManager;
     private readonly PathValidator _pathValidator;
+    
     public MenuHandler(ILocalizationService localization, IJobManager jobManager, ConfigManager configManager,
-
         BackupExecutor backupExecutor, ILogger logger, IStateManager stateManager, PathValidator pathValidator)
     {
         _localization = localization;
@@ -42,7 +42,8 @@ public class MenuHandler
             System.Console.WriteLine(_localization.GetString("menu_list"));      // Option 4
             System.Console.WriteLine(_localization.GetString("menu_execute"));   // Option 5
             System.Console.WriteLine(_localization.GetString("menu_language"));  // Option 6
-            System.Console.WriteLine(_localization.GetString("menu_exit"));      // Option 7
+            System.Console.WriteLine(_localization.GetString("menu_log_format"));      // Option 7
+            System.Console.WriteLine(_localization.GetString("menu_exit"));      // Option 8
             System.Console.WriteLine();
             System.Console.Write("> ");
             var choice = System.Console.ReadLine()?.Trim();
@@ -67,6 +68,9 @@ public class MenuHandler
                     ChangeLanguage();
                     break;
                 case "7":
+                    ChangeLogFormat();
+                    break;
+                case "8":
                     System.Console.WriteLine(_localization.GetString("goodbye"));
                     _configManager.SaveJobs(_jobManager);
                     return;
@@ -398,7 +402,7 @@ public class MenuHandler
         if (string.IsNullOrWhiteSpace(input))
             return;
 
-        var formatter = new BackupListFormatter();
+        var formatter = new BackupListFormatter(_localization);
         var (success, message, jobs) = formatter.FormatJobList(input, _jobManager);
 
         // Executer les backup si la liste entree par utilisateur est correcte
@@ -445,6 +449,45 @@ public class MenuHandler
                 _configManager.SaveSettings(settingsFr);
                 break;
         }
+        System.Console.WriteLine(_localization.GetString("press_to_continue"));
+        System.Console.ReadKey();
+    }
+
+    private void ChangeLogFormat()
+    {
+        System.Console.Clear();
+        System.Console.WriteLine(_localization.GetString("current_log_format") + ": " + _logger.GetCurrentLogFormat().ToUpper());
+        System.Console.WriteLine("1. JSON");
+        System.Console.WriteLine("2. XML");
+        System.Console.WriteLine();
+        System.Console.Write("> ");
+
+        var choice = System.Console.ReadLine()?.Trim();
+
+        string newFormat = null;
+        switch (choice)
+        {
+            case "1":
+                newFormat = "json";
+                break;
+            case "2":
+                newFormat = "xml";
+                break;
+            default:
+                System.Console.WriteLine(_localization.GetString("invalid_choice"));
+                System.Console.WriteLine(_localization.GetString("press_to_continue"));
+                System.Console.ReadKey();
+                return;
+        }
+
+        _logger.SetLogFormat(newFormat);
+
+        // Save logs format in settings
+        var settings = _configManager.LoadSettings();
+        settings.LogFormat = newFormat;
+        _configManager.SaveSettings(settings);
+
+        System.Console.WriteLine(_localization.GetString("log_format_changed") + " " + newFormat.ToUpper());
         System.Console.WriteLine(_localization.GetString("press_to_continue"));
         System.Console.ReadKey();
     }

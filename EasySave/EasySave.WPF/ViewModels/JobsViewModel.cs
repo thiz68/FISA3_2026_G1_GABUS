@@ -361,7 +361,7 @@ public class JobsViewModel : BaseViewModel
     // Execute a list of jobs
     private void ExecuteJobs(List<IJob> jobs)
     {
-        //Vérification CryptoSoft
+        //V�rification CryptoSoft
         if (!_cryptoRunner.IsCryptoSoftAvailable())
         {
             var result = MessageBox.Show(
@@ -385,6 +385,7 @@ public class JobsViewModel : BaseViewModel
             _logger,
             _stateManager,
             _localization);
+        var result = _backupExecutor.ExecuteSequential(jobs, _logger, _stateManager);
 
         MessageBox.Show(
             _localization.GetString(executionResult),

@@ -40,16 +40,9 @@ public class BackupExecutor
             }
             else
             {
-                // Mark job as failed (drive unavailable, USB unplugged, etc.)
+                // Mark job as failed (drive unavailable, USB unplugged, business software detected, etc.)
                 state.State = _localization.GetString("failed");
                 allSuccess = false;
-
-                // If stopped due to business software, log it
-                if (shouldStop?.Invoke() == true)
-                {
-                    var settings = new ConfigManager().LoadSettings();
-                    logger.LogBusinessSoftwareStop(DateTime.Now, job.Name, settings.BusinessSoftware);
-                }
             }
 
             stateManager.UpdateJobState(job, state);

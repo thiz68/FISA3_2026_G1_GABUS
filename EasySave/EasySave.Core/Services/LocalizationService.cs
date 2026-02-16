@@ -30,7 +30,8 @@ public class LocalizationService : ILocalizationService
             ["menu_execute"] = "5. Execute backup",
             ["menu_language"] = "6. Change language",
             ["menu_log_format"] = "7. Change log format",
-            ["menu_exit"] = "8. Exit",
+            ["menu_business_software"] = "8. Configure business software",
+            ["menu_exit"] = "9. Exit",
 
             // User input
             ["enter_choice"] = "Enter your choice: ",
@@ -42,6 +43,7 @@ public class LocalizationService : ILocalizationService
             ["enter_type"] = "Enter type (1=Full, 2=Differential): ",
             ["press_to_continue"] = "Press any key to continue...",
             ["enter_job_number"] = "Enter job number to execute:",
+            ["enter_business_software"] = "Enter process name (e.g., CalculatorApp, notepad):",
 
             // Success
             ["job_created"] = "Job successfully created",
@@ -127,7 +129,8 @@ public class LocalizationService : ILocalizationService
             ["menu_execute"] = "5. Executer une sauvegarde",
             ["menu_language"] = "6. Changer la langue",
             ["menu_log_format"] = "7. Changer le format des logs",
-            ["menu_exit"] = "8. Quitter",
+            ["menu_business_software"] = "8. Configurer le logiciel metier",
+            ["menu_exit"] = "9. Quitter",
 
             // User input
             ["enter_choice"] = "Entrez votre choix: ",
@@ -139,6 +142,7 @@ public class LocalizationService : ILocalizationService
             ["enter_type"] = "Type (1=Complet, 2=Differentiel): ",
             ["press_to_continue"] = "Appuyer sur une touche pour continuer...",
             ["enter_job_number"] = "Entrez les numeros des travaux a executer:",
+            ["enter_business_software"] = "Entrez le nom du processus (ex: CalculatorApp, notepad):",
 
             // Success
             ["job_created"] = "Travail cree avec succes",

@@ -1,5 +1,6 @@
 namespace EasySave.Core.Services;
 
+using System;
 using System.IO;
 using System.Reflection;
 
@@ -15,7 +16,7 @@ public class PathValidator
         }
 
         // Check if source is executable folder
-        string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "";
+        string exePath = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         string fullSource = Path.GetFullPath(sourcePath);
         string fullExe = Path.GetFullPath(exePath);
         bool isInside = fullExe.Equals(fullSource, StringComparison.OrdinalIgnoreCase) ||

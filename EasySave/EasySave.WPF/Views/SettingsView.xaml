@@ -34,6 +34,14 @@
                      Margin="0,0,0,20"
                      Text="{Binding ExtensionsToEncrypt, UpdateSourceTrigger=PropertyChanged}"/>
 
+            <!-- Business Software -->
+            <TextBlock Text="{Binding BusinessSoftwareLabel}"
+                       FontSize="14"
+                       Margin="0,0,0,5"/>
+            <TextBox Height="35"
+                     Margin="0,0,0,20"
+                     Text="{Binding BusinessSoftware, UpdateSourceTrigger=PropertyChanged}"/>
+
             <!-- Save Button -->
             <Button Content="{Binding SaveSettingsText}"
                     Width="150"

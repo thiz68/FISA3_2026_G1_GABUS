@@ -456,7 +456,7 @@ public class MenuHandler
     private void ChangeLogFormat()
     {
         System.Console.Clear();
-        System.Console.WriteLine(_localization.GetString("current_log_format") + ": " + _logger.GetCurrentLogFormat().ToUpper());
+        System.Console.WriteLine(_localization.GetString("log_format") + ": " + _logger.GetCurrentLogFormat().ToUpper());
         System.Console.WriteLine("1. JSON");
         System.Console.WriteLine("2. XML");
         System.Console.WriteLine();

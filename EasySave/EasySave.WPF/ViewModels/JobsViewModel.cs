@@ -383,9 +383,8 @@ public class JobsViewModel : BaseViewModel
         var executionResult = _backupExecutor.ExecuteSequential(
             jobs,
             _logger,
-            _stateManager,
-            _localization);
-        var result = _backupExecutor.ExecuteSequential(jobs, _logger, _stateManager);
+            _stateManager);
+        //var result = _backupExecutor.ExecuteSequential(jobs, _logger, _stateManager);
 
         MessageBox.Show(
             _localization.GetString(executionResult),

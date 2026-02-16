@@ -1,4 +1,4 @@
-namespace EasySave.Core.Services;
+﻿namespace EasySave.Core.Services;
 
 using System.Diagnostics;
 using EasySave.Core.Models;
@@ -8,6 +8,9 @@ using EasySave.Core.Interfaces;
 //It supports full and differential backups
 public class FileBackupService
 {
+    //Process CryptoSoft
+    private readonly CryptoSoftRunner _cryptoRunner = new();
+    
     //Copy an entire dir from source to target
     //Returns true if backup succeeded, false if it failed (drive unavailable, etc.)
     public bool CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger, IStateManager stateManager, ILocalizationService localization)
@@ -135,24 +138,65 @@ public class FileBackupService
         long fileSize = fileInfo.Length;
         var stopwatch = Stopwatch.StartNew();
 
+        long encryptionTime = 0;
+
         try
         {
-            //Copy the file. "overwrite: true" means replace if it exists.
             File.Copy(sourceFile, targetFile, overwrite: true);
             stopwatch.Stop();
 
-            //Log successful
-            logger.LogFileTransfer(DateTime.Now, job.Name, sourceFile, targetFile, fileSize, stopwatch.ElapsedMilliseconds);
+            var settings = new ConfigManager().LoadSettings();
+
+            if (!string.IsNullOrWhiteSpace(settings.ExtensionsToEncrypt))
+            {
+                var extensions = settings.ExtensionsToEncrypt
+                    .Split(';', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(e => e.Trim().ToLower())
+                    .ToList();
+
+                var fileExtension = Path.GetExtension(targetFile).ToLower();
+
+                if (extensions.Contains(fileExtension))
+                {
+                    if (_cryptoRunner.IsCryptoSoftAvailable())
+                    {
+                        encryptionTime = _cryptoRunner.EncryptFile(targetFile);
+                    }
+                    else
+                    {
+                        encryptionTime = -1;
+                    }
+                }
+            }
+
+            logger.LogFileTransfer(
+                DateTime.Now,
+                job.Name,
+                sourceFile,
+                targetFile,
+                fileSize,
+                stopwatch.ElapsedMilliseconds,
+                encryptionTime
+            );
         }
         catch (Exception)
         {
-            //Problem
             stopwatch.Stop();
-            //Log failed
-            logger.LogFileTransfer(DateTime.Now, job.Name, sourceFile, targetFile, fileSize, -stopwatch.ElapsedMilliseconds);
+
+            logger.LogFileTransfer(
+                DateTime.Now,
+                job.Name,
+                sourceFile,
+                targetFile,
+                fileSize,
+                -stopwatch.ElapsedMilliseconds,
+                -1
+            );
         }
+
         return fileSize;
     }
+
 
     private (int fileCount, long totalSize) CalculateEligibleFiles(string sourceDir, string targetDir, string type)
     {

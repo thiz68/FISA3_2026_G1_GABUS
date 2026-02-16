@@ -8,4 +8,6 @@ public class AppSettings
 
     // Log file format (json/xml) - for future version 1.1
     public string LogFormat { get; set; } = "json";
+    
+    public string ExtensionsToEncrypt { get; set; } = string.Empty;
 }

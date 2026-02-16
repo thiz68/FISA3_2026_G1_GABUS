@@ -110,6 +110,9 @@ public class LocalizationService : ILocalizationService
             ["confirm_delete_title"] = "Confirm Delete",
             ["no_jobs_selected"] = "No jobs selected",
             ["select_jobs_to_execute"] = "Please select jobs to execute",
+            ["business_software"] = "Business Software (process name)",
+            ["business_software_detected"] = "Business software detected. Backup cannot start.",
+            ["business_software_stopped"] = "Backup stopped: business software detected",
         },
 
         // French dict
@@ -205,6 +208,9 @@ public class LocalizationService : ILocalizationService
             ["confirm_delete_title"] = "Confirmer la suppression",
             ["no_jobs_selected"] = "Aucun travail selectionne",
             ["select_jobs_to_execute"] = "Veuillez selectionner des travaux a executer",
+            ["business_software"] = "Logiciel metier (nom du processus)",
+            ["business_software_detected"] = "Logiciel metier detecte. Impossible de demarrer la sauvegarde.",
+            ["business_software_stopped"] = "Sauvegarde arretee : logiciel metier detecte",
         }
     };
 

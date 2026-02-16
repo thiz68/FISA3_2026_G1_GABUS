@@ -14,4 +14,7 @@ public interface ILogger
 
     // Initialize the logger (create log file if needed)
     void Initialize();
+
+    // Log when backup is stopped due to business software detection
+    void LogBusinessSoftwareStop(DateTime timestamp, string jobName, string businessSoftware);
 }

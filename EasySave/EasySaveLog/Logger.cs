@@ -82,6 +82,27 @@ public class Logger : ILogger
         SaveEntries(logFilePath, entries);
     }
 
+    // Logs when backup is stopped due to business software detection
+    public void LogBusinessSoftwareStop(DateTime timestamp, string jobName, string businessSoftware)
+    {
+        RefreshFormat();
+
+        var entry = new LogEntry
+        {
+            Timestamp = timestamp,
+            JobName = jobName,
+            SourceFile = $"STOPPED: Business software detected ({businessSoftware})",
+            TargetFile = string.Empty,
+            FileSize = 0,
+            TransferTimeMs = -1
+        };
+
+        var logFilePath = GetDailyLogFilePath();
+        var entries = LoadExistingEntries(logFilePath);
+        entries.Add(entry);
+        SaveEntries(logFilePath, entries);
+    }
+
     // Loads existing log entries depending on current format
     private List<LogEntry> LoadExistingEntries(string path)
     {

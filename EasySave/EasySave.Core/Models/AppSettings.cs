@@ -10,4 +10,6 @@ public class AppSettings
     public string LogFormat { get; set; } = "json";
     
     public string ExtensionsToEncrypt { get; set; } = string.Empty;
+
+    public string BusinessSoftware { get; set; } = string.Empty;
 }

@@ -65,6 +65,7 @@ public class JobsViewModel : BaseViewModel
     private readonly StateManager _stateManager;
     private readonly PathValidator _pathValidator;
     private readonly CryptoSoftRunner _cryptoRunner;
+    private readonly BusinessSoftwareChecker _businessChecker = new();
 
     // Observable collection of jobs for DataGrid binding
     public ObservableCollection<JobItemViewModel> Jobs { get; } = new();
@@ -361,7 +362,19 @@ public class JobsViewModel : BaseViewModel
     // Execute a list of jobs
     private void ExecuteJobs(List<IJob> jobs)
     {
-        //V�rification CryptoSoft
+        // Vérification Logiciel Métier
+        var settings = _configManager.LoadSettings();
+        if (_businessChecker.IsBusinessSoftwareRunning(settings.BusinessSoftware))
+        {
+            MessageBox.Show(
+                _localization.GetString("business_software_detected"),
+                "Info",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
+        //Vérification CryptoSoft
         if (!_cryptoRunner.IsCryptoSoftAvailable())
         {
             var result = MessageBox.Show(
@@ -380,14 +393,27 @@ public class JobsViewModel : BaseViewModel
             MessageBoxButton.OK,
             MessageBoxImage.Information);
 
+        Func<bool> shouldStop = () => _businessChecker.IsBusinessSoftwareRunning(settings.BusinessSoftware);
+
         var executionResult = _backupExecutor.ExecuteSequential(
             jobs,
             _logger,
-            _stateManager);
-        //var result = _backupExecutor.ExecuteSequential(jobs, _logger, _stateManager);
+            _stateManager,
+            shouldStop);
+
+        // Show specific message if stopped due to business software
+        string messageKey;
+        if (executionResult == "backup_failed" && shouldStop())
+        {
+            messageKey = "business_software_stopped";
+        }
+        else
+        {
+            messageKey = executionResult;
+        }
 
         MessageBox.Show(
-            _localization.GetString(executionResult),
+            _localization.GetString(messageKey),
             "Result",
             MessageBoxButton.OK,
             executionResult == "backup_completed"

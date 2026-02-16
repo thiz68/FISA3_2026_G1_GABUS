@@ -7,17 +7,17 @@ using System.Collections.Generic;
 // Format backup job lists from input
 public class BackupListFormatter
 {
-    private static ILocalizationService _localization = null!;
+    private static ILocalizationService? _localization;
 
-    public BackupListFormatter()
+    public BackupListFormatter(ILocalizationService localization)
     {
+        _localization = localization;
     }
 
     // Format and validate job list from arguments
     // Returns (success, message, list of jobs)
     public (bool, string, List<IJob>) FormatJobList(string arguments, IJobManager manager)
     {
-        _localization = new LocalizationService();
         var indexes = new HashSet<int>();
         var parts = arguments.Split(';', StringSplitOptions.RemoveEmptyEntries);
 

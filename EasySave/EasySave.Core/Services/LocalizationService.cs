@@ -29,7 +29,8 @@ public class LocalizationService : ILocalizationService
             ["menu_list"] = "4. List backup jobs",
             ["menu_execute"] = "5. Execute backup",
             ["menu_language"] = "6. Change language",
-            ["menu_exit"] = "7. Exit",
+            ["menu_log_format"] = "7. Change log format",
+            ["menu_exit"] = "8. Exit",
 
             // User input
             ["enter_choice"] = "Enter your choice: ",
@@ -56,6 +57,7 @@ public class LocalizationService : ILocalizationService
             ["inactive"] = "Inactive",
             ["completed"] = "Completed",
             ["failed"] = "Failed",
+            ["log_format_changed"] = "Log format changed to",
 
             // Errors
             ["error_max_jobs"] = "Error: Maximum 5 jobs allowed",
@@ -119,7 +121,8 @@ public class LocalizationService : ILocalizationService
             ["menu_list"] = "4. Lister les travaux",
             ["menu_execute"] = "5. Executer une sauvegarde",
             ["menu_language"] = "6. Changer la langue",
-            ["menu_exit"] = "7. Quitter",
+            ["menu_log_format"] = "7. Changer le format des logs",
+            ["menu_exit"] = "8. Quitter",
 
             // User input
             ["enter_choice"] = "Entrez votre choix: ",
@@ -141,12 +144,13 @@ public class LocalizationService : ILocalizationService
             ["file_copied"] = "Fichiers copies: {0}",
 
             // Infos
-            ["job_list_empty"] = "Aucun travail crees.",
+            ["job_list_empty"] = "Aucun travail cree.",
             ["goodbye"] = "A bientot!",
             ["active"] = "Actif",
             ["inactive"] = "Inactif",
             ["completed"] = "Complete",
             ["failed"] = "Echoue",
+            ["log_format_changed"] = "Format des logs changes en",
 
             // Errors
             ["error_max_jobs"] = "Erreur: Maximum 5 travaux autorises",
@@ -184,11 +188,11 @@ public class LocalizationService : ILocalizationService
             ["actions"] = "Actions",
             ["state_file_preview"] = "Fichier d'etat temps reel (Apercu)",
             ["log_file_preview"] = "Fichier Log journalier (Apercu)",
-            ["state_preview_placeholder"] = "L'apercu de l'état apparaitra ici...",
+            ["state_preview_placeholder"] = "L'apercu de l'etat apparaitra ici...",
             ["log_preview_placeholder_json"] = "L'apercu des logs en json apparaitra ici...",
             ["log_preview_placeholder_xml"] = "L'apercu des logs en xml apparaitra ici...",
             ["general_settings"] = "Parametres generaux",
-            ["log_format"] = "Format du Log",
+            ["log_format"] = "Format des logs",
             ["save_settings"] = "Enregistrer",
             ["settings_saved"] = "Parametres enregistres avec succes",
             ["cancel"] = "Annuler",

@@ -10,10 +10,13 @@ public class BackupListFormatterTests
 {
     private readonly BackupListFormatter _formatter;
     private readonly Mock<IJobManager> _mockJobManager;
+    private static ILocalizationService? _localization;
 
-    public BackupListFormatterTests()
+
+    public BackupListFormatterTests(ILocalizationService localization)
     {
-        _formatter = new BackupListFormatter();
+        _localization = localization;
+        _formatter = new BackupListFormatter(_localization);
         _mockJobManager = new Mock<IJobManager>();
 
         // Setup mock jobs

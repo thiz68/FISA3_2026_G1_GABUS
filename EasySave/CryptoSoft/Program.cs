@@ -21,7 +21,7 @@ internal class Program
                 try
                 {
                     encryptionService.EncryptFile(file);
-                    Console.WriteLine($"Fichier chiffré et original supprimé : {file}");
+                    Console.WriteLine($"Fichier chiffre et original supprime : {file}");
                 }
                 catch (Exception ex)
                 {
@@ -41,7 +41,7 @@ internal class Program
 
             Console.WriteLine("=== CryptoSoft ===");
             Console.WriteLine("1 - Chiffrer un fichier");
-            Console.WriteLine("2 - Déchiffrer un fichier");
+            Console.WriteLine("2 - Dechiffrer un fichier");
             Console.WriteLine("0 - Quitter");
             Console.Write("Votre choix : ");
 
@@ -59,12 +59,12 @@ internal class Program
                 {
                     case "1":
                         encryptionService.EncryptFile(filePath!);
-                        Console.WriteLine("\nChiffrement terminé. Fichier original supprimé.");
+                        Console.WriteLine("\nChiffrement termine. Fichier original supprime.");
                         break;
 
                     case "2":
                         encryptionService.DecryptFile(filePath!);
-                        Console.WriteLine("\nDéchiffrement terminé. Fichier .crypt supprimé.");
+                        Console.WriteLine("\nDechiffrement termine. Fichier .crypt supprime.");
                         break;
 
                     default:

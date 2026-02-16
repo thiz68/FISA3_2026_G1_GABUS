@@ -361,7 +361,7 @@ public class JobsViewModel : BaseViewModel
     {
         MessageBox.Show(_localization.GetString("backup_started"), "Info", MessageBoxButton.OK, MessageBoxImage.Information);
 
-        var result = _backupExecutor.ExecuteSequential(jobs, _logger, _stateManager, _localization);
+        var result = _backupExecutor.ExecuteSequential(jobs, _logger, _stateManager);
 
         MessageBox.Show(_localization.GetString(result), "Result", MessageBoxButton.OK,
             result == "backup_completed" ? MessageBoxImage.Information : MessageBoxImage.Warning);

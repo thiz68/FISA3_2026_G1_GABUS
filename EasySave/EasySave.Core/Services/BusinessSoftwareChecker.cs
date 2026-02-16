@@ -4,13 +4,22 @@ using System.Diagnostics;
 
 public class BusinessSoftwareChecker
 {
-    public bool IsBusinessSoftwareRunning(string processName)
+    public bool IsBusinessSoftwareRunning(string processNames)
     {
-        if (string.IsNullOrWhiteSpace(processName))
+        if (string.IsNullOrWhiteSpace(processNames))
             return false;
 
-        var name = processName.Replace(".exe", "", StringComparison.OrdinalIgnoreCase);
+        // Support multiple processes separated by ;
+        var names = processNames.Split(';', StringSplitOptions.RemoveEmptyEntries);
 
-        return Process.GetProcessesByName(name).Length > 0;
+        foreach (var processName in names)
+        {
+            var name = processName.Trim().Replace(".exe", "", StringComparison.OrdinalIgnoreCase);
+
+            if (Process.GetProcessesByName(name).Length > 0)
+                return true;
+        }
+
+        return false;
     }
 }

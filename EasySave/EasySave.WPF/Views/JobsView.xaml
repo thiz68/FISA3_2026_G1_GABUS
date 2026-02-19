@@ -3,175 +3,143 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:local="clr-namespace:EasySave.WPF.Views"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="900">
 
-    <Grid Margin="20">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition/>
+            <RowDefinition Height="14"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Top buttons -->
-        <StackPanel Orientation="Horizontal"
-                    Margin="0,0,0,10"
-                    Grid.Row="0">
+        <!-- Header -->
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="{Binding BackupJobsTitle, FallbackValue=Jobs}" Style="{StaticResource Text.Title}"/>
+            <TextBlock Text="Create, edit and execute backup jobs." Style="{StaticResource Text.Subtitle}" Margin="0,6,0,0"/>
+        </StackPanel>
 
+        <!-- Actions -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,0,0">
             <Button Content="{Binding AddJobText}"
-                    Width="100"
-                    Margin="5"
-                    Style="{StaticResource ActionButtonStyle}"
+                    Margin="6,0,0,0"
+                    Style="{StaticResource Button.Primary}"
                     Command="{Binding AddJobCommand}"/>
 
             <Button Content="{Binding ExecuteAllText}"
-                    Width="120"
-                    Margin="5"
-                    Style="{StaticResource ActionButtonStyle}"
+                    Margin="10,0,0,0"
                     Command="{Binding ExecuteAllCommand}"/>
 
             <Button Content="{Binding ExecuteSelectedText}"
-                    Width="140"
-                    Margin="5"
-                    Style="{StaticResource ActionButtonStyle}"
+                    Margin="10,0,0,0"
                     Command="{Binding ExecuteSelectedCommand}"/>
         </StackPanel>
 
-        <!-- Jobs DataGrid -->
-        <DataGrid Grid.Row="1"
-                  ItemsSource="{Binding Jobs}"
-                  SelectedItem="{Binding SelectedJob}"
-                  AutoGenerateColumns="False"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  SelectionMode="Single"
-                  IsReadOnly="True"
-                  GridLinesVisibility="Horizontal"
-                  HeadersVisibility="Column"
-                  AlternatingRowBackground="#F5F5F5">
+        <!-- DataGrid -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource Brush.Surface}"
+                BorderBrush="{DynamicResource Brush.Border}"
+                BorderThickness="1"
+                CornerRadius="14"
+                Padding="0">
 
-            <DataGrid.Columns>
-                <!-- Checkbox for selection -->
-                <DataGridTemplateColumn Width="40">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
-                                      HorizontalAlignment="Center"
-                                      VerticalAlignment="Center"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+            <DataGrid ItemsSource="{Binding Jobs}"
+                      SelectedItem="{Binding SelectedJob}"
+                      AutoGenerateColumns="False">
 
-                <!-- Name column -->
-                <DataGridTextColumn Header="{Binding DataContext.NameHeader, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                    Binding="{Binding Name}"
-                                    Width="*"/>
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Width="52">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
 
-                <!-- Source column -->
-                <DataGridTextColumn Header="{Binding DataContext.SourceHeader, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                    Binding="{Binding SourcePath}"
-                                    Width="2*"/>
+                    <DataGridTextColumn Header="{Binding DataContext.NameHeader, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        Binding="{Binding Name}" Width="*" />
 
-                <!-- Target column -->
-                <DataGridTextColumn Header="{Binding DataContext.TargetHeader, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                    Binding="{Binding TargetPath}"
-                                    Width="2*"/>
+                    <DataGridTextColumn Header="{Binding DataContext.SourceHeader, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        Binding="{Binding SourcePath}" Width="2*" />
 
-                <!-- Type column -->
-                <DataGridTextColumn Header="{Binding DataContext.TypeHeader, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                    Binding="{Binding TypeDisplay}"
-                                    Width="*"/>
+                    <DataGridTextColumn Header="{Binding DataContext.TargetHeader, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        Binding="{Binding TargetPath}" Width="2*" />
 
-                <!-- Actions column -->
-                <DataGridTemplateColumn Header="{Binding DataContext.ActionsHeader, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        Width="160">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
-                                <Button Content="{Binding DataContext.EditText, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        Width="60"
-                                        Margin="2"
-                                        Style="{StaticResource ActionButtonStyle}"
-                                        Command="{Binding DataContext.EditJobCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}"/>
-                                <Button Content="{Binding DataContext.DeleteText, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        Width="70"
-                                        Margin="2"
-                                        Style="{StaticResource DangerButtonStyle}"
-                                        Command="{Binding DataContext.DeleteJobCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
+                    <DataGridTextColumn Header="{Binding DataContext.TypeHeader, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        Binding="{Binding TypeDisplay}" Width="*" />
 
-        <!-- Add/Edit Dialog Overlay -->
-        <Grid Grid.RowSpan="2"
+                    <DataGridTemplateColumn Header="{Binding DataContext.ActionsHeader, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            Width="220">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Content="{Binding DataContext.EditText, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            Margin="0,0,8,0"
+                                            Command="{Binding DataContext.EditJobCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"/>
+
+                                    <Button Content="{Binding DataContext.DeleteText, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            Style="{StaticResource Button.Danger}"
+                                            Command="{Binding DataContext.DeleteJobCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+
+            </DataGrid>
+        </Border>
+
+        <!-- Dialog Overlay -->
+        <Grid Grid.RowSpan="3"
               Visibility="{Binding IsDialogOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
 
-            <!-- Semi-transparent background -->
-            <Border Background="#80000000"/>
+            <Border Background="#99000000"/>
 
-            <!-- Dialog box -->
-            <Border Background="White"
-                    CornerRadius="8"
-                    Padding="30"
-                    Width="500"
+            <Border Width="560"
+                    Background="{DynamicResource Brush.Surface}"
+                    BorderBrush="{DynamicResource Brush.Border}"
+                    BorderThickness="1"
+                    CornerRadius="16"
+                    Padding="18"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
 
                 <StackPanel>
-                    <TextBlock Text="{Binding AddJobText}"
-                               FontSize="20"
-                               FontWeight="Bold"
-                               Margin="0,0,0,20"/>
+                    <TextBlock Text="{Binding AddJobText}" Style="{StaticResource Text.Section}" Margin="0,0,0,14"/>
 
-                    <!-- Job Name -->
-                    <TextBlock Text="{Binding NameHeader}" Margin="0,0,0,5"/>
-                    <TextBox Text="{Binding DialogJobName, UpdateSourceTrigger=PropertyChanged}"
-                             Height="30"
-                             Margin="0,0,0,15"
-                             Padding="5"/>
+                    <TextBlock Text="{Binding NameHeader}" Style="{StaticResource Text.Subtitle}" Margin="0,0,0,6"/>
+                    <TextBox Text="{Binding DialogJobName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12"/>
 
-                    <!-- Source Path -->
-                    <TextBlock Text="{Binding SourceHeader}" Margin="0,0,0,5"/>
-                    <TextBox Text="{Binding DialogSourcePath, UpdateSourceTrigger=PropertyChanged}"
-                             Height="30"
-                             Margin="0,0,0,15"
-                             Padding="5"/>
+                    <TextBlock Text="{Binding SourceHeader}" Style="{StaticResource Text.Subtitle}" Margin="0,0,0,6"/>
+                    <TextBox Text="{Binding DialogSourcePath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12"/>
 
-                    <!-- Target Path -->
-                    <TextBlock Text="{Binding TargetHeader}" Margin="0,0,0,5"/>
-                    <TextBox Text="{Binding DialogTargetPath, UpdateSourceTrigger=PropertyChanged}"
-                             Height="30"
-                             Margin="0,0,0,15"
-                             Padding="5"/>
+                    <TextBlock Text="{Binding TargetHeader}" Style="{StaticResource Text.Subtitle}" Margin="0,0,0,6"/>
+                    <TextBox Text="{Binding DialogTargetPath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12"/>
 
-                    <!-- Type Selection -->
-                    <TextBlock Text="{Binding TypeHeader}" Margin="0,0,0,5"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                    <TextBlock Text="{Binding TypeHeader}" Style="{StaticResource Text.Subtitle}" Margin="0,0,0,6"/>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
                         <RadioButton Content="Full"
                                      IsChecked="{Binding DialogType, Converter={StaticResource BackupTypeConverter}, ConverterParameter=full}"
-                                     Margin="0,0,20,0"/>
+                                     Margin="0,0,18,0"/>
                         <RadioButton Content="Differential"
                                      IsChecked="{Binding DialogType, Converter={StaticResource BackupTypeConverter}, ConverterParameter=diff}"/>
                     </StackPanel>
 
-                    <!-- Buttons -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="Cancel"
-                                Width="80"
                                 Margin="0,0,10,0"
-                                Style="{StaticResource TopBarButtonStyle}"
                                 Command="{Binding CancelDialogCommand}"/>
                         <Button Content="Save"
-                                Width="80"
-                                Style="{StaticResource ActionButtonStyle}"
+                                Style="{StaticResource Button.Primary}"
                                 Command="{Binding SaveJobCommand}"/>
                     </StackPanel>
                 </StackPanel>
+
             </Border>
         </Grid>
     </Grid>

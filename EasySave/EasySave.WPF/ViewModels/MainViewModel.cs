@@ -5,11 +5,10 @@ using EasySave.Core.Interfaces;
 using EasySave.Core.Services;
 using EasySave.WPF.Commands;
 using EasySaveLog;
+using EasySave.WPF.Theme; // <-- AJOUT
 
-// Main ViewModel that manages navigation and shared services
 public class MainViewModel : BaseViewModel
 {
-    // Services shared across the application
     private readonly ILocalizationService _localization;
     private readonly IJobManager _jobManager;
     private readonly ConfigManager _configManager;
@@ -19,7 +18,6 @@ public class MainViewModel : BaseViewModel
     private readonly PathValidator _pathValidator;
     private readonly CryptoSoftRunner _cryptoRunner;
 
-    // Current view displayed in the main content area
     private BaseViewModel _currentViewModel = null!;
     public BaseViewModel CurrentViewModel
     {
@@ -27,12 +25,10 @@ public class MainViewModel : BaseViewModel
         set => SetProperty(ref _currentViewModel, value);
     }
 
-    // Child ViewModels
     public DashboardViewModel DashboardViewModel { get; }
     public JobsViewModel JobsViewModel { get; }
     public SettingsViewModel SettingsViewModel { get; }
 
-    // Navigation commands
     public ICommand NavigateToDashboardCommand { get; }
     public ICommand NavigateToJobsCommand { get; }
     public ICommand NavigateToSettingsCommand { get; }
@@ -40,7 +36,30 @@ public class MainViewModel : BaseViewModel
     public ICommand SetLanguageFrCommand { get; }
     public ICommand SetLanguageEnCommand { get; }
 
-    // Localized strings for UI binding
+    // --- AJOUT : thème ---
+    public ICommand ToggleThemeCommand { get; }
+
+    private bool _isDarkMode;
+    public bool IsDarkMode
+    {
+        get => _isDarkMode;
+        set
+        {
+            if (SetProperty(ref _isDarkMode, value))
+            {
+                ThemeToggleText = _isDarkMode ? "Light" : "Dark";
+            }
+        }
+    }
+
+    private string _themeToggleText = "Dark";
+    public string ThemeToggleText
+    {
+        get => _themeToggleText;
+        set => SetProperty(ref _themeToggleText, value);
+    }
+    // --- fin AJOUT ---
+
     private string _appTitle = string.Empty;
     public string AppTitle
     {
@@ -78,7 +97,6 @@ public class MainViewModel : BaseViewModel
 
     public MainViewModel()
     {
-        // Initialize services
         _localization = new LocalizationService();
         _jobManager = new JobManager(_localization);
         _configManager = new ConfigManager();
@@ -88,26 +106,20 @@ public class MainViewModel : BaseViewModel
         _pathValidator = new PathValidator();
         _cryptoRunner = new CryptoSoftRunner();
 
-        // Initialize logger
         _logger.Initialize();
         _logger.SetLogFormat(_configManager.LoadSettings().LogFormat);
 
-        // Load existing jobs from config
         _configManager.LoadJobs(_jobManager);
 
-        // Load settings and apply language
         var settings = _configManager.LoadSettings();
         _localization.SetLanguage(settings.Language);
 
-        // Subscribe to language changes
         _localization.LanguageChanged += OnLanguageChanged;
 
-        // Initialize child ViewModels
         DashboardViewModel = new DashboardViewModel(_localization, _stateManager, _logger, _configManager);
         JobsViewModel = new JobsViewModel(_localization, _jobManager, _configManager, _backupExecutor, _logger, _stateManager, _pathValidator, _cryptoRunner);
         SettingsViewModel = new SettingsViewModel(_localization, _configManager);
 
-        // Initialize commands
         NavigateToDashboardCommand = new RelayCommand(_ => NavigateToDashboard());
         NavigateToJobsCommand = new RelayCommand(_ => NavigateToJobs());
         NavigateToSettingsCommand = new RelayCommand(_ => NavigateToSettings());
@@ -115,14 +127,23 @@ public class MainViewModel : BaseViewModel
         SetLanguageFrCommand = new RelayCommand(_ => SetLanguage("fr"));
         SetLanguageEnCommand = new RelayCommand(_ => SetLanguage("en"));
 
-        // Set initial view to Dashboard
+        // --- AJOUT : commande thème + thème initial ---
+        ToggleThemeCommand = new RelayCommand(_ => ToggleTheme());
+        IsDarkMode = false;
+        ThemeManager.Apply(ThemeManager.AppTheme.Light);
+        // --- fin AJOUT ---
+
         CurrentViewModel = DashboardViewModel;
 
-        // Load localized strings
         UpdateLocalizedStrings();
     }
 
-    // Navigation methods
+    private void ToggleTheme()
+    {
+        IsDarkMode = !IsDarkMode;
+        ThemeManager.Apply(IsDarkMode ? ThemeManager.AppTheme.Dark : ThemeManager.AppTheme.Light);
+    }
+
     private void NavigateToDashboard()
     {
         DashboardViewModel.RefreshContent();
@@ -142,7 +163,6 @@ public class MainViewModel : BaseViewModel
 
     private void ExitApplication()
     {
-        // Save jobs before exiting
         _configManager.SaveJobs(_jobManager);
         System.Windows.Application.Current.Shutdown();
     }
@@ -151,17 +171,14 @@ public class MainViewModel : BaseViewModel
     {
         _localization.SetLanguage(languageCode);
 
-        // Save language preference
         var settings = _configManager.LoadSettings();
         settings.Language = languageCode;
         _configManager.SaveSettings(settings);
     }
 
-    // Called when language changes to update all localized strings
     private void OnLanguageChanged(object? sender, EventArgs e)
     {
         UpdateLocalizedStrings();
-        // Update child ViewModels
         DashboardViewModel.UpdateLocalizedStrings();
         JobsViewModel.UpdateLocalizedStrings();
         SettingsViewModel.UpdateLocalizedStrings();
@@ -175,5 +192,4 @@ public class MainViewModel : BaseViewModel
         SettingsText = _localization.GetString("settings");
         ExitText = _localization.GetString("exit");
     }
-
 }

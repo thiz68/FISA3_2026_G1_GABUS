@@ -1,130 +1,27 @@
 <Application x:Class="EasySave.WPF.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:EasySave.WPF"
              xmlns:converters="clr-namespace:EasySave.WPF.Converters"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-        <!-- Converters -->
-        <converters:BackupTypeConverter x:Key="BackupTypeConverter"/>
-        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
 
-        <!-- Colors -->
-        <SolidColorBrush x:Key="PrimaryColor" Color="#2C3E50"/>
-        <SolidColorBrush x:Key="SecondaryColor" Color="#34495E"/>
-        <SolidColorBrush x:Key="AccentColor" Color="#3498DB"/>
-        <SolidColorBrush x:Key="TextColor" Color="White"/>
 
-        <!-- Button Style -->
-        <Style x:Key="MenuButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="15,10"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                Padding="{TemplateBinding Padding}"
-                                CornerRadius="5">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#4A6278"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#3498DB"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+                <ResourceDictionary Source="Resources/Theme/Colors.Light.xaml" />
 
-        <!-- Top Bar Button Style -->
-        <Style x:Key="TopBarButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#4A6278"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="10,5"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                Padding="{TemplateBinding Padding}"
-                                CornerRadius="3">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#5D7A91"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#3498DB"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+  
+                <ResourceDictionary Source="Resources/Theme/Brushes.xaml" />
+                <ResourceDictionary Source="Resources/Theme/Typography.xaml" />
+                <ResourceDictionary Source="Resources/Theme/Controls.xaml" />
+                <ResourceDictionary Source="Resources/Theme/DataGrid.xaml" />
 
-        <!-- Action Button Style -->
-        <Style x:Key="ActionButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#3498DB"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="15,8"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                Padding="{TemplateBinding Padding}"
-                                CornerRadius="3">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#2980B9"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#1F6391"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+            </ResourceDictionary.MergedDictionaries>
 
-        <!-- Danger Button Style -->
-        <Style x:Key="DangerButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#E74C3C"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="10,5"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                Padding="{TemplateBinding Padding}"
-                                CornerRadius="3">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#C0392B"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#A93226"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+
+            <converters:BackupTypeConverter x:Key="BackupTypeConverter"/>
+            <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

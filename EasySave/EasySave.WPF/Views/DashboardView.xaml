@@ -3,60 +3,62 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:local="clr-namespace:EasySave.WPF.Views"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="900">
 
-    <Grid Margin="20">
-        <StackPanel>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="16"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="16"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-            <!-- Dashboard Title -->
-            <TextBlock Text="{Binding DashboardTitle}"
-                       FontSize="24"
-                       FontWeight="Bold"
-                       Margin="0,0,0,20"/>
-
-            <!-- State File Preview -->
-            <Border BorderBrush="Gray"
-                    BorderThickness="1"
-                    Padding="15"
-                    Margin="0,0,0,10">
-
-                <StackPanel>
-                    <TextBlock Text="{Binding StateFileTitle}"
-                               FontWeight="Bold"
-                               Margin="0,0,0,10"/>
-                    <TextBox Height="200"
-                             TextWrapping="Wrap"
-                             VerticalScrollBarVisibility="Auto"
-                             HorizontalScrollBarVisibility="Auto"
-                             Text="{Binding StateContent, Mode=OneWay}"
-                             IsReadOnly="True"
-                             FontFamily="Consolas"
-                             FontSize="12"/>
-                </StackPanel>
-            </Border>
-
-            <!-- Log File Preview -->
-            <Border BorderBrush="Gray"
-                    BorderThickness="1"
-                    Padding="15">
-
-                <StackPanel>
-                    <TextBlock Text="{Binding LogFileTitle}"
-                               FontWeight="Bold"
-                               Margin="0,0,0,10"/>
-                    <TextBox Height="200"
-                             TextWrapping="Wrap"
-                             VerticalScrollBarVisibility="Auto"
-                             HorizontalScrollBarVisibility="Auto"
-                             Text="{Binding LogContent, Mode=OneWay}"
-                             IsReadOnly="True"
-                             FontFamily="Consolas"
-                             FontSize="12"/>
-                </StackPanel>
-            </Border>
-
+        <StackPanel Grid.Row="0">
+            <TextBlock Text="{Binding DashboardTitle}" Style="{StaticResource Text.Title}"/>
+            <TextBlock Text="{Binding StateFileTitle}" Style="{StaticResource Text.Subtitle}" Margin="0,6,0,0"/>
         </StackPanel>
+
+        <!-- State -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource Brush.Surface}"
+                BorderBrush="{DynamicResource Brush.Border}"
+                BorderThickness="1"
+                CornerRadius="14"
+                Padding="14">
+            <StackPanel>
+                <TextBlock Text="{Binding StateFileTitle}" Style="{StaticResource Text.Section}" Margin="0,0,0,10"/>
+                <TextBox Height="220"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Auto"
+                         Text="{Binding StateContent, Mode=OneWay}"
+                         IsReadOnly="True"
+                         FontFamily="{StaticResource Font.Mono}"
+                         FontSize="12"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Log -->
+        <Border Grid.Row="4"
+                Background="{DynamicResource Brush.Surface}"
+                BorderBrush="{DynamicResource Brush.Border}"
+                BorderThickness="1"
+                CornerRadius="14"
+                Padding="14">
+            <StackPanel>
+                <TextBlock Text="{Binding LogFileTitle}" Style="{StaticResource Text.Section}" Margin="0,0,0,10"/>
+                <TextBox Height="220"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Auto"
+                         Text="{Binding LogContent, Mode=OneWay}"
+                         IsReadOnly="True"
+                         FontFamily="{StaticResource Font.Mono}"
+                         FontSize="12"/>
+            </StackPanel>
+        </Border>
+
     </Grid>
 </UserControl>

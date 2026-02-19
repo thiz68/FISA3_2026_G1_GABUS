@@ -1,11 +1,12 @@
 namespace EasySave.WPF.ViewModels;
 
+using System;
 using System.Windows.Input;
 using EasySave.Core.Interfaces;
 using EasySave.Core.Services;
 using EasySave.WPF.Commands;
 using EasySaveLog;
-using EasySave.WPF.Theme; // <-- AJOUT
+using EasySave.WPF.Theme;
 
 public class MainViewModel : BaseViewModel
 {
@@ -36,7 +37,7 @@ public class MainViewModel : BaseViewModel
     public ICommand SetLanguageFrCommand { get; }
     public ICommand SetLanguageEnCommand { get; }
 
-    // --- AJOUT : thème ---
+    // Theme
     public ICommand ToggleThemeCommand { get; }
 
     private bool _isDarkMode;
@@ -58,7 +59,6 @@ public class MainViewModel : BaseViewModel
         get => _themeToggleText;
         set => SetProperty(ref _themeToggleText, value);
     }
-    // --- fin AJOUT ---
 
     private string _appTitle = string.Empty;
     public string AppTitle
@@ -127,11 +127,11 @@ public class MainViewModel : BaseViewModel
         SetLanguageFrCommand = new RelayCommand(_ => SetLanguage("fr"));
         SetLanguageEnCommand = new RelayCommand(_ => SetLanguage("en"));
 
-        // --- AJOUT : commande thème + thème initial ---
+        // Theme: Light by default at startup
         ToggleThemeCommand = new RelayCommand(_ => ToggleTheme());
         IsDarkMode = false;
+        ThemeToggleText = "Dark";
         ThemeManager.Apply(ThemeManager.AppTheme.Light);
-        // --- fin AJOUT ---
 
         CurrentViewModel = DashboardViewModel;
 

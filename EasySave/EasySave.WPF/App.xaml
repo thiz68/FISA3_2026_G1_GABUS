@@ -3,22 +3,22 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:converters="clr-namespace:EasySave.WPF.Converters"
              StartupUri="MainWindow.xaml">
+
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
 
+                <!-- Theme: Light by default -->
+                <ResourceDictionary Source="Resources/Theme/Theme.Light.xaml" />
 
-                <ResourceDictionary Source="Resources/Theme/Colors.Light.xaml" />
-
-  
-                <ResourceDictionary Source="Resources/Theme/Brushes.xaml" />
+                <!-- UI resources -->
                 <ResourceDictionary Source="Resources/Theme/Typography.xaml" />
                 <ResourceDictionary Source="Resources/Theme/Controls.xaml" />
                 <ResourceDictionary Source="Resources/Theme/DataGrid.xaml" />
 
             </ResourceDictionary.MergedDictionaries>
 
-
+            <!-- Converters (already in your project) -->
             <converters:BackupTypeConverter x:Key="BackupTypeConverter"/>
             <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
 

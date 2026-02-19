@@ -12,8 +12,8 @@ public static class ThemeManager
         Dark
     }
 
-    private const string LightSource = "Resources/Theme/Colors.Light.xaml";
-    private const string DarkSource  = "Resources/Theme/Colors.Dark.xaml";
+    private const string LightSource = "Resources/Theme/Theme.Light.xaml";
+    private const string DarkSource  = "Resources/Theme/Theme.Dark.xaml";
 
     public static AppTheme CurrentTheme { get; private set; } = AppTheme.Light;
 
@@ -24,16 +24,16 @@ public static class ThemeManager
 
         var merged = Application.Current.Resources.MergedDictionaries;
 
-        // Retire le dictionnaire Colors.* existant (Light ou Dark)
+        // Remove current Theme.* dictionary if present
         var existing = merged.FirstOrDefault(d =>
             d.Source != null &&
-            (d.Source.OriginalString.EndsWith("Colors.Light.xaml", StringComparison.OrdinalIgnoreCase) ||
-             d.Source.OriginalString.EndsWith("Colors.Dark.xaml", StringComparison.OrdinalIgnoreCase)));
+            (d.Source.OriginalString.EndsWith("Theme.Light.xaml", StringComparison.OrdinalIgnoreCase) ||
+             d.Source.OriginalString.EndsWith("Theme.Dark.xaml", StringComparison.OrdinalIgnoreCase)));
 
         if (existing != null)
             merged.Remove(existing);
 
-        // Ajoute le nouveau dictionnaire Colors.* en 1er (important: les Brushes dépendent des Colors)
+        // Insert new theme dictionary at index 0 (important: other dictionaries depend on these keys)
         var source = theme == AppTheme.Dark ? DarkSource : LightSource;
         merged.Insert(0, new ResourceDictionary { Source = new Uri(source, UriKind.Relative) });
 

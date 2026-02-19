@@ -27,7 +27,7 @@
             <views:SettingsView/>
         </DataTemplate>
 
-        <!-- Style bouton nav -->
+        <!-- Sidebar buttons -->
         <Style x:Key="NavButton" TargetType="Button">
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="Background" Value="Transparent"/>
@@ -80,7 +80,7 @@
                     <Button Content="FR" Width="44" Margin="6,0" Command="{Binding SetLanguageFrCommand}"/>
                     <Button Content="EN" Width="44" Margin="6,0" Command="{Binding SetLanguageEnCommand}"/>
 
-                    <!-- Toggle Theme -->
+                    <!-- Theme toggle -->
                     <Button Content="{Binding ThemeToggleText}"
                             Width="70"
                             Margin="10,0,6,0"
@@ -95,7 +95,7 @@
         </Border>
 
         <!-- MAIN AREA -->
-        <Grid Grid.Row="1" Margin="18,18,18,18">
+        <Grid Grid.Row="1" Margin="18">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="260"/>
                 <ColumnDefinition Width="18"/>
@@ -128,6 +128,5 @@
                 <ContentControl Content="{Binding CurrentViewModel}"/>
             </Border>
         </Grid>
-
     </Grid>
 </Window>

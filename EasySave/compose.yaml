@@ -1,0 +1,14 @@
+﻿services:
+  logserver:
+    build:
+      context: ./EasySave.LogServer
+      dockerfile: Dockerfile
+    container_name: G1_easysave_logserver
+    ports:
+      - "5000:5000"
+    volumes:
+      - log_data:/app/CentralLogs
+    restart: unless-stopped
+
+volumes:
+  log_data:

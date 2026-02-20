@@ -3,186 +3,180 @@ namespace EasySaveLog;
 using EasySave.Core.Interfaces;
 using EasySave.Core.Models;
 using EasySave.Core.Services;
-using System.Text.Json;
-using System.Xml.Serialization;
 
-// This class handles logging for the backup application
 public class Logger : ILogger
 {
     private readonly ConfigManager _configManager;
+    private ILogWriter _writer = null!;
+    private ILogReader _reader = null!;
     private readonly string _logDirectory;
-    private string _logFormat = "json"; // Default format
+    private static readonly SemaphoreSlim _writeSemaphore = new(1, 1);
 
-    // Constructor
+    /// <summary>
+    /// Event raised when remote server is unreachable
+    /// </summary>
+    public static event EventHandler<string>? RemoteServerUnreachable;
+
     public Logger(ConfigManager configManager)
     {
         _configManager = configManager;
-        // Get the application's base directory
-        var appDirectory = AppDomain.CurrentDomain.BaseDirectory;
-        // Build Logs folder path
-        _logDirectory = Path.Combine(appDirectory, "Logs");
-        RefreshFormat();
+
+        _logDirectory = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Logs");
+
+        Configure();
+
+        // Subscribe to CompositeLogWriter events
+        CompositeLogWriter.RemoteServerUnreachable += (sender, message) =>
+        {
+            RemoteServerUnreachable?.Invoke(this, message);
+        };
     }
 
-    // Get log format
-    public string GetCurrentLogFormat() => _logFormat;
-
-    // Sets the desired log format ("json" or "xml")
-    public void SetLogFormat(string format)
+    private void Configure()
     {
-        _logFormat = format.ToLower() == "xml" ? "xml" : "json";
+        var settings = _configManager.LoadSettings();
+
+        var localWriter = new LocalLogWriter(_logDirectory, () => settings.LogFormat);
+        var remoteWriter = new RemoteLogWriter(settings.LogServerIp, settings.LogServerPort);
+
+        var localReader = new LocalLogReader(_logDirectory, () => settings.LogFormat);
+        var remoteReader = new RemoteLogReader(settings.LogServerIp, settings.LogServerPort, () => settings.LogFormat);
+
+        switch (settings.LogStorageMode)
+        {
+            case LogStorageMode.LocalOnly:
+                _writer = localWriter;
+                _reader = localReader;
+                break;
+
+            case LogStorageMode.RemoteOnly:
+                _writer = remoteWriter;
+                _reader = remoteReader;
+                break;
+
+            case LogStorageMode.LocalAndRemote:
+                _writer = new CompositeLogWriter(localWriter, remoteWriter);
+                _reader = localReader;
+                break;
+        }
     }
 
-    // Creates log folder if it doesn't exist (called once at startup)
+    /// <summary>
+    /// Log a file transfer - returns Task to allow awaiting completion
+    /// </summary>
+    public async Task LogFileTransferAsync(
+        DateTime timestamp,
+        string jobName,
+        string sourceFile,
+        string targetFile,
+        long fileSize,
+        long transferTimeMs,
+        long encryptionTimeMs)
+    {
+        await _writeSemaphore.WaitAsync();
+
+        try
+        {
+            Configure();
+
+            var settings = _configManager.LoadSettings();
+            var format = settings.LogFormat;
+
+            var entry = new LogEntry
+            {
+                Timestamp = timestamp,
+                JobName = jobName,
+                SourceFile = sourceFile,
+                TargetFile = targetFile,
+                FileSize = fileSize,
+                TransferTimeMs = transferTimeMs,
+                EncryptionTimeMs = encryptionTimeMs
+            };
+
+            await _writer.WriteAsync(entry, format);
+        }
+        finally
+        {
+            _writeSemaphore.Release();
+        }
+    }
+
+    /// <summary>
+    /// Legacy synchronous method - fires and forgets but ensures completion
+    /// </summary>
+    public void LogFileTransfer(
+        DateTime timestamp,
+        string jobName,
+        string sourceFile,
+        string targetFile,
+        long fileSize,
+        long transferTimeMs,
+        long encryptionTimeMs)
+    {
+        // Use Task.Run to avoid blocking, but ensure the write completes
+        Task.Run(async () =>
+        {
+            try
+            {
+                await LogFileTransferAsync(timestamp, jobName, sourceFile, targetFile,
+                    fileSize, transferTimeMs, encryptionTimeMs);
+            }
+            catch
+            {
+                // Silently ignore errors in legacy method
+            }
+        }).Wait(); // Wait for completion to ensure log is written
+    }
+
+    public async Task<string> ReadCurrentLogAsync()
+    {
+        Configure();
+        return await _reader.ReadCurrentLogAsync();
+    }
+
     public void Initialize()
     {
-        // CreateDirectory is idempotent
         Directory.CreateDirectory(_logDirectory);
     }
 
-    private void RefreshFormat()
+    public void SetLogFormat(string format) { }
+
+    public string GetCurrentLogFormat()
+        => _configManager.LoadSettings().LogFormat;
+
+    public void LogBusinessSoftwareStop(
+        DateTime timestamp,
+        string jobName,
+        string businessSoftware)
     {
-        _logFormat = _configManager.LoadSettings().LogFormat.ToLower();
+        LogFileTransfer(
+            timestamp,
+            jobName,
+            $"STOPPED: {businessSoftware}",
+            string.Empty,
+            0,
+            -1,
+            0);
     }
 
-    // Logs file transfer information
-    // - timestamp: when the transfer happened
-    // - jobName: name of the backup job
-    // - sourceFile: original file path
-    // - targetFile: destination file path
-    // - fileSize: size of the file in bytes
-    // - transferTimeMs: how long the transfer took in milliseconds
-    // - encryptionTimeMs: how long the encryption was going
-    public void LogFileTransfer(DateTime timestamp, string jobName, string sourceFile, string targetFile, long fileSize,
-        long transferTimeMs, long encryptionTimeMs = 0)
+    /// <summary>
+    /// Get current log storage mode
+    /// </summary>
+    public LogStorageMode GetLogStorageMode()
+        => _configManager.LoadSettings().LogStorageMode;
+
+    /// <summary>
+    /// Check if remote server is configured and reachable
+    /// </summary>
+    public async Task<bool> IsRemoteServerReachableAsync()
     {
+        var settings = _configManager.LoadSettings();
+        if (settings.LogStorageMode == LogStorageMode.LocalOnly)
+            return true; // Not using remote, so "reachable" is N/A
 
-        RefreshFormat();
-
-        var entry = new LogEntry
-        {
-            Timestamp = timestamp,
-            JobName = jobName,
-            SourceFile = sourceFile,
-            TargetFile = targetFile,
-            FileSize = fileSize,
-            TransferTimeMs = transferTimeMs,
-            EncryptionTimeMs = encryptionTimeMs
-        };
-
-        //Path to log file
-        var logFilePath = GetDailyLogFilePath();
-
-        // Load existing entries or start with empty list
-        var entries = LoadExistingEntries(logFilePath);
-
-        entries.Add(entry);
-
-        // Save updated entries in the selected format
-        SaveEntries(logFilePath, entries);
-    }
-
-    // Logs when backup is stopped due to business software detection
-    public void LogBusinessSoftwareStop(DateTime timestamp, string jobName, string businessSoftware)
-    {
-        RefreshFormat();
-
-        var entry = new LogEntry
-        {
-            Timestamp = timestamp,
-            JobName = jobName,
-            SourceFile = $"STOPPED: Business software detected ({businessSoftware})",
-            TargetFile = string.Empty,
-            FileSize = 0,
-            TransferTimeMs = -1
-        };
-
-        var logFilePath = GetDailyLogFilePath();
-        var entries = LoadExistingEntries(logFilePath);
-        entries.Add(entry);
-        SaveEntries(logFilePath, entries);
-    }
-
-    // Loads existing log entries depending on current format
-    private List<LogEntry> LoadExistingEntries(string path)
-    {
-        if (!File.Exists(path)) return new List<LogEntry>();
-
-        try
-        {
-            var content = File.ReadAllText(path);
-
-            if (_logFormat == "xml")
-            {
-                var serializer = new XmlSerializer(typeof(List<LogEntry>));
-                using var reader = new StringReader(content);
-                var result = serializer.Deserialize(reader) as List<LogEntry>;
-                return result ?? new List<LogEntry>();
-            }
-            else // json
-            {
-                return JsonSerializer.Deserialize<List<LogEntry>>(content) ?? new List<LogEntry>();
-            }
-        }
-        catch (Exception)
-        {
-            // Return empty list on any read/deserialization error
-            return new List<LogEntry>();
-        }
-    }
-
-    // Saves the list of entries in the current format (JSON or XML)
-    private void SaveEntries(string path, List<LogEntry> entries)
-    {
-        try
-        {
-            string content;
-
-            if (_logFormat == "xml")
-            {
-                var serializer = new XmlSerializer(typeof(List<LogEntry>));
-                using var writer = new StringWriter();
-                serializer.Serialize(writer, entries);
-                content = writer.ToString();
-            }
-            else // json
-            {
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                content = JsonSerializer.Serialize(entries, options);
-            }
-
-            File.WriteAllText(path, content);
-        }
-        catch (IOException)
-        {
-        }
-    }
-
-    // Returns the path of the current log file
-    private string GetDailyLogFilePath()
-    {
-        var extension = _logFormat == "xml" ? ".xml" : ".json";
-        var fileName = DateTime.Now.ToString("yyyy-MM-dd") + extension;
-        return Path.Combine(_logDirectory, fileName);
-    }
-
-    // Reads the current log file content (for dashbaord)
-    public string ReadLogFileContent()
-    {
- 
-        RefreshFormat();
-
-        try
-        {
-            var logFilePath = GetDailyLogFilePath();
-            if (File.Exists(logFilePath))
-            {
-                return File.ReadAllText(logFilePath);
-            }
-        }
-        catch (IOException)
-        {
-        }
-        return string.Empty;
+        var remoteWriter = new RemoteLogWriter(settings.LogServerIp, settings.LogServerPort);
+        return await remoteWriter.IsServerReachableAsync();
     }
 }

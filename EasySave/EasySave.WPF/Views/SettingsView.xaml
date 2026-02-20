@@ -41,7 +41,18 @@
             <TextBox Height="35"
                      Margin="0,0,0,20"
                      Text="{Binding BusinessSoftware, UpdateSourceTrigger=PropertyChanged}"/>
+            
+            <!-- LOGS -->
+            <TextBlock Text="Log Storage Mode"/>
+            <ComboBox ItemsSource="{Binding LogStorageModes}"
+                      SelectedIndex="{Binding SelectedLogStorageModeIndex}"/>
 
+            <TextBlock Text="Server IP"/>
+            <TextBox Text="{Binding LogServerIp}"/>
+
+            <TextBlock Text="Server Port"/>
+            <TextBox Text="{Binding LogServerPort}"/>
+            
             <!-- Save Button -->
             <Button Content="{Binding SaveSettingsText}"
                     Width="150"

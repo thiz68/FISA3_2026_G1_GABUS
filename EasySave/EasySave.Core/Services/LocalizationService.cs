@@ -115,6 +115,12 @@ public class LocalizationService : ILocalizationService
             ["business_software"] = "Business Software (process name)",
             ["business_software_detected"] = "Business software detected. Backup cannot start.",
             ["business_software_stopped"] = "Backup stopped: business software detected",
+
+            // Server status
+            ["server_unreachable"] = "Log server unreachable",
+            ["server_connected"] = "Log server connected",
+            ["server_unreachable_message"] = "The log server is not reachable. Logs will be saved locally only.",
+            ["warning"] = "Warning",
         },
 
         // French dict
@@ -215,6 +221,12 @@ public class LocalizationService : ILocalizationService
             ["business_software"] = "Logiciel metier (nom du processus)",
             ["business_software_detected"] = "Logiciel metier detecte. Impossible de demarrer la sauvegarde.",
             ["business_software_stopped"] = "Sauvegarde arretee : logiciel metier detecte",
+
+            // Server status
+            ["server_unreachable"] = "Serveur de logs inaccessible",
+            ["server_connected"] = "Serveur de logs connecte",
+            ["server_unreachable_message"] = "Le serveur de logs est inaccessible. Les logs seront enregistres localement uniquement.",
+            ["warning"] = "Avertissement",
         }
     };
 

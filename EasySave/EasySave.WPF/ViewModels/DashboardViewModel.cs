@@ -58,22 +58,32 @@ public class DashboardViewModel : BaseViewModel
         _logger = logger;
         _configManager = configManager;
 
-        UpdateLocalizedStrings();
-        RefreshContent();
+        UpdateLocalizedStringsAsync();
+        
+        _ = RefreshContentAsync();
     }
 
     // Rafraichir le contenu en fonction du settings de format de log
-    public void RefreshContent()
+    public async Task RefreshContentAsync()
     {
+        // Récupération état local
         var stateContent = _stateManager.ReadStateFileContent();
         StateContent = string.IsNullOrEmpty(stateContent)
             ? _localization.GetString("state_preview_placeholder")
             : stateContent;
 
-        // Log content + placeholder
-        var logContent = _logger.ReadLogFileContent();
-        var format = _logger.GetCurrentLogFormat();
+        // Récupération logs
+        string logContent;
+        try
+        {
+            logContent = await _logger.ReadCurrentLogAsync();
+        }
+        catch
+        {
+            logContent = string.Empty;
+        }
 
+        var format = _logger.GetCurrentLogFormat();
         string placeholderKey = format == "xml"
             ? "log_preview_placeholder_xml"
             : "log_preview_placeholder_json";
@@ -87,7 +97,7 @@ public class DashboardViewModel : BaseViewModel
     }
 
     // Update localized strings when language changes or after settings update
-    public void UpdateLocalizedStrings()
+    public async Task UpdateLocalizedStringsAsync()
     {
         DashboardTitle = _localization.GetString("dashboard");
         StateFileTitle = _localization.GetString("state_file_preview");
@@ -95,14 +105,23 @@ public class DashboardViewModel : BaseViewModel
         var format = _logger.GetCurrentLogFormat().ToUpper();
         LogFileTitle = $"{_localization.GetString("log_file_preview")} ({format})";
 
-        // Re-apply placeholder if empty
-        var logContent = _logger.ReadLogFileContent();
-        if (string.IsNullOrEmpty(logContent))
+        // Mettre à jour le contenu log
+        string logContent;
+        try
         {
-            string placeholderKey = format.ToLower() == "xml"
-                ? "log_preview_placeholder_xml"
-                : "log_preview_placeholder_json";
-            LogContent = _localization.GetString(placeholderKey);
+            logContent = await _logger.ReadCurrentLogAsync();
         }
+        catch
+        {
+            logContent = string.Empty;
+        }
+
+        string placeholderKey = format.ToLower() == "xml"
+            ? "log_preview_placeholder_xml"
+            : "log_preview_placeholder_json";
+
+        LogContent = string.IsNullOrEmpty(logContent)
+            ? _localization.GetString(placeholderKey)
+            : logContent;
     }
 }

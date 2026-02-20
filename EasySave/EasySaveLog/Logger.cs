@@ -12,13 +12,17 @@ public class Logger : ILogger
     private readonly ConfigManager _configManager;
     private readonly string _logDirectory;
     private string _logFormat = "json"; // Default format
+                                        // Lock object for synchronizing access to the log file in multi-threaded environment
+    private readonly object _logLock = new object();
 
     // Constructor
     public Logger(ConfigManager configManager)
     {
         _configManager = configManager;
+
         // Get the application's base directory
         var appDirectory = AppDomain.CurrentDomain.BaseDirectory;
+
         // Build Logs folder path
         _logDirectory = Path.Combine(appDirectory, "Logs");
         RefreshFormat();
@@ -54,11 +58,11 @@ public class Logger : ILogger
     // - transferTimeMs: how long the transfer took in milliseconds
     // - encryptionTimeMs: how long the encryption was going
     public void LogFileTransfer(DateTime timestamp, string jobName, string sourceFile, string targetFile, long fileSize,
-        long transferTimeMs, long encryptionTimeMs = 0)
+    long transferTimeMs, long encryptionTimeMs = 0)
     {
-
         RefreshFormat();
 
+        // Create a log entry object
         var entry = new LogEntry
         {
             Timestamp = timestamp,
@@ -70,46 +74,31 @@ public class Logger : ILogger
             EncryptionTimeMs = encryptionTimeMs
         };
 
-        //Path to log file
-        var logFilePath = GetDailyLogFilePath();
-
-        // Load existing entries or start with empty list
-        var entries = LoadExistingEntries(logFilePath);
-
-        entries.Add(entry);
-
-        // Save updated entries in the selected format
-        SaveEntries(logFilePath, entries);
-    }
-
-    // Logs when backup is stopped due to business software detection
-    public void LogBusinessSoftwareStop(DateTime timestamp, string jobName, string businessSoftware)
-    {
-        RefreshFormat();
-
-        var entry = new LogEntry
+        // Synchronize access to the log file
+        lock (_logLock)
         {
-            Timestamp = timestamp,
-            JobName = jobName,
-            SourceFile = $"STOPPED: Business software detected ({businessSoftware})",
-            TargetFile = string.Empty,
-            FileSize = 0,
-            TransferTimeMs = -1
-        };
+            // Get the path to the daily log file
+            var logFilePath = GetDailyLogFilePath();
 
-        var logFilePath = GetDailyLogFilePath();
-        var entries = LoadExistingEntries(logFilePath);
-        entries.Add(entry);
-        SaveEntries(logFilePath, entries);
+            // Load existing entries or create a new list
+            var entries = LoadEntries(logFilePath);
+            // Add the new entry
+            entries.Add(entry);
+
+            // Save the updated list
+            SaveEntries(logFilePath, entries);
+        }
     }
 
-    // Loads existing log entries depending on current format
-    private List<LogEntry> LoadExistingEntries(string path)
+    // Loads existing log entries from the file
+    private List<LogEntry> LoadEntries(string path)
     {
-        if (!File.Exists(path)) return new List<LogEntry>();
-
         try
         {
+            if (!File.Exists(path))
+            {
+                return new List<LogEntry>();
+            }
             var content = File.ReadAllText(path);
 
             if (_logFormat == "xml")
@@ -124,6 +113,7 @@ public class Logger : ILogger
                 return JsonSerializer.Deserialize<List<LogEntry>>(content) ?? new List<LogEntry>();
             }
         }
+
         catch (Exception)
         {
             // Return empty list on any read/deserialization error
@@ -150,9 +140,9 @@ public class Logger : ILogger
                 var options = new JsonSerializerOptions { WriteIndented = true };
                 content = JsonSerializer.Serialize(entries, options);
             }
-
             File.WriteAllText(path, content);
         }
+
         catch (IOException)
         {
         }
@@ -169,9 +159,7 @@ public class Logger : ILogger
     // Reads the current log file content (for dashbaord)
     public string ReadLogFileContent()
     {
- 
         RefreshFormat();
-
         try
         {
             var logFilePath = GetDailyLogFilePath();
@@ -184,5 +172,10 @@ public class Logger : ILogger
         {
         }
         return string.Empty;
+    }
+
+    public void LogBusinessSoftwareStop(DateTime timestamp, string jobName, string businessSoftware)
+    {
+        throw new NotImplementedException();
     }
 }

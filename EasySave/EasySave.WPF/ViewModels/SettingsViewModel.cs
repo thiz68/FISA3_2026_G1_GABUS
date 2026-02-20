@@ -82,9 +82,14 @@ public class SettingsViewModel : BaseViewModel
         var settings = _configManager.LoadSettings();
         SelectedLogFormat = settings.LogFormat;
         SelectedLogFormatIndex = settings.LogFormat == "json" ? 0 : 1;
-        
+
         ExtensionsToEncrypt = settings.ExtensionsToEncrypt;
         BusinessSoftware = settings.BusinessSoftware;
+
+        // Load log storage settings
+        SelectedLogStorageModeIndex = (int)settings.LogStorageMode;
+        LogServerIp = settings.LogServerIp;
+        LogServerPort = settings.LogServerPort;
     }
     
     // Properties + Label Encrypt Extensions

@@ -24,10 +24,12 @@ public class RemoteLogWriter : ILogWriter
         await client.ConnectAsync(_serverIp, _serverPort);
 
         using var stream = client.GetStream();
+        using var writer = new StreamWriter(stream, Encoding.UTF8)
+        {
+            AutoFlush = true
+        };
 
         var json = JsonSerializer.Serialize(entry);
-        var data = Encoding.UTF8.GetBytes(json);
-
-        await stream.WriteAsync(data, 0, data.Length);
+        await writer.WriteLineAsync($"LOG|{json}");
     }
 }

@@ -7,6 +7,7 @@ using EasySave.Core.Interfaces;
 using EasySave.Core.Models;
 using EasySave.Core.Services;
 using EasySave.WPF.Commands;
+using EasySave.WPF.Views;
 using EasySaveLog;
 
 // ViewModel for a single job item in the list
@@ -359,7 +360,7 @@ public class JobsViewModel : BaseViewModel
         ExecuteJobs(selectedJobs);
     }
 
-    // Execute a list of jobs
+    // Execute a list of jobs with progress popup
     private void ExecuteJobs(List<IJob> jobs)
     {
         // Vérification Logiciel Métier
@@ -387,38 +388,51 @@ public class JobsViewModel : BaseViewModel
                 return;
         }
 
-        MessageBox.Show(
-            _localization.GetString("backup_started"),
-            "Info",
-            MessageBoxButton.OK,
-            MessageBoxImage.Information);
+        // Get the number of available threads
+        int threadCount = BackupExecutor.MaxConcurrency;
 
+        // Get job names for the progress popup
+        var jobNames = jobs.Select(j => j.Name).ToList();
+
+        // Create the progress ViewModel
+        var progressViewModel = new BackupProgressViewModel(_localization, threadCount, jobNames);
+
+        // Create and show the progress popup window
+        var progressWindow = new BackupProgressWindow(progressViewModel);
+        progressWindow.Owner = Application.Current.MainWindow;
+
+        // Callback to check if business software is running
         Func<bool> shouldStop = () => _businessChecker.IsBusinessSoftwareRunning(settings.BusinessSoftware);
 
-        var executionResult = _backupExecutor.ExecuteSequential(
+        // Progress callback: update the ViewModel on the UI thread
+        Action<string, double, bool> progressCallback = (jobName, progressPercent, isFailed) =>
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                progressViewModel.UpdateProgress(jobName, progressPercent, isFailed);
+            });
+        };
+
+        // Completion callback: enable the OK button on the UI thread
+        Action<bool> completionCallback = (allSuccess) =>
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                progressViewModel.SetCompleted();
+            });
+        };
+
+        // Start the backup execution with progress tracking
+        _backupExecutor.ExecuteWithProgress(
             jobs,
             _logger,
             _stateManager,
+            progressCallback,
+            completionCallback,
             shouldStop);
 
-        // Show specific message if stopped due to business software
-        string messageKey;
-        if (executionResult == "backup_failed" && shouldStop())
-        {
-            messageKey = "business_software_stopped";
-        }
-        else
-        {
-            messageKey = executionResult;
-        }
-
-        MessageBox.Show(
-            _localization.GetString(messageKey),
-            "Result",
-            MessageBoxButton.OK,
-            executionResult == "backup_completed"
-                ? MessageBoxImage.Information
-                : MessageBoxImage.Warning);
+        // Show the progress window (modal dialog)
+        progressWindow.ShowDialog();
     }
 
     // Delete a job

@@ -7,9 +7,15 @@ using EasySave.Core.Services;
 public class Logger : ILogger
 {
     private readonly ConfigManager _configManager;
-    private ILogWriter _writer;
-    private ILogReader _reader;
+    private ILogWriter _writer = null!;
+    private ILogReader _reader = null!;
     private readonly string _logDirectory;
+    private static readonly SemaphoreSlim _writeSemaphore = new(1, 1);
+
+    /// <summary>
+    /// Event raised when remote server is unreachable
+    /// </summary>
+    public static event EventHandler<string>? RemoteServerUnreachable;
 
     public Logger(ConfigManager configManager)
     {
@@ -20,6 +26,12 @@ public class Logger : ILogger
             "Logs");
 
         Configure();
+
+        // Subscribe to CompositeLogWriter events
+        CompositeLogWriter.RemoteServerUnreachable += (sender, message) =>
+        {
+            RemoteServerUnreachable?.Invoke(this, message);
+        };
     }
 
     private void Configure()
@@ -51,7 +63,10 @@ public class Logger : ILogger
         }
     }
 
-    public async void LogFileTransfer(
+    /// <summary>
+    /// Log a file transfer - returns Task to allow awaiting completion
+    /// </summary>
+    public async Task LogFileTransferAsync(
         DateTime timestamp,
         string jobName,
         string sourceFile,
@@ -60,26 +75,59 @@ public class Logger : ILogger
         long transferTimeMs,
         long encryptionTimeMs)
     {
-        Configure();
-
-        var entry = new LogEntry
-        {
-            Timestamp = timestamp,
-            JobName = jobName,
-            SourceFile = sourceFile,
-            TargetFile = targetFile,
-            FileSize = fileSize,
-            TransferTimeMs = transferTimeMs,
-            EncryptionTimeMs = encryptionTimeMs
-        };
+        await _writeSemaphore.WaitAsync();
 
         try
         {
-            await _writer.WriteAsync(entry);
+            Configure();
+
+            var settings = _configManager.LoadSettings();
+            var format = settings.LogFormat;
+
+            var entry = new LogEntry
+            {
+                Timestamp = timestamp,
+                JobName = jobName,
+                SourceFile = sourceFile,
+                TargetFile = targetFile,
+                FileSize = fileSize,
+                TransferTimeMs = transferTimeMs,
+                EncryptionTimeMs = encryptionTimeMs
+            };
+
+            await _writer.WriteAsync(entry, format);
         }
-        catch
+        finally
         {
+            _writeSemaphore.Release();
         }
+    }
+
+    /// <summary>
+    /// Legacy synchronous method - fires and forgets but ensures completion
+    /// </summary>
+    public void LogFileTransfer(
+        DateTime timestamp,
+        string jobName,
+        string sourceFile,
+        string targetFile,
+        long fileSize,
+        long transferTimeMs,
+        long encryptionTimeMs)
+    {
+        // Use Task.Run to avoid blocking, but ensure the write completes
+        Task.Run(async () =>
+        {
+            try
+            {
+                await LogFileTransferAsync(timestamp, jobName, sourceFile, targetFile,
+                    fileSize, transferTimeMs, encryptionTimeMs);
+            }
+            catch
+            {
+                // Silently ignore errors in legacy method
+            }
+        }).Wait(); // Wait for completion to ensure log is written
     }
 
     public async Task<string> ReadCurrentLogAsync()
@@ -111,5 +159,24 @@ public class Logger : ILogger
             0,
             -1,
             0);
+    }
+
+    /// <summary>
+    /// Get current log storage mode
+    /// </summary>
+    public LogStorageMode GetLogStorageMode()
+        => _configManager.LoadSettings().LogStorageMode;
+
+    /// <summary>
+    /// Check if remote server is configured and reachable
+    /// </summary>
+    public async Task<bool> IsRemoteServerReachableAsync()
+    {
+        var settings = _configManager.LoadSettings();
+        if (settings.LogStorageMode == LogStorageMode.LocalOnly)
+            return true; // Not using remote, so "reachable" is N/A
+
+        var remoteWriter = new RemoteLogWriter(settings.LogServerIp, settings.LogServerPort);
+        return await remoteWriter.IsServerReachableAsync();
     }
 }

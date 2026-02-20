@@ -19,17 +19,44 @@ public class RemoteLogWriter : ILogWriter
 
     public async Task WriteAsync(LogEntry entry)
     {
-        using var client = new TcpClient();
+        const int maxRetries = 3;
+        const int retryDelayMs = 100;
 
-        await client.ConnectAsync(_serverIp, _serverPort);
-
-        using var stream = client.GetStream();
-        using var writer = new StreamWriter(stream, Encoding.UTF8)
+        for (int retry = 0; retry < maxRetries; retry++)
         {
-            AutoFlush = true
-        };
+            try
+            {
+                using var client = new TcpClient();
 
-        var json = JsonSerializer.Serialize(entry);
-        await writer.WriteLineAsync($"LOG|{json}");
+                var connectTask = client.ConnectAsync(_serverIp, _serverPort);
+                var completedTask = await Task.WhenAny(
+                    connectTask,
+                    Task.Delay(3000));
+
+                if (completedTask != connectTask)
+                    throw new TimeoutException("Connection timeout to log server");
+
+                if (connectTask.Exception != null)
+                    throw connectTask.Exception.InnerException ?? connectTask.Exception;
+
+                using var stream = client.GetStream();
+                using var writer = new StreamWriter(stream, Encoding.UTF8)
+                {
+                    AutoFlush = true
+                };
+
+                var json = JsonSerializer.Serialize(entry);
+                await writer.WriteLineAsync($"LOG|{json}");
+
+                return;
+            }
+            catch
+            {
+                if (retry == maxRetries - 1)
+                    throw;
+
+                await Task.Delay(retryDelayMs);
+            }
+        }
     }
 }

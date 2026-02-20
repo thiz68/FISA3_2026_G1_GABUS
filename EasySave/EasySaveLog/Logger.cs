@@ -4,7 +4,6 @@ using EasySave.Core.Interfaces;
 using EasySave.Core.Models;
 using EasySave.Core.Services;
 
-
 public class Logger : ILogger
 {
     private readonly ConfigManager _configManager;
@@ -15,6 +14,7 @@ public class Logger : ILogger
     public Logger(ConfigManager configManager)
     {
         _configManager = configManager;
+
         _logDirectory = Path.Combine(
             AppDomain.CurrentDomain.BaseDirectory,
             "Logs");
@@ -30,7 +30,7 @@ public class Logger : ILogger
         var remoteWriter = new RemoteLogWriter(settings.LogServerIp, settings.LogServerPort);
 
         var localReader = new LocalLogReader(_logDirectory, () => settings.LogFormat);
-        var remoteReader = new RemoteLogReader(settings.LogServerIp, settings.LogServerPort);
+        var remoteReader = new RemoteLogReader(settings.LogServerIp, settings.LogServerPort, () => settings.LogFormat);
 
         switch (settings.LogStorageMode)
         {
@@ -103,7 +103,9 @@ public class Logger : ILogger
         string jobName,
         string businessSoftware)
     {
-        LogFileTransfer(timestamp, jobName,
+        LogFileTransfer(
+            timestamp,
+            jobName,
             $"STOPPED: {businessSoftware}",
             string.Empty,
             0,

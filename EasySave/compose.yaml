@@ -1,6 +1,8 @@
 ﻿services:
   logserver:
-    build: .
+    build:
+      context: ./EasySave.LogServer
+      dockerfile: Dockerfile
     container_name: easysave_logserver
     ports:
       - "5000:5000"

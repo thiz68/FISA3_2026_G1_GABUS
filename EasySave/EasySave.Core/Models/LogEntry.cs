@@ -21,4 +21,8 @@ public class LogEntry
     public long TransferTimeMs { get; set; }
     
     public long EncryptionTimeMs { get; set; }
+    
+    //LOG DOCKER
+    public string MachineName { get; set; } = Environment.MachineName;
+    public string UserName { get; set; } = Environment.UserName;
 }

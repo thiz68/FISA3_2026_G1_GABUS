@@ -12,4 +12,11 @@ public class AppSettings
     public string ExtensionsToEncrypt { get; set; } = string.Empty;
 
     public string BusinessSoftware { get; set; } = string.Empty;
+
+    //LOG DOCKER
+    public LogStorageMode LogStorageMode { get; set; } = LogStorageMode.LocalOnly;
+
+    public string LogServerIp { get; set; } = "127.0.0.1";
+
+    public int LogServerPort { get; set; } = 5000;
 }

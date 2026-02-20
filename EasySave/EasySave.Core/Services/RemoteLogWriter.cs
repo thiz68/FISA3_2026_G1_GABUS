@@ -10,6 +10,9 @@ public class RemoteLogWriter : ILogWriter
 {
     private readonly string _serverIp;
     private readonly int _serverPort;
+    private const int ConnectionTimeoutMs = 2000;
+    private const int MaxRetries = 3;
+    private const int RetryDelayMs = 100;
 
     public RemoteLogWriter(string serverIp, int serverPort)
     {
@@ -17,27 +20,23 @@ public class RemoteLogWriter : ILogWriter
         _serverPort = serverPort;
     }
 
-    public async Task WriteAsync(LogEntry entry)
+    public async Task WriteAsync(LogEntry entry, string format = "json")
     {
-        const int maxRetries = 3;
-        const int retryDelayMs = 100;
-
-        for (int retry = 0; retry < maxRetries; retry++)
+        for (int retry = 0; retry < MaxRetries; retry++)
         {
             try
             {
                 using var client = new TcpClient();
+                using var cts = new CancellationTokenSource(ConnectionTimeoutMs);
 
-                var connectTask = client.ConnectAsync(_serverIp, _serverPort);
-                var completedTask = await Task.WhenAny(
-                    connectTask,
-                    Task.Delay(3000));
-
-                if (completedTask != connectTask)
-                    throw new TimeoutException("Connection timeout to log server");
-
-                if (connectTask.Exception != null)
-                    throw connectTask.Exception.InnerException ?? connectTask.Exception;
+                try
+                {
+                    await client.ConnectAsync(_serverIp, _serverPort, cts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw new TimeoutException($"Connection timeout to log server at {_serverIp}:{_serverPort}");
+                }
 
                 using var stream = client.GetStream();
                 using var writer = new StreamWriter(stream, Encoding.UTF8)
@@ -46,17 +45,47 @@ public class RemoteLogWriter : ILogWriter
                 };
 
                 var json = JsonSerializer.Serialize(entry);
-                await writer.WriteLineAsync($"LOG|{json}");
+                // Send format along with the log entry: LOG|format|json_data
+                await writer.WriteLineAsync($"LOG|{format}|{json}");
 
                 return;
             }
-            catch
+            catch (TimeoutException)
             {
-                if (retry == maxRetries - 1)
+                if (retry == MaxRetries - 1)
                     throw;
-
-                await Task.Delay(retryDelayMs);
             }
+            catch (SocketException)
+            {
+                if (retry == MaxRetries - 1)
+                    throw;
+            }
+            catch (Exception)
+            {
+                if (retry == MaxRetries - 1)
+                    throw;
+            }
+
+            await Task.Delay(RetryDelayMs);
+        }
+    }
+
+    /// <summary>
+    /// Check if the server is reachable without sending data
+    /// </summary>
+    public async Task<bool> IsServerReachableAsync()
+    {
+        try
+        {
+            using var client = new TcpClient();
+            using var cts = new CancellationTokenSource(ConnectionTimeoutMs);
+
+            await client.ConnectAsync(_serverIp, _serverPort, cts.Token);
+            return true;
+        }
+        catch
+        {
+            return false;
         }
     }
 }

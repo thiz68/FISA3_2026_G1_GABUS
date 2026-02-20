@@ -9,6 +9,7 @@ public class RemoteLogReader : ILogReader
     private readonly string _serverIp;
     private readonly int _serverPort;
     private readonly Func<string> _getFormat;
+    private const int ConnectionTimeoutMs = 2000;
 
     public RemoteLogReader(string serverIp, int serverPort, Func<string> getFormat)
     {
@@ -22,17 +23,17 @@ public class RemoteLogReader : ILogReader
         try
         {
             using var client = new TcpClient();
+            using var cts = new CancellationTokenSource(ConnectionTimeoutMs);
 
-            var connectTask = client.ConnectAsync(_serverIp, _serverPort);
-            var completedTask = await Task.WhenAny(
-                connectTask,
-                Task.Delay(3000));
-
-            if (completedTask != connectTask)
-                throw new TimeoutException("Connection timeout to log server");
-
-            if (connectTask.Exception != null)
-                throw connectTask.Exception.InnerException ?? connectTask.Exception;
+            try
+            {
+                await client.ConnectAsync(_serverIp, _serverPort, cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                // Timeout - return empty to allow fallback to local logs
+                return string.Empty;
+            }
 
             using var stream = client.GetStream();
             using var writer = new StreamWriter(stream, Encoding.UTF8)
@@ -46,6 +47,10 @@ public class RemoteLogReader : ILogReader
             await writer.WriteLineAsync($"GET_LOG|{format}");
 
             var base64Response = await reader.ReadLineAsync() ?? string.Empty;
+
+            if (string.IsNullOrEmpty(base64Response))
+                return string.Empty;
+
             var bytes = Convert.FromBase64String(base64Response);
 
             return Encoding.UTF8.GetString(bytes);

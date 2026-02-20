@@ -17,7 +17,7 @@ public class LocalLogWriter : ILogWriter
         _getFormat = getFormat;
     }
 
-    public async Task WriteAsync(LogEntry entry)
+    public async Task WriteAsync(LogEntry entry, string format = "json")
     {
         await _semaphore.WaitAsync();
 
@@ -25,8 +25,12 @@ public class LocalLogWriter : ILogWriter
         {
             Directory.CreateDirectory(_logDirectory);
 
-            var format = _getFormat();
-            var extension = format == "xml" ? ".xml" : ".json";
+            // Use provided format or fallback to configured format
+            var effectiveFormat = string.IsNullOrEmpty(format) ? _getFormat() : format;
+            if (effectiveFormat != "xml" && effectiveFormat != "json")
+                effectiveFormat = _getFormat();
+
+            var extension = effectiveFormat == "xml" ? ".xml" : ".json";
 
             var filePath = Path.Combine(
                 _logDirectory,
@@ -40,7 +44,7 @@ public class LocalLogWriter : ILogWriter
 
                 if (!string.IsNullOrWhiteSpace(content))
                 {
-                    entries = format == "xml"
+                    entries = effectiveFormat == "xml"
                         ? DeserializeXml(content)
                         : JsonSerializer.Deserialize<List<LogEntry>>(content) ?? new();
                 }
@@ -48,7 +52,7 @@ public class LocalLogWriter : ILogWriter
 
             entries.Add(entry);
 
-            string output = format == "xml"
+            string output = effectiveFormat == "xml"
                 ? SerializeXml(entries)
                 : JsonSerializer.Serialize(
                     entries,

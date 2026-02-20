@@ -4,5 +4,5 @@ using EasySave.Core.Models;
 
 public interface ILogWriter
 {
-    Task WriteAsync(LogEntry entry);
+    Task WriteAsync(LogEntry entry, string format = "json");
 }

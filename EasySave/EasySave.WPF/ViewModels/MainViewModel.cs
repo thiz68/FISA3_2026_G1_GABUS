@@ -125,7 +125,7 @@ public class MainViewModel : BaseViewModel
     // Navigation methods
     private void NavigateToDashboard()
     {
-        DashboardViewModel.RefreshContent();
+        DashboardViewModel.RefreshContentAsync();
         CurrentViewModel = DashboardViewModel;
     }
 
@@ -162,7 +162,7 @@ public class MainViewModel : BaseViewModel
     {
         UpdateLocalizedStrings();
         // Update child ViewModels
-        DashboardViewModel.UpdateLocalizedStrings();
+        DashboardViewModel.UpdateLocalizedStringsAsync();
         JobsViewModel.UpdateLocalizedStrings();
         SettingsViewModel.UpdateLocalizedStrings();
     }

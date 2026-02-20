@@ -104,6 +104,7 @@ public class MainViewModel : BaseViewModel
 
         // Initialize child ViewModels
         DashboardViewModel = new DashboardViewModel(_localization, _stateManager, _logger, _configManager);
+        Task.Run(async () => await DashboardViewModel.RefreshContentAsync());
         JobsViewModel = new JobsViewModel(_localization, _jobManager, _configManager, _backupExecutor, _logger, _stateManager, _pathValidator, _cryptoRunner);
         SettingsViewModel = new SettingsViewModel(_localization, _configManager);
 
@@ -123,9 +124,9 @@ public class MainViewModel : BaseViewModel
     }
 
     // Navigation methods
-    private void NavigateToDashboard()
+    private async void NavigateToDashboard()
     {
-        DashboardViewModel.RefreshContentAsync();
+        await DashboardViewModel.RefreshContentAsync();
         CurrentViewModel = DashboardViewModel;
     }
 
@@ -158,11 +159,10 @@ public class MainViewModel : BaseViewModel
     }
 
     // Called when language changes to update all localized strings
-    private void OnLanguageChanged(object? sender, EventArgs e)
+    private async void OnLanguageChanged(object? sender, EventArgs e)
     {
         UpdateLocalizedStrings();
-        // Update child ViewModels
-        DashboardViewModel.UpdateLocalizedStringsAsync();
+        await DashboardViewModel.UpdateLocalizedStringsAsync();
         JobsViewModel.UpdateLocalizedStrings();
         SettingsViewModel.UpdateLocalizedStrings();
     }

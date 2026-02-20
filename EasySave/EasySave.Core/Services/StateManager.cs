@@ -13,6 +13,9 @@ public class StateManager : IStateManager
     //Key = job name, Value = job state information
     private readonly Dictionary<string, JobState> _states = new();
 
+    // Lock object for synchronizing access to states and file in multi-threaded environment
+    private readonly object _stateLock = new object();
+
     //Constructor
     public StateManager()
     {
@@ -24,17 +27,21 @@ public class StateManager : IStateManager
     //Update state for job
     public void UpdateJobState(IJob job, JobState state)
     {
-        //Copy job information
-        state.Name = job.Name;
-        state.JobSourcePath = job.SourcePath;
-        state.JobTargetPath = job.TargetPath;
+        // Synchronize access to the states dictionary and file
+        lock (_stateLock)
+        {
+            //Copy job information
+            state.Name = job.Name;
+            state.JobSourcePath = job.SourcePath;
+            state.JobTargetPath = job.TargetPath;
 
-        //Record update
-        state.Timestamp = DateTime.Now;
+            //Record update
+            state.Timestamp = DateTime.Now;
 
-        //Record or update state in dictionary
-        _states[job.Name] = state;
-        SaveState();
+            //Record or update state in dictionary
+            _states[job.Name] = state;
+            SaveState();
+        }
     }
 
     // Save all job states to the JSON file

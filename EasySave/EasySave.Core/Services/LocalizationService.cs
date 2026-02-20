@@ -115,6 +115,11 @@ public class LocalizationService : ILocalizationService
             ["business_software"] = "Business Software (process name)",
             ["business_software_detected"] = "Business software detected. Backup cannot start.",
             ["business_software_stopped"] = "Backup stopped: business software detected",
+
+            // Backup progress popup
+            ["backup_progress_header"] = "Starting backups with {0} threads available",
+            ["progression"] = "Progress",
+            ["emergency_stop"] = "Stop",
         },
 
         // French dict
@@ -215,6 +220,11 @@ public class LocalizationService : ILocalizationService
             ["business_software"] = "Logiciel metier (nom du processus)",
             ["business_software_detected"] = "Logiciel metier detecte. Impossible de demarrer la sauvegarde.",
             ["business_software_stopped"] = "Sauvegarde arretee : logiciel metier detecte",
+
+            // Backup progress popup
+            ["backup_progress_header"] = "Demarrage des backups avec {0} threads disponibles",
+            ["progression"] = "Progression",
+            ["emergency_stop"] = "Arrêt",
         }
     };
 

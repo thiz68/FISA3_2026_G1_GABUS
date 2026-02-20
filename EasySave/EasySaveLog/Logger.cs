@@ -9,39 +9,58 @@ public class Logger : ILogger
 {
     private readonly ConfigManager _configManager;
     private ILogWriter _writer;
-    private string _logDirectory;
+    private ILogReader _reader;
+    private readonly string _logDirectory;
 
     public Logger(ConfigManager configManager)
     {
         _configManager = configManager;
+        _logDirectory = Path.Combine(
+            AppDomain.CurrentDomain.BaseDirectory,
+            "Logs");
 
-        var appDirectory = AppDomain.CurrentDomain.BaseDirectory;
-        _logDirectory = Path.Combine(appDirectory, "Logs");
-
-        ConfigureWriter();
+        Configure();
     }
 
-    private void ConfigureWriter()
+    private void Configure()
     {
         var settings = _configManager.LoadSettings();
 
-        var local = new LocalLogWriter(_logDirectory, () => settings.LogFormat);
-        var remote = new RemoteLogWriter(settings.LogServerIp, settings.LogServerPort);
+        var localWriter = new LocalLogWriter(_logDirectory, () => settings.LogFormat);
+        var remoteWriter = new RemoteLogWriter(settings.LogServerIp, settings.LogServerPort);
 
-        _writer = settings.LogStorageMode switch
+        var localReader = new LocalLogReader(_logDirectory, () => settings.LogFormat);
+        var remoteReader = new RemoteLogReader(settings.LogServerIp, settings.LogServerPort);
+
+        switch (settings.LogStorageMode)
         {
-            LogStorageMode.LocalOnly => local,
-            LogStorageMode.RemoteOnly => remote,
-            LogStorageMode.LocalAndRemote => new CompositeLogWriter(local, remote),
-            _ => local
-        };
+            case LogStorageMode.LocalOnly:
+                _writer = localWriter;
+                _reader = localReader;
+                break;
+
+            case LogStorageMode.RemoteOnly:
+                _writer = remoteWriter;
+                _reader = remoteReader;
+                break;
+
+            case LogStorageMode.LocalAndRemote:
+                _writer = new CompositeLogWriter(localWriter, remoteWriter);
+                _reader = localReader;
+                break;
+        }
     }
 
-    public async void LogFileTransfer(DateTime timestamp, string jobName,
-        string sourceFile, string targetFile,
-        long fileSize, long transferTimeMs, long encryptionTimeMs)
+    public async void LogFileTransfer(
+        DateTime timestamp,
+        string jobName,
+        string sourceFile,
+        string targetFile,
+        long fileSize,
+        long transferTimeMs,
+        long encryptionTimeMs)
     {
-        ConfigureWriter();
+        Configure();
 
         var entry = new LogEntry
         {
@@ -54,7 +73,19 @@ public class Logger : ILogger
             EncryptionTimeMs = encryptionTimeMs
         };
 
-        await _writer.WriteAsync(entry);
+        try
+        {
+            await _writer.WriteAsync(entry);
+        }
+        catch
+        {
+        }
+    }
+
+    public async Task<string> ReadCurrentLogAsync()
+    {
+        Configure();
+        return await _reader.ReadCurrentLogAsync();
     }
 
     public void Initialize()
@@ -64,11 +95,19 @@ public class Logger : ILogger
 
     public void SetLogFormat(string format) { }
 
-    public string GetCurrentLogFormat() => _configManager.LoadSettings().LogFormat;
+    public string GetCurrentLogFormat()
+        => _configManager.LoadSettings().LogFormat;
 
-    public void LogBusinessSoftwareStop(DateTime timestamp, string jobName, string businessSoftware)
+    public void LogBusinessSoftwareStop(
+        DateTime timestamp,
+        string jobName,
+        string businessSoftware)
     {
         LogFileTransfer(timestamp, jobName,
-            $"STOPPED: {businessSoftware}", "", 0, -1, 0);
+            $"STOPPED: {businessSoftware}",
+            string.Empty,
+            0,
+            -1,
+            0);
     }
 }

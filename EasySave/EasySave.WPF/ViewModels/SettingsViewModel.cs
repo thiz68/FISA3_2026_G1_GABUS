@@ -115,6 +115,34 @@ public class SettingsViewModel : BaseViewModel
         get => _businessSoftwareLabel;
         set => SetProperty(ref _businessSoftwareLabel, value);
     }
+    
+    public string[] LogStorageModes { get; } =
+    {
+        "LocalOnly",
+        "RemoteOnly",
+        "LocalAndRemote"
+    };
+
+    private int _selectedLogStorageModeIndex;
+    public int SelectedLogStorageModeIndex
+    {
+        get => _selectedLogStorageModeIndex;
+        set => SetProperty(ref _selectedLogStorageModeIndex, value);
+    }
+
+    private string _logServerIp = "127.0.0.1";
+    public string LogServerIp
+    {
+        get => _logServerIp;
+        set => SetProperty(ref _logServerIp, value);
+    }
+
+    private int _logServerPort = 5000;
+    public int LogServerPort
+    {
+        get => _logServerPort;
+        set => SetProperty(ref _logServerPort, value);
+    }
 
     // Save settings to config
     private void SaveSettings()
@@ -123,6 +151,9 @@ public class SettingsViewModel : BaseViewModel
         settings.LogFormat = SelectedLogFormat;
         settings.ExtensionsToEncrypt = ExtensionsToEncrypt ?? string.Empty;
         settings.BusinessSoftware = BusinessSoftware ?? string.Empty;
+        settings.LogStorageMode = (LogStorageMode)SelectedLogStorageModeIndex;
+        settings.LogServerIp = LogServerIp;
+        settings.LogServerPort = LogServerPort;
 
         _configManager.SaveSettings(settings);
 

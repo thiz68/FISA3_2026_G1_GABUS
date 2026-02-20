@@ -58,9 +58,13 @@ public class DashboardViewModel : BaseViewModel
         _logger = logger;
         _configManager = configManager;
 
-        UpdateLocalizedStringsAsync();
-        
-        _ = RefreshContentAsync();
+        InitializeDashboard();
+    }
+
+    private async void InitializeDashboard()
+    {
+        await UpdateLocalizedStringsAsync();
+        await RefreshContentAsync();
     }
 
     // Rafraichir le contenu en fonction du settings de format de log

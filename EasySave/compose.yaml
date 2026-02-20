@@ -1,0 +1,14 @@
+﻿version: "3.9"
+
+services:
+  logserver:
+    build: .
+    container_name: easysave_logserver
+    ports:
+      - "5000:5000"   # Expose le port 5000 sur l'hôte
+    volumes:
+      - log_data:/app/CentralLogs   # Persistance des logs
+    restart: unless-stopped
+
+volumes:
+  log_data:

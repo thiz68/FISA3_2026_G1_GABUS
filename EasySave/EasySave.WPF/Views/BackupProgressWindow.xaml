@@ -5,7 +5,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         mc:Ignorable="d"
         Title="Backup Progress"
-        Height="400" Width="600"
+        Height="400" Width="700"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         WindowStyle="ToolWindow">
@@ -71,20 +71,33 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
-                <!-- Emergency Stop button column -->
+                <!-- Actions column with Pause/Resume and Stop buttons -->
                 <DataGridTemplateColumn Header="{Binding DataContext.ActionColumnHeader, RelativeSource={RelativeSource AncestorType=Window}}"
                                         Width="Auto">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Button Content="{Binding DataContext.EmergencyStopText, RelativeSource={RelativeSource AncestorType=Window}}"
-                                    Width="100"
-                                    Height="25"
-                                    Margin="5"
-                                    IsEnabled="True"
-                                    Background="#FFDD4444"
-                                    Foreground="White"
-                                    FontWeight="Bold"
-									Command="{Binding EmergencyStopCommand}"/>
+                            <StackPanel Orientation="Horizontal">
+                                <!-- Pause/Resume button -->
+                                <Button Content="{Binding PauseResumeButtonText}"
+                                        Width="80"
+                                        Height="25"
+                                        Margin="5"
+                                        Background="#FF4488DD"
+                                        Foreground="White"
+                                        FontWeight="Bold"
+                                        Command="{Binding PauseResumeCommand}"/>
+
+                                <!-- Emergency Stop button -->
+                                <Button Content="{Binding DataContext.EmergencyStopText, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        Width="80"
+                                        Height="25"
+                                        Margin="5"
+                                        IsEnabled="True"
+                                        Background="#FFDD4444"
+                                        Foreground="White"
+                                        FontWeight="Bold"
+									    Command="{Binding EmergencyStopCommand}"/>
+                            </StackPanel>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

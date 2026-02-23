@@ -124,6 +124,8 @@ public class LocalizationService : ILocalizationService
             ["backup_progress_header"] = "Starting backups with {0} threads available",
             ["progression"] = "Progress",
             ["emergency_stop"] = "Stop",
+            ["pause"] = "Pause",
+            ["resume"] = "Resume",
 
             // Server status
             ["server_unreachable"] = "Log server unreachable",
@@ -239,6 +241,8 @@ public class LocalizationService : ILocalizationService
             ["backup_progress_header"] = "Demarrage des backups avec {0} threads disponibles",
             ["progression"] = "Progression",
             ["emergency_stop"] = "Arrêt",
+            ["pause"] = "Pause",
+            ["resume"] = "Reprendre",
 
             // Server status
             ["server_unreachable"] = "Serveur de logs inaccessible",

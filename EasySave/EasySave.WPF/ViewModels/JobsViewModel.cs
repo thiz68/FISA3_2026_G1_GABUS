@@ -398,8 +398,6 @@ public class JobsViewModel : BaseViewModel
         progressWindow.Owner = Application.Current.MainWindow;
 
         var monitorCts = new CancellationTokenSource();
-        // Callback to check if business software is running (for pause)
-        Func<bool> shouldPause = () => _businessChecker.IsBusinessSoftwareRunning(settings.BusinessSoftware);
 
         // Progress callback: update the ViewModel on the UI thread
         Action<string, double, bool> progressCallback = (jobName, progressPercent, isFailed) =>
@@ -424,13 +422,18 @@ public class JobsViewModel : BaseViewModel
         Func<string, bool> shouldStopFunc = jobName =>
             progressViewModel.IsStopRequested(jobName);
 
-        // Pause state callback: show popup when entering pause (only once)
+        // Pause state callback: show popup when entering pause (only once) due to business software
         bool pausePopupShown = false;
         object pauseLock = new object();
         Action<bool> onPauseStateChanged = (isPaused) =>
         {
             if (isPaused)
             {
+                // Only show popup for business software pause, not manual pause
+                bool isBusinessSoftwareRunning = _businessChecker.IsBusinessSoftwareRunning(settings.BusinessSoftware);
+                if (!isBusinessSoftwareRunning)
+                    return; // Manual pause, no popup
+
                 lock (pauseLock)
                 {
                     if (pausePopupShown) return;
@@ -454,9 +457,21 @@ public class JobsViewModel : BaseViewModel
             }
         };
 
-        // Soft pause: a business-critical software is running → suspend until it exits
-        Func<string, bool> shouldPauseFunc = _ =>
-            _businessChecker.IsBusinessSoftwareRunning(settings.BusinessSoftware);
+        // Soft pause: business software running OR manual pause from user
+        // Business software has priority: if running, Resume button is disabled
+        Func<string, bool> shouldPauseFunc = jobName =>
+        {
+            bool isBusinessSoftwareRunning = _businessChecker.IsBusinessSoftwareRunning(settings.BusinessSoftware);
+
+            // Update business software pause state in progress items (on UI thread)
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                progressViewModel.UpdateBusinessSoftwarePauseState(isBusinessSoftwareRunning);
+            });
+
+            // Pause if business software is running OR if user manually paused this job
+            return isBusinessSoftwareRunning || progressViewModel.IsManuallyPaused(jobName);
+        };
 
         // Start the backup execution with progress tracking
         _backupExecutor.ExecuteWithProgress(

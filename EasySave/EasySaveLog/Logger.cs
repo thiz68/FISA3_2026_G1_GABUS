@@ -124,9 +124,9 @@ public class Logger : ILogger
                     fileSize, transferTimeMs, encryptionTimeMs);
             }
             catch
-        {
-            // Return empty list on any read/deserialization error
-            return new List<LogEntry>();
+            {
+                // Silently ignore errors in legacy method
+            }
         }).Wait(); // Wait for completion to ensure log is written
     }
 
@@ -134,13 +134,13 @@ public class Logger : ILogger
     {
         Configure();
         return await _reader.ReadCurrentLogAsync();
-            {
-                // Silently ignore errors in legacy method
-            }
-            else // json
-            {
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                content = JsonSerializer.Serialize(entries, options);
+    }
+
+    public void Initialize()
+    {
+        Directory.CreateDirectory(_logDirectory);
+    }
+
     public void SetLogFormat(string format) { }
 
     public string GetCurrentLogFormat()
@@ -178,19 +178,5 @@ public class Logger : ILogger
 
         var remoteWriter = new RemoteLogWriter(settings.LogServerIp, settings.LogServerPort);
         return await remoteWriter.IsServerReachableAsync();
-        RefreshFormat();
-            {
-                return File.ReadAllText(logFilePath);
-            }
-        }
-        catch (IOException)
-        {
-        }
-        return string.Empty;
-    }
-
-    public void LogBusinessSoftwareStop(DateTime timestamp, string jobName, string businessSoftware)
-    {
-        throw new NotImplementedException();
     }
 }

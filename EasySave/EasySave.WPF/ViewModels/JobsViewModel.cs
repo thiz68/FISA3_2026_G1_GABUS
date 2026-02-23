@@ -422,11 +422,18 @@ public class JobsViewModel : BaseViewModel
             });
         };
 
-        // Pause state callback: show popup when entering pause
+        // Pause state callback: show popup when entering pause (only once)
+        bool pausePopupShown = false;
+        object pauseLock = new object();
         Action<bool> onPauseStateChanged = (isPaused) =>
         {
             if (isPaused)
             {
+                lock (pauseLock)
+                {
+                    if (pausePopupShown) return;
+                    pausePopupShown = true;
+                }
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     MessageBox.Show(
@@ -435,6 +442,14 @@ public class JobsViewModel : BaseViewModel
                         MessageBoxButton.OK,
                         MessageBoxImage.Warning);
                 });
+            }
+            else
+            {
+                // Reset flag when exiting pause so popup can show again if paused later
+                lock (pauseLock)
+                {
+                    pausePopupShown = false;
+                }
             }
         };
 

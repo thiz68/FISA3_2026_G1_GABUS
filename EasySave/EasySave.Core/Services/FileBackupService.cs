@@ -13,7 +13,7 @@ public class FileBackupService
     
     //Copy an entire dir from source to target
     //Returns true if backup succeeded, false if it failed (drive unavailable, etc.)
-    public bool CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger, IStateManager stateManager, ILocalizationService localization, Func<bool>? shouldStop = null)
+    public bool CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger, IStateManager stateManager, ILocalizationService localization, Func<bool>? shouldStop = null, Action<bool>? onPauseStateChanged = null)
     {
         //Counting how many files need to copy and total size
         var (totalFiles, totalSize) = CalculateEligibleFiles(sourceDir, targetDir, job.Type);
@@ -50,13 +50,13 @@ public class FileBackupService
 
         //Copy progress
         bool success = true;
-        CopyDirectoryRecursive(sourceDir, targetDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, localization, shouldStop);
+        CopyDirectoryRecursive(sourceDir, targetDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, localization, shouldStop, onPauseStateChanged);
         return success;
     }
 
     //Copy all files and subfolders
     private void CopyDirectoryRecursive(string sourceDir, string targetDir, IJob job, ILogger logger,
-    IStateManager stateManager, int totalFiles, long totalSize, ref int filesRemaining, ref long sizeRemaining, ref bool success, ILocalizationService localization, Func<bool>? shouldStop = null)
+    IStateManager stateManager, int totalFiles, long totalSize, ref int filesRemaining, ref long sizeRemaining, ref bool success, ILocalizationService localization, Func<bool>? shouldStop = null, Action<bool>? onPauseStateChanged = null)
     {
         // Get list of files, handle errors if drive becomes unavailable (USB unplugged)
         string[] files;
@@ -99,21 +99,30 @@ public class FileBackupService
             UpdateStateForFile(job, sourceFile, targetFile, filesRemaining, sizeRemaining, progression, stateManager, localization);
 
             // Pause while business software is running
-            while (shouldStop?.Invoke() == true)
+            if (shouldStop?.Invoke() == true)
             {
-                // Update state to paused
-                var pausedState = new JobState
-                {
-                    State = localization.GetString("paused"),
-                    NbFilesLeftToDo = filesRemaining,
-                    NbSizeLeftToDo = sizeRemaining,
-                    Progression = progression,
-                    CurrentSourceFilePath = sourceFile,
-                    CurrentTargetFilePath = targetFile
-                };
-                stateManager.UpdateJobState(job, pausedState);
+                // Notify UI that we're entering pause state (only once)
+                onPauseStateChanged?.Invoke(true);
 
-                Thread.Sleep(1000); // Check every second
+                while (shouldStop.Invoke())
+                {
+                    // Update state to paused
+                    var pausedState = new JobState
+                    {
+                        State = localization.GetString("paused"),
+                        NbFilesLeftToDo = filesRemaining,
+                        NbSizeLeftToDo = sizeRemaining,
+                        Progression = progression,
+                        CurrentSourceFilePath = sourceFile,
+                        CurrentTargetFilePath = targetFile
+                    };
+                    stateManager.UpdateJobState(job, pausedState);
+
+                    Thread.Sleep(1000); // Check every second
+                }
+
+                // Notify UI that we're exiting pause state
+                onPauseStateChanged?.Invoke(false);
             }
         }
 
@@ -143,7 +152,7 @@ public class FileBackupService
                 success = false;
                 return;
             }
-            CopyDirectoryRecursive(subDir, targetSubDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, localization, shouldStop);
+            CopyDirectoryRecursive(subDir, targetSubDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, localization, shouldStop, onPauseStateChanged);
             if (!success) return;
         }
     }

@@ -422,6 +422,22 @@ public class JobsViewModel : BaseViewModel
             });
         };
 
+        // Pause state callback: show popup when entering pause
+        Action<bool> onPauseStateChanged = (isPaused) =>
+        {
+            if (isPaused)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    MessageBox.Show(
+                        _localization.GetString("business_software_detected"),
+                        _localization.GetString("warning"),
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                });
+            }
+        };
+
         // Start the backup execution with progress tracking
         _backupExecutor.ExecuteWithProgress(
             jobs,
@@ -429,7 +445,8 @@ public class JobsViewModel : BaseViewModel
             _stateManager,
             progressCallback,
             completionCallback,
-            shouldStop);
+            shouldStop,
+            onPauseStateChanged);
 
         // Show the progress window (modal dialog)
         progressWindow.ShowDialog();

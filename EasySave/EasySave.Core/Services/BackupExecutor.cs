@@ -75,13 +75,15 @@ public class BackupExecutor
 
     // Execute jobs in parallel with callback for view updates
     // progressCallback: (jobName, progressPercent, isFailed)
+    // onPauseStateChanged: (isPaused) - called when backup enters or exits pause state
     public void ExecuteWithProgress(
         List<IJob> jobs,
         ILogger logger,
         IStateManager stateManager,
         Action<string, double, bool> progressCallback,
         Action<bool> completionCallback,
-        Func<bool>? shouldStop = null)
+        Func<bool>? shouldStop = null,
+        Action<bool>? onPauseStateChanged = null)
     {
         // Determine maximum concurrency (max threads available on computer)
         int maxConcurrency = Math.Clamp(Environment.ProcessorCount, 1, 8);
@@ -107,7 +109,7 @@ public class BackupExecutor
                     progressStateManager.UpdateJobState(job, state);
 
                     // Copy all files from source to target
-                    bool success = _fileBackupService.CopyDirectory(job.SourcePath, job.TargetPath, job, logger, progressStateManager, _localization, shouldStop);
+                    bool success = _fileBackupService.CopyDirectory(job.SourcePath, job.TargetPath, job, logger, progressStateManager, _localization, shouldStop, onPauseStateChanged);
 
                     if (success)
                     {

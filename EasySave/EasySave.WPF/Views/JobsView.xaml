@@ -178,25 +178,19 @@
                     <TextBlock Text="{Binding NameHeader}"
                                Style="{StaticResource LabelStyle}"/>
                     <TextBox Text="{Binding DialogJobName, UpdateSourceTrigger=PropertyChanged}"
-                             Height="36"
-                             Margin="0,0,0,16"
-                             Padding="10,7"/>
+                             Margin="0,0,0,16"/>
 
                     <!-- ── Source Path ── -->
                     <TextBlock Text="{Binding SourceHeader}"
                                Style="{StaticResource LabelStyle}"/>
                     <TextBox Text="{Binding DialogSourcePath, UpdateSourceTrigger=PropertyChanged}"
-                             Height="36"
-                             Margin="0,0,0,16"
-                             Padding="10,7"/>
+                             Margin="0,0,0,16"/>
 
                     <!-- ── Target Path ── -->
                     <TextBlock Text="{Binding TargetHeader}"
                                Style="{StaticResource LabelStyle}"/>
                     <TextBox Text="{Binding DialogTargetPath, UpdateSourceTrigger=PropertyChanged}"
-                             Height="36"
-                             Margin="0,0,0,16"
-                             Padding="10,7"/>
+                             Margin="0,0,0,16"/>
 
                     <!-- ── Backup Type ── -->
                     <TextBlock Text="{Binding TypeHeader}"

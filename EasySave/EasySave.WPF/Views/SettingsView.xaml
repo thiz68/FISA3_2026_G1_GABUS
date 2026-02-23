@@ -10,9 +10,7 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="32,28,32,32"
-                    MaxWidth="640"
-                    HorizontalAlignment="Left">
+        <StackPanel Margin="32,28,32,32">
 
             <!-- ── Page title ──────────────────────────────── -->
             <TextBlock Text="{Binding GeneralSettingsTitle}"
@@ -20,170 +18,172 @@
                        Margin="0,0,0,24"/>
 
             <!-- ══════════════════════════════════════════════
-                 CARD: Appearance
+                 2-COLUMN CARD LAYOUT
+                 Left : Appearance + Backup
+                 Right: Log Server
                  ══════════════════════════════════════════════ -->
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-                    <!-- Card title -->
-                    <TextBlock Text="APPEARANCE"
-                               Style="{StaticResource SectionTitleStyle}"
-                               Margin="0,0,0,16"/>
+                <!-- ── LEFT COLUMN ───────────────────────── -->
+                <StackPanel Grid.Column="0">
 
-                    <!-- Theme toggle -->
-                    <Grid Margin="0,0,0,16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                            <TextBlock Text="Dark Mode"
-                                       FontSize="14"
-                                       FontWeight="Medium"
-                                       Foreground="{DynamicResource PrimaryTextBrush}"/>
-                            <TextBlock Text="Switch between light and dark interface"
-                                       Style="{StaticResource SecondaryTextStyle}"
-                                       Margin="0,2,0,0"/>
+                    <!-- CARD: Appearance -->
+                    <Border Style="{StaticResource CardStyle}"
+                            Margin="0,0,0,16">
+                        <StackPanel>
+
+                            <TextBlock Text="APPEARANCE"
+                                       Style="{StaticResource SectionTitleStyle}"
+                                       Margin="0,0,0,16"/>
+
+                            <!-- Theme toggle -->
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock Text="Dark Mode"
+                                               FontSize="14"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource PrimaryTextBrush}"/>
+                                    <TextBlock Text="Switch between light and dark interface"
+                                               Style="{StaticResource SecondaryTextStyle}"
+                                               Margin="0,2,0,0"/>
+                                </StackPanel>
+                                <ToggleButton x:Name="ThemeToggle"
+                                              Grid.Column="1"
+                                              Style="{StaticResource ThemeToggleStyle}"
+                                              Click="OnThemeToggleClick"/>
+                            </Grid>
+
+                            <!-- Separator -->
+                            <Rectangle Height="1"
+                                       Fill="{DynamicResource SeparatorBrush}"
+                                       Margin="0,4,0,16"/>
+
+                            <!-- Language -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock Text="Language"
+                                               FontSize="14"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource PrimaryTextBrush}"/>
+                                    <TextBlock Text="Interface language"
+                                               Style="{StaticResource SecondaryTextStyle}"
+                                               Margin="0,2,0,0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1"
+                                            Orientation="Horizontal"
+                                            VerticalAlignment="Center">
+                                    <Button Content="FR"
+                                            Style="{StaticResource LangButtonStyle}"
+                                            Margin="0,0,6,0"
+                                            Command="{Binding DataContext.SetLanguageFrCommand,
+                                                      RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                    <Button Content="EN"
+                                            Style="{StaticResource LangButtonStyle}"
+                                            Command="{Binding DataContext.SetLanguageEnCommand,
+                                                      RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                </StackPanel>
+                            </Grid>
+
                         </StackPanel>
-                        <ToggleButton x:Name="ThemeToggle"
-                                      Grid.Column="1"
-                                      Style="{StaticResource ThemeToggleStyle}"
-                                      Click="OnThemeToggleClick"/>
-                    </Grid>
+                    </Border>
 
-                    <!-- Separator -->
-                    <Rectangle Height="1"
-                               Fill="{DynamicResource SeparatorBrush}"
-                               Margin="0,4,0,16"/>
+                    <!-- CARD: Backup Settings -->
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel>
 
-                    <!-- Language -->
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                            <TextBlock Text="Language"
-                                       FontSize="14"
-                                       FontWeight="Medium"
-                                       Foreground="{DynamicResource PrimaryTextBrush}"/>
-                            <TextBlock Text="Interface language"
-                                       Style="{StaticResource SecondaryTextStyle}"
-                                       Margin="0,2,0,0"/>
+                            <TextBlock Text="BACKUP"
+                                       Style="{StaticResource SectionTitleStyle}"
+                                       Margin="0,0,0,16"/>
+
+                            <!-- Log Format -->
+                            <TextBlock Text="{Binding LogFormatLabel}"
+                                       Style="{StaticResource LabelStyle}"/>
+                            <ComboBox Margin="0,0,0,20"
+                                      ItemsSource="{Binding LogFormats}"
+                                      SelectedIndex="{Binding SelectedLogFormatIndex}"/>
+
+                            <!-- Extensions to Encrypt -->
+                            <TextBlock Text="{Binding ExtensionsToEncryptLabel}"
+                                       Style="{StaticResource LabelStyle}"/>
+                            <TextBox Margin="0,0,0,20"
+                                     Text="{Binding ExtensionsToEncrypt,
+                                            UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <!-- Business Software -->
+                            <TextBlock Text="{Binding BusinessSoftwareLabel}"
+                                       Style="{StaticResource LabelStyle}"/>
+                            <TextBox Margin="0,0,0,20"
+                                     Text="{Binding BusinessSoftware,
+                                            UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <!-- Priority Extension -->
+                            <TextBlock Text="{Binding PriorityExtensionLabel}"
+                                       Style="{StaticResource LabelStyle}"/>
+                            <TextBox Margin="0,0,0,20"
+                                     ToolTip="Ex: .exe  —  leave empty to disable"
+                                     Text="{Binding PriorityExtension,
+                                            UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <!-- Large File Threshold -->
+                            <TextBlock Text="{Binding LargeFileThresholdLabel}"
+                                       Style="{StaticResource LabelStyle}"/>
+                            <TextBox ToolTip="Ex: 1024 KB  —  0 or empty to disable"
+                                     Text="{Binding LargeFileThresholdKB,
+                                            UpdateSourceTrigger=PropertyChanged}"/>
+
                         </StackPanel>
-                        <StackPanel Grid.Column="1"
-                                    Orientation="Horizontal"
-                                    VerticalAlignment="Center">
-                            <Button Content="FR"
-                                    Style="{StaticResource LangButtonStyle}"
-                                    Margin="0,0,6,0"
-                                    Command="{Binding DataContext.SetLanguageFrCommand,
-                                              RelativeSource={RelativeSource AncestorType=Window}}"/>
-                            <Button Content="EN"
-                                    Style="{StaticResource LangButtonStyle}"
-                                    Command="{Binding DataContext.SetLanguageEnCommand,
-                                              RelativeSource={RelativeSource AncestorType=Window}}"/>
-                        </StackPanel>
-                    </Grid>
+                    </Border>
 
                 </StackPanel>
-            </Border>
 
-            <!-- ══════════════════════════════════════════════
-                 CARD: Backup Settings
-                 ══════════════════════════════════════════════ -->
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel>
+                <!-- ── RIGHT COLUMN ──────────────────────── -->
 
-                    <!-- Card title -->
-                    <TextBlock Text="BACKUP"
-                               Style="{StaticResource SectionTitleStyle}"
-                               Margin="0,0,0,16"/>
+                <!-- CARD: Log Server -->
+                <Border Grid.Column="2"
+                        Style="{StaticResource CardStyle}">
+                    <StackPanel>
 
-                    <!-- Log Format -->
-                    <TextBlock Text="{Binding LogFormatLabel}"
-                               Style="{StaticResource LabelStyle}"/>
-                    <ComboBox Margin="0,0,0,20"
-                              ItemsSource="{Binding LogFormats}"
-                              SelectedIndex="{Binding SelectedLogFormatIndex}"/>
+                        <TextBlock Text="LOG SERVER"
+                                   Style="{StaticResource SectionTitleStyle}"
+                                   Margin="0,0,0,16"/>
 
-                    <!-- Extensions to Encrypt -->
-                    <TextBlock Text="{Binding ExtensionsToEncryptLabel}"
-                               Style="{StaticResource LabelStyle}"/>
-                    <TextBox Margin="0,0,0,20"
-                             Height="36"
-                             Padding="10,7"
-                             Text="{Binding ExtensionsToEncrypt,
-                                    UpdateSourceTrigger=PropertyChanged}"/>
+                        <!-- Log Storage Mode -->
+                        <TextBlock Text="Log Storage Mode"
+                                   Style="{StaticResource LabelStyle}"/>
+                        <ComboBox Margin="0,0,0,20"
+                                  ItemsSource="{Binding LogStorageModes}"
+                                  SelectedIndex="{Binding SelectedLogStorageModeIndex}"/>
 
-                    <!-- Business Software -->
-                    <TextBlock Text="{Binding BusinessSoftwareLabel}"
-                               Style="{StaticResource LabelStyle}"/>
-                    <TextBox Margin="0,0,0,20"
-                             Height="36"
-                             Padding="10,7"
-                             Text="{Binding BusinessSoftware,
-                                    UpdateSourceTrigger=PropertyChanged}"/>
+                        <!-- Server IP -->
+                        <TextBlock Text="Server IP"
+                                   Style="{StaticResource LabelStyle}"/>
+                        <TextBox Margin="0,0,0,20"
+                                 Text="{Binding LogServerIp,
+                                        UpdateSourceTrigger=PropertyChanged}"/>
 
-                    <!-- Priority Extension -->
-                    <TextBlock Text="{Binding PriorityExtensionLabel}"
-                               Style="{StaticResource LabelStyle}"/>
-                    <TextBox Margin="0,0,0,20"
-                             Height="36"
-                             Padding="10,7"
-                             ToolTip="Ex: .exe  —  leave empty to disable"
-                             Text="{Binding PriorityExtension,
-                                    UpdateSourceTrigger=PropertyChanged}"/>
+                        <!-- Server Port -->
+                        <TextBlock Text="Server Port"
+                                   Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding LogServerPort,
+                                        UpdateSourceTrigger=PropertyChanged}"/>
 
-                    <!-- Large File Threshold -->
-                    <TextBlock Text="{Binding LargeFileThresholdLabel}"
-                               Style="{StaticResource LabelStyle}"/>
-                    <TextBox Height="36"
-                             Padding="10,7"
-                             ToolTip="Ex: 1024 KB  —  0 or empty to disable"
-                             Text="{Binding LargeFileThresholdKB,
-                                    UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                </Border>
 
-                </StackPanel>
-            </Border>
-
-            <!-- ══════════════════════════════════════════════
-                 CARD: Log Server
-                 ══════════════════════════════════════════════ -->
-            <Border Style="{StaticResource CardStyle}">
-                <StackPanel>
-
-                    <!-- Card title -->
-                    <TextBlock Text="LOG SERVER"
-                               Style="{StaticResource SectionTitleStyle}"
-                               Margin="0,0,0,16"/>
-
-                    <!-- Log Storage Mode -->
-                    <TextBlock Text="Log Storage Mode"
-                               Style="{StaticResource LabelStyle}"/>
-                    <ComboBox Margin="0,0,0,20"
-                              ItemsSource="{Binding LogStorageModes}"
-                              SelectedIndex="{Binding SelectedLogStorageModeIndex}"/>
-
-                    <!-- Server IP -->
-                    <TextBlock Text="Server IP"
-                               Style="{StaticResource LabelStyle}"/>
-                    <TextBox Margin="0,0,0,20"
-                             Height="36"
-                             Padding="10,7"
-                             Text="{Binding LogServerIp,
-                                    UpdateSourceTrigger=PropertyChanged}"/>
-
-                    <!-- Server Port -->
-                    <TextBlock Text="Server Port"
-                               Style="{StaticResource LabelStyle}"/>
-                    <TextBox Height="36"
-                             Padding="10,7"
-                             Text="{Binding LogServerPort,
-                                    UpdateSourceTrigger=PropertyChanged}"/>
-
-                </StackPanel>
-            </Border>
+            </Grid>
 
             <!-- ── Save button ──────────────────────────────── -->
             <Button Content="{Binding SaveSettingsText}"
@@ -192,7 +192,7 @@
                     HorizontalAlignment="Left"
                     Style="{StaticResource ActionButtonStyle}"
                     Command="{Binding SaveSettingsCommand}"
-                    Margin="0,8,0,0"/>
+                    Margin="0,16,0,0"/>
 
         </StackPanel>
     </ScrollViewer>

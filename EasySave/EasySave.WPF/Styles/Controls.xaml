@@ -375,20 +375,31 @@
 
     <!-- ═══════════════════════════════════════════════════
          TEXTBOX
+         ─────────────────────────────────────────────────────
+         FIX: Padding is now applied to Border.Padding (not as
+         Margin on PART_ContentHost). A 3-row *,Auto,* Grid
+         inside the Border centers the ScrollViewer at its
+         natural line height regardless of the control height
+         or DPI scaling, eliminating the top/bottom glyph
+         clipping that occurred when Margin ate into the
+         ScrollViewer's allocated space.
          ═══════════════════════════════════════════════════ -->
 
     <Style TargetType="TextBox">
-        <Setter Property="Background"           Value="{DynamicResource InputBackgroundBrush}"/>
-        <Setter Property="Foreground"           Value="{DynamicResource PrimaryTextBrush}"/>
-        <Setter Property="BorderBrush"          Value="{DynamicResource InputBorderBrush}"/>
-        <Setter Property="BorderThickness"      Value="1"/>
-        <Setter Property="Padding"              Value="10,7"/>
-        <Setter Property="FontFamily"           Value="Segoe UI Variable Text, Segoe UI"/>
-        <Setter Property="FontSize"             Value="14"/>
-        <Setter Property="CaretBrush"           Value="{DynamicResource PrimaryTextBrush}"/>
-        <Setter Property="SelectionBrush"       Value="{DynamicResource AccentBrush}"/>
-        <Setter Property="SnapsToDevicePixels"  Value="True"/>
-        <Setter Property="FocusVisualStyle"     Value="{x:Null}"/>
+        <Setter Property="Background"               Value="{DynamicResource InputBackgroundBrush}"/>
+        <Setter Property="Foreground"               Value="{DynamicResource PrimaryTextBrush}"/>
+        <Setter Property="BorderBrush"              Value="{DynamicResource InputBorderBrush}"/>
+        <Setter Property="BorderThickness"          Value="1"/>
+        <!-- Horizontal-only padding; vertical centering handled by the * / Auto / * grid -->
+        <Setter Property="Padding"                  Value="10,0"/>
+        <Setter Property="MinHeight"                Value="38"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="FontFamily"               Value="Segoe UI Variable Text, Segoe UI"/>
+        <Setter Property="FontSize"                 Value="14"/>
+        <Setter Property="CaretBrush"               Value="{DynamicResource PrimaryTextBrush}"/>
+        <Setter Property="SelectionBrush"           Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="SnapsToDevicePixels"      Value="True"/>
+        <Setter Property="FocusVisualStyle"         Value="{x:Null}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
@@ -396,12 +407,25 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}"
                             CornerRadius="8">
-                        <ScrollViewer x:Name="PART_ContentHost"
-                                      Margin="{TemplateBinding Padding}"
-                                      VerticalAlignment="Center"
-                                      HorizontalScrollBarVisibility="Hidden"
-                                      VerticalScrollBarVisibility="Hidden"/>
+                        <!--
+                            3-row grid: star rows flex equally above/below the
+                            auto-height content row, perfectly centering text
+                            at any container size without clipping.
+                        -->
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                          Grid.Row="1"
+                                          Focusable="False"
+                                          HorizontalScrollBarVisibility="Hidden"
+                                          VerticalScrollBarVisibility="Hidden"/>
+                        </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsFocused" Value="True">
@@ -423,8 +447,10 @@
         </Setter>
     </Style>
 
-    <!-- Multiline TextBox variant (shows both scrollbars) -->
+    <!-- Multiline TextBox variant (scrollable content, no vertical centering grid) -->
     <Style x:Key="MultilineTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+        <Setter Property="Padding"    Value="10,8"/>
+        <Setter Property="MinHeight"  Value="60"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
@@ -432,9 +458,11 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}"
                             CornerRadius="8">
+                        <!-- No centering grid; content scrolls freely -->
                         <ScrollViewer x:Name="PART_ContentHost"
-                                      Margin="{TemplateBinding Padding}"
+                                      Focusable="False"
                                       VerticalScrollBarVisibility="Auto"
                                       HorizontalScrollBarVisibility="Auto"/>
                     </Border>
@@ -459,27 +487,43 @@
          COMBOBOX
          ═══════════════════════════════════════════════════ -->
 
+    <!-- ═══════════════════════════════════════════════════
+         COMBOBOX
+         ─────────────────────────────────────────────────────
+         FIX: Padding is now expressed as horizontal-only
+         (10,0). The ContentPresenter sits in a 3-row
+         *,Auto,* inner Grid so it is perfectly vertically
+         centered at any MinHeight, matching the TextBox fix.
+         ═══════════════════════════════════════════════════ -->
+
     <Style TargetType="ComboBox">
-        <Setter Property="Background"           Value="{DynamicResource InputBackgroundBrush}"/>
-        <Setter Property="Foreground"           Value="{DynamicResource PrimaryTextBrush}"/>
-        <Setter Property="BorderBrush"          Value="{DynamicResource InputBorderBrush}"/>
-        <Setter Property="BorderThickness"      Value="1"/>
-        <Setter Property="Padding"              Value="10,7"/>
-        <Setter Property="FontFamily"           Value="Segoe UI Variable Text, Segoe UI"/>
-        <Setter Property="FontSize"             Value="14"/>
-        <Setter Property="MinHeight"            Value="36"/>
-        <Setter Property="FocusVisualStyle"     Value="{x:Null}"/>
+        <Setter Property="Background"               Value="{DynamicResource InputBackgroundBrush}"/>
+        <Setter Property="Foreground"               Value="{DynamicResource PrimaryTextBrush}"/>
+        <Setter Property="BorderBrush"              Value="{DynamicResource InputBorderBrush}"/>
+        <Setter Property="BorderThickness"          Value="1"/>
+        <!-- Horizontal-only padding; vertical centering via inner *,Auto,* grid -->
+        <Setter Property="Padding"                  Value="10,0"/>
+        <Setter Property="MinHeight"                Value="38"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="FontFamily"               Value="Segoe UI Variable Text, Segoe UI"/>
+        <Setter Property="FontSize"                 Value="14"/>
+        <Setter Property="FocusVisualStyle"         Value="{x:Null}"/>
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility"   Value="Auto"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBox">
+                    <!--
+                        Outer grid: col 0 = content area, col 1 = arrow button.
+                        The border spans both columns as the visual background.
+                    -->
                     <Grid x:Name="MainGrid" SnapsToDevicePixels="True">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="36"/>
                         </Grid.ColumnDefinitions>
 
+                        <!-- Background border (spans full width) -->
                         <Border x:Name="MainBorder"
                                 Grid.ColumnSpan="2"
                                 Background="{TemplateBinding Background}"
@@ -487,38 +531,46 @@
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="8"/>
 
-                        <!-- Selected item display -->
-                        <ContentPresenter x:Name="ContentSite"
-                                          Grid.Column="0"
-                                          IsHitTestVisible="False"
-                                          Content="{TemplateBinding SelectionBoxItem}"
-                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-                                          ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
-                                          Margin="{TemplateBinding Padding}"
-                                          VerticalAlignment="Center"
-                                          HorizontalAlignment="Left"/>
+                        <!--
+                            Selected-item presenter: *,Auto,* grid centers the
+                            ContentPresenter at its natural height (same fix as TextBox).
+                            Left/right inset comes from the Padding binding.
+                        -->
+                        <Grid Grid.Column="0"
+                              Margin="{TemplateBinding Padding}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <ContentPresenter x:Name="ContentSite"
+                                              Grid.Row="1"
+                                              IsHitTestVisible="False"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                              HorizontalAlignment="Left"
+                                              VerticalAlignment="Center"/>
+                            <!-- Editable textbox (hidden by default) -->
+                            <TextBox x:Name="PART_EditableTextBox"
+                                     Grid.Row="1"
+                                     Visibility="Hidden"
+                                     IsReadOnly="{TemplateBinding IsReadOnly}"
+                                     Foreground="{TemplateBinding Foreground}"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     Padding="0"/>
+                        </Grid>
 
-                        <!-- Hidden editable textbox (required part) -->
-                        <TextBox x:Name="PART_EditableTextBox"
-                                 Grid.Column="0"
-                                 Visibility="Hidden"
-                                 IsReadOnly="{TemplateBinding IsReadOnly}"
-                                 Padding="{TemplateBinding Padding}"
-                                 Foreground="{TemplateBinding Foreground}"
-                                 Background="Transparent"
-                                 BorderThickness="0"/>
-
-                        <!-- Arrow indicator -->
+                        <!-- Chevron toggle button -->
                         <ToggleButton x:Name="ToggleButton"
                                       Grid.Column="1"
                                       Focusable="False"
                                       IsChecked="{Binding IsDropDownOpen, Mode=TwoWay,
                                                   RelativeSource={RelativeSource TemplatedParent}}"
                                       ClickMode="Press"
-                                      Width="32"
                                       Background="Transparent"
-                                      BorderThickness="0"
-                                      Margin="0,0,4,0">
+                                      BorderThickness="0">
                             <Path Data="M 0 0 L 5 5 L 10 0"
                                   Stroke="{DynamicResource SecondaryTextBrush}"
                                   StrokeThickness="1.5"
@@ -567,7 +619,7 @@
                             <Setter Property="Opacity" Value="0.38"/>
                         </Trigger>
                         <Trigger Property="IsEditable" Value="True">
-                            <Setter TargetName="ContentSite"    Property="Visibility" Value="Hidden"/>
+                            <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden"/>
                             <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
                         </Trigger>
                     </ControlTemplate.Triggers>

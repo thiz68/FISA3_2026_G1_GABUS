@@ -38,7 +38,7 @@
     <Grid>
         <Grid.ColumnDefinitions>
             <!-- Sidebar -->
-            <ColumnDefinition Width="210"/>
+            <ColumnDefinition Width="240"/>
             <!-- Thin separator line -->
             <ColumnDefinition Width="1"/>
             <!-- Main content -->

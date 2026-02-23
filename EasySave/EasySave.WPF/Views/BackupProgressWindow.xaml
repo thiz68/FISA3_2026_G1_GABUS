@@ -71,7 +71,7 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
-                <!-- Emergency Stop button column (non-functional, visual only) -->
+                <!-- Emergency Stop button column -->
                 <DataGridTemplateColumn Header="{Binding DataContext.ActionColumnHeader, RelativeSource={RelativeSource AncestorType=Window}}"
                                         Width="Auto">
                     <DataGridTemplateColumn.CellTemplate>
@@ -83,7 +83,8 @@
                                     IsEnabled="True"
                                     Background="#FFDD4444"
                                     Foreground="White"
-                                    FontWeight="Bold"/>
+                                    FontWeight="Bold"
+									Command="{Binding EmergencyStopCommand}"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

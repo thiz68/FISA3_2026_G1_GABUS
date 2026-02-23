@@ -183,14 +183,38 @@
                     <!-- ── Source Path ── -->
                     <TextBlock Text="{Binding SourceHeader}"
                                Style="{StaticResource LabelStyle}"/>
-                    <TextBox Text="{Binding DialogSourcePath, UpdateSourceTrigger=PropertyChanged}"
-                             Margin="0,0,0,16"/>
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding DialogSourcePath, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Button Grid.Column="2"
+                                Content="Browse…"
+                                MinWidth="80"
+                                Style="{StaticResource TopBarButtonStyle}"
+                                Click="BrowseSource_Click"/>
+                    </Grid>
 
                     <!-- ── Target Path ── -->
                     <TextBlock Text="{Binding TargetHeader}"
                                Style="{StaticResource LabelStyle}"/>
-                    <TextBox Text="{Binding DialogTargetPath, UpdateSourceTrigger=PropertyChanged}"
-                             Margin="0,0,0,16"/>
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding DialogTargetPath, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Button Grid.Column="2"
+                                Content="Browse…"
+                                MinWidth="80"
+                                Style="{StaticResource TopBarButtonStyle}"
+                                Click="BrowseTarget_Click"/>
+                    </Grid>
 
                     <!-- ── Backup Type ── -->
                     <TextBlock Text="{Binding TypeHeader}"

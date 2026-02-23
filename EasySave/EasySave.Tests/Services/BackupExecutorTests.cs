@@ -9,14 +9,18 @@ namespace EasySave.Tests.Services;
 public class BackupExecutorTests
 {
     private readonly BackupExecutor _backupExecutor;
+    private readonly Mock<ILocalizationService> _mockLocalization;
     private readonly Mock<ILogger> _mockLogger;
     private readonly Mock<IStateManager> _mockStateManager;
-    private static ILocalizationService? _localization;
 
-    public BackupExecutorTests(ILocalizationService localization)
+    public BackupExecutorTests()
     {
-        _localization = localization;
-        _backupExecutor = new BackupExecutor(_localization);
+        _mockLocalization = new Mock<ILocalizationService>();
+        _mockLocalization.Setup(l => l.GetString("active")).Returns("Active");
+        _mockLocalization.Setup(l => l.GetString("completed")).Returns("Completed");
+        _mockLocalization.Setup(l => l.GetString("failed")).Returns("Failed");
+
+        _backupExecutor = new BackupExecutor(_mockLocalization.Object);
         _mockLogger = new Mock<ILogger>();
         _mockStateManager = new Mock<IStateManager>();
     }
@@ -24,33 +28,53 @@ public class BackupExecutorTests
     [Fact]
     public void ExecuteSequential_WithEmptyList_ShouldReturnCompleted()
     {
-        // Arrange
         var jobs = new List<IJob>();
-
-        // Act
         var result = _backupExecutor.ExecuteSequential(jobs, _mockLogger.Object, _mockStateManager.Object);
-
-        // Assert
         Assert.Equal("backup_completed", result);
     }
 
     [Fact]
     public void ExecuteSequential_WithInvalidSourcePath_ShouldReturnFailed()
     {
-        // Arrange
-        var job = new SaveJob
-        {
-            Name = "TestJob",
-            SourcePath = "/nonexistent/path",
-            TargetPath = "/tmp/target",
-            Type = "full"
-        };
+        var job = new SaveJob { Name = "TestJob", SourcePath = "/nonexistent", TargetPath = "/tmp/target", Type = "full" };
+        var jobs = new List<IJob> { job };
+        var result = _backupExecutor.ExecuteSequential(jobs, _mockLogger.Object, _mockStateManager.Object);
+        Assert.Equal("backup_failed", result);
+    }
+
+    [Fact]
+    public void ExecuteSequential_WithShouldStopTrue_ShouldStopAndReturnFailed()
+    {
+        var job = new SaveJob { Name = "TestJob", SourcePath = Directory.GetCurrentDirectory(), TargetPath = "/tmp/target", Type = "full" };
+        var jobs = new List<IJob> { job };
+        bool shouldStop() => true; // Force stop
+        var result = _backupExecutor.ExecuteSequential(jobs, _mockLogger.Object, _mockStateManager.Object, shouldStop);
+        Assert.Equal("backup_failed", result);
+    }
+
+    [Fact]
+    public void MaxConcurrency_ShouldBeClampedBetween1And8()
+    {
+        Assert.InRange(BackupExecutor.MaxConcurrency, 1, 8);
+    }
+
+    // Ajout : Test pour ExecuteWithProgress (asynchrone, mock callbacks)
+    [Fact]
+    public async Task ExecuteWithProgress_ShouldCallCallbacks()
+    {
+        var job = new SaveJob { Name = "TestJob", SourcePath = Directory.GetCurrentDirectory(), TargetPath = "/tmp/target", Type = "full" };
         var jobs = new List<IJob> { job };
 
-        // Act
-        var result = _backupExecutor.ExecuteSequential(jobs, _mockLogger.Object, _mockStateManager.Object);
+        var progressCalled = false;
+        var completionCalled = false;
 
-        // Assert
-        Assert.Equal("backup_failed", result);
+        void progressCallback(string name, double progress, bool failed) { progressCalled = true; }
+        void completionCallback(bool success) { completionCalled = true; }
+
+        _backupExecutor.ExecuteWithProgress(jobs, _mockLogger.Object, _mockStateManager.Object, progressCallback, completionCallback);
+        await Task.Delay(1000); // Attendre fin
+
+        Assert.True(progressCalled);
+        Assert.True(completionCalled);
     }
 }

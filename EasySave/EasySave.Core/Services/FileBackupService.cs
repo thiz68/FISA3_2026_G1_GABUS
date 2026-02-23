@@ -1,16 +1,16 @@
-﻿namespace EasySave.Core.Services;
+namespace EasySave.Core.Services;
 
 using System.Diagnostics;
 using EasySave.Core.Models;
 using EasySave.Core.Interfaces;
 
-//This class heandles operations of copying for backups
+//This class handles operations of copying for backups
 //It supports full and differential backups
 public class FileBackupService
 {
     //Process CryptoSoft
     private readonly CryptoSoftRunner _cryptoRunner = new();
-    
+
     // Count priority-eligible files for pre-registration in the PriorityGate
     public int CountPriorityFiles(string sourceDir, string targetDir, string jobType, string priorityExtension)
     {
@@ -34,146 +34,156 @@ public class FileBackupService
         return count;
     }
 
-    //Copy an entire dir from source to target
-    //Returns true if backup succeeded, false if it failed (drive unavailable, etc.)
-    public bool CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger, IStateManager stateManager, ILocalizationService localization, Func<bool>? shouldStop = null, PriorityGate? gate = null, string priorityExtension = "")
+    // Copy an entire directory using a two-phase approach:
+    //   Phase 1 – copy priority files only; call gate.Done() after each (copy+encrypt+log chain).
+    //   Phase 2 – wait for the global priority phase to end, then copy the rest.
+    // Returns true if the backup fully succeeded, false otherwise.
+    public bool CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger,
+        IStateManager stateManager, ILocalizationService localization,
+        Func<bool>? shouldStop = null, PriorityGate? gate = null,
+        string priorityExtension = "", LargeFileGate? largeFileGate = null)
     {
-        //Counting how many files need to copy and total size
-        var (totalFiles, totalSize) = CalculateEligibleFiles(sourceDir, targetDir, job.Type);
+        // Collect all files that need to be copied (diff filter applied)
+        List<(string src, string tgt)> eligible;
+        try { eligible = CollectEligibleFiles(sourceDir, targetDir, job.Type); }
+        catch (IOException) { return false; }
 
-        // If no files found, drive might be unavailable
-        if (totalFiles == 0 && totalSize == 0)
-        {
-            // Check if source directory is actually empty or if there was an error
-            try
-            {
-                if (!Directory.Exists(sourceDir))
-                    return false;
-            }
-            catch (IOException)
-            {
-                return false;
-            }
-        }
+        try { Directory.CreateDirectory(targetDir); }
+        catch (IOException) { return false; }
 
-        //counters
+        int totalFiles = eligible.Count;
+        long totalSize = eligible.Sum(f => new FileInfo(f.src).Length);
         int filesRemaining = totalFiles;
         long sizeRemaining = totalSize;
 
-        // Try to create target folder, handle errors if drive is unavailable
-        try
+        bool hasPriority = !string.IsNullOrEmpty(priorityExtension);
+        var priorityFiles = hasPriority
+            ? eligible.Where(f => Path.GetExtension(f.src).ToLowerInvariant() == priorityExtension).ToList()
+            : new List<(string src, string tgt)>();
+        var nonPriorityFiles = hasPriority
+            ? eligible.Where(f => Path.GetExtension(f.src).ToLowerInvariant() != priorityExtension).ToList()
+            : eligible;
+
+        bool success = true;
+
+        // ── Phase 1: priority files ──────────────────────────────────────────────
+        // We MUST call gate.Done() for every slot we entered (even on abort) to avoid
+        // deadlocking jobs that are blocked at WaitIfBlocked.
+        int priorityProcessed = 0;
+        foreach (var (src, tgt) in priorityFiles)
         {
-            Directory.CreateDirectory(targetDir);
-        }
-        catch (IOException)
-        {
-            // Cannot create target directory, abort backup
-            return false;
+            bool acquired = false;
+            try
+            {
+                if (shouldStop?.Invoke() == true) { success = false; break; }
+                try { Directory.CreateDirectory(Path.GetDirectoryName(tgt)!); }
+                catch (IOException) { success = false; break; }
+
+                if (largeFileGate != null && new FileInfo(src).Length > largeFileGate.ThresholdKB * 1024L)
+                {
+                    acquired = largeFileGate.Acquire(shouldStop);
+                    if (!acquired) { success = false; break; }
+                }
+
+                var prog = totalFiles > 0 ? Math.Round((1 - (double)filesRemaining / totalFiles) * 100, 2) : 0;
+                UpdateStateForFile(job, src, tgt, filesRemaining, sizeRemaining, prog, stateManager, localization);
+
+                long fileSize = CopyFile(src, tgt, logger, job);
+                filesRemaining--;
+                sizeRemaining -= fileSize;
+
+                prog = totalFiles > 0 ? Math.Round((1 - (double)filesRemaining / totalFiles) * 100, 2) : 0;
+                UpdateStateForFile(job, src, tgt, filesRemaining, sizeRemaining, prog, stateManager, localization);
+
+                if (shouldStop?.Invoke() == true)
+                {
+                    var cfg = new ConfigManager().LoadSettings();
+                    logger.LogBusinessSoftwareStop(DateTime.Now, job.Name, cfg.BusinessSoftware);
+                    success = false;
+                }
+            }
+            finally
+            {
+                // Always release the large-file slot and signal the priority gate,
+                // including when we break early (finally still runs on break in C#).
+                if (acquired) largeFileGate!.Release();
+                gate?.Done();
+                priorityProcessed++;
+            }
+            if (!success) break;
         }
 
-        //Copy progress
-        bool success = true;
-        CopyDirectoryRecursive(sourceDir, targetDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, localization, shouldStop, gate, priorityExtension);
+        // Drain any priority slots we never entered (early abort) so other jobs
+        // waiting at WaitIfBlocked are not deadlocked.
+        if (gate != null)
+            for (int i = priorityProcessed; i < priorityFiles.Count; i++)
+                gate.Done();
+
+        // ── Wait for the global priority phase to finish ─────────────────────────
+        gate?.WaitIfBlocked(shouldStop);
+        if (shouldStop?.Invoke() == true) return false;
+
+        // ── Phase 2: non-priority files ──────────────────────────────────────────
+        if (success)
+        {
+            foreach (var (src, tgt) in nonPriorityFiles)
+            {
+                if (shouldStop?.Invoke() == true) { success = false; break; }
+                try { Directory.CreateDirectory(Path.GetDirectoryName(tgt)!); }
+                catch (IOException) { success = false; break; }
+
+                bool acquired = false;
+                try
+                {
+                    if (largeFileGate != null && new FileInfo(src).Length > largeFileGate.ThresholdKB * 1024L)
+                    {
+                        acquired = largeFileGate.Acquire(shouldStop);
+                        if (!acquired) { success = false; break; }
+                    }
+
+                    var prog = totalFiles > 0 ? Math.Round((1 - (double)filesRemaining / totalFiles) * 100, 2) : 0;
+                    UpdateStateForFile(job, src, tgt, filesRemaining, sizeRemaining, prog, stateManager, localization);
+
+                    long fileSize = CopyFile(src, tgt, logger, job);
+                    filesRemaining--;
+                    sizeRemaining -= fileSize;
+
+                    prog = totalFiles > 0 ? Math.Round((1 - (double)filesRemaining / totalFiles) * 100, 2) : 0;
+                    UpdateStateForFile(job, src, tgt, filesRemaining, sizeRemaining, prog, stateManager, localization);
+
+                    if (shouldStop?.Invoke() == true)
+                    {
+                        var cfg = new ConfigManager().LoadSettings();
+                        logger.LogBusinessSoftwareStop(DateTime.Now, job.Name, cfg.BusinessSoftware);
+                        success = false;
+                    }
+                }
+                finally
+                {
+                    if (acquired) largeFileGate!.Release();
+                }
+                if (!success) break;
+            }
+        }
+
         return success;
     }
 
-    //Copy all files and subfolders
-    private void CopyDirectoryRecursive(string sourceDir, string targetDir, IJob job, ILogger logger,
-    IStateManager stateManager, int totalFiles, long totalSize, ref int filesRemaining, ref long sizeRemaining, ref bool success, ILocalizationService localization, Func<bool>? shouldStop, PriorityGate? gate, string priorityExtension)
+    // Returns all (src, tgt) pairs that must be copied, respecting the diff filter.
+    // Throws IOException if the source directory is unavailable.
+    private List<(string src, string tgt)> CollectEligibleFiles(string sourceDir, string targetDir, string jobType)
     {
-        // Get list of files, handle errors if drive becomes unavailable (USB unplugged)
-        string[] files;
-        try
+        var result = new List<(string src, string tgt)>();
+        var allFiles = Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories);
+        foreach (var src in allFiles)
         {
-            files = Directory.GetFiles(sourceDir);
+            var rel = Path.GetRelativePath(sourceDir, src);
+            var tgt = Path.Combine(targetDir, rel);
+            if (jobType == "diff" && File.Exists(tgt) && File.GetLastWriteTime(tgt) >= File.GetLastWriteTime(src))
+                continue;
+            result.Add((src, tgt));
         }
-        catch (IOException)
-        {
-            // Drive unavailable, mark as failed and stop
-            success = false;
-            return;
-        }
-
-        //Copy all files in the current folder
-        foreach (var sourceFile in files)
-        {
-            var relativePath = Path.GetRelativePath(sourceDir, sourceFile);
-            var targetFile = Path.Combine(targetDir, relativePath);
-            // Check if file needs to be copied (for differential backup)
-            if (job.Type == "diff")
-            {
-                if (File.Exists(targetFile) && File.GetLastWriteTime(targetFile) >= File.GetLastWriteTime(sourceFile))
-                    continue;
-            }
-
-            // Priority gate: block non-priority files until all priority files across all jobs are done
-            bool isPriority = !string.IsNullOrEmpty(priorityExtension) &&
-                              Path.GetExtension(sourceFile).ToLowerInvariant() == priorityExtension;
-            if (!isPriority)
-            {
-                gate?.WaitIfBlocked(shouldStop);
-                if (shouldStop?.Invoke() == true) { success = false; return; }
-            }
-
-            // Update state before copying
-            var progression = totalFiles > 0 ? Math.Round((1 - (double)filesRemaining / totalFiles) * 100, 2) : 0;
-            UpdateStateForFile(job, sourceFile, targetFile, filesRemaining, sizeRemaining, progression, stateManager, localization);
-
-            // Copy the file and log (includes encryption + log write)
-            long fileSize = CopyFile(sourceFile, targetFile, logger, job);
-
-            // Signal gate: priority file fully processed (copy + encrypt + log done)
-            if (isPriority)
-                gate?.Done();
-
-            // Update counters
-            filesRemaining--;
-            sizeRemaining -= fileSize;
-
-            // Update progression after copy
-            progression = totalFiles > 0 ? Math.Round((1 - (double)filesRemaining / totalFiles) * 100, 2) : 0;
-            UpdateStateForFile(job, sourceFile, targetFile, filesRemaining, sizeRemaining, progression, stateManager, localization);
-
-            // Check if we should stop (business software detected)
-            if (shouldStop?.Invoke() == true)
-            {
-                // Log the stop immediately (before user might close the business software)
-                var settings = new ConfigManager().LoadSettings();
-                logger.LogBusinessSoftwareStop(DateTime.Now, job.Name, settings.BusinessSoftware);
-                success = false;
-                return;
-            }
-        }
-
-        // Get subdirectories, handle errors
-        string[] subDirs;
-        try
-        {
-            subDirs = Directory.GetDirectories(sourceDir);
-        }
-        catch (IOException)
-        {
-            success = false;
-            return;
-        }
-
-        // Recurse into subdirectories
-        foreach (var subDir in subDirs)
-        {
-            var relativePath = Path.GetRelativePath(sourceDir, subDir);
-            var targetSubDir = Path.Combine(targetDir, relativePath);
-            try
-            {
-                Directory.CreateDirectory(targetSubDir);
-            }
-            catch (IOException)
-            {
-                success = false;
-                return;
-            }
-            CopyDirectoryRecursive(subDir, targetSubDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, localization, shouldStop, gate, priorityExtension);
-            if (!success) return;
-        }
+        return result;
     }
 
     //Copy a single file from source to target
@@ -243,46 +253,10 @@ public class FileBackupService
         return fileSize;
     }
 
-
-    private (int fileCount, long totalSize) CalculateEligibleFiles(string sourceDir, string targetDir, string type)
-    {
-        int count = 0;
-        long size = 0;
-
-        // Get all files recursively, handle errors if drive becomes unavailable
-        string[] allFiles;
-        try
-        {
-            allFiles = Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories);
-        }
-        catch (IOException)
-        {
-            // Drive unavailable, return zero files
-            return (0, 0);
-        }
-
-        foreach (var file in allFiles)
-        {
-            var fileInfo = new FileInfo(file);
-            if (type == "diff")
-            {
-                var relativePath = Path.GetRelativePath(sourceDir, file);
-                var targetFile = Path.Combine(targetDir, relativePath);
-                if (File.Exists(targetFile) && File.GetLastWriteTime(targetFile) >= File.GetLastWriteTime(file))
-                    continue;
-            }
-
-            count++;
-            size += fileInfo.Length;
-        }
-        return (count, size);
-    }
-
-    // Update  state manager progress information.
+    // Update state manager progress information.
     private void UpdateStateForFile(IJob job, string currentSource, string currentTarget,
-    int remainingFiles, long remainingSize, double progression, IStateManager stateManager, ILocalizationService localization)
+        int remainingFiles, long remainingSize, double progression, IStateManager stateManager, ILocalizationService localization)
     {
-        // Create state object with all information.
         var state = new JobState
         {
             State = localization.GetString("active"),
@@ -292,8 +266,6 @@ public class FileBackupService
             CurrentSourceFilePath = currentSource,
             CurrentTargetFilePath = currentTarget
         };
-
-        //Update state manager
         stateManager.UpdateJobState(job, state);
     }
 }

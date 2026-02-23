@@ -86,6 +86,7 @@ public class SettingsViewModel : BaseViewModel
         ExtensionsToEncrypt = settings.ExtensionsToEncrypt;
         BusinessSoftware = settings.BusinessSoftware;
         PriorityExtension = settings.PriorityExtension;
+        LargeFileThresholdKB = settings.LargeFileThresholdKB;
 
         // Load log storage settings
         SelectedLogStorageModeIndex = (int)settings.LogStorageMode;
@@ -136,6 +137,21 @@ public class SettingsViewModel : BaseViewModel
         get => _priorityExtensionLabel;
         set => SetProperty(ref _priorityExtensionLabel, value);
     }
+
+    // Max file size (KB) above which only one concurrent transfer is allowed. 0 = disabled.
+    private long _largeFileThresholdKB;
+    public long LargeFileThresholdKB
+    {
+        get => _largeFileThresholdKB;
+        set => SetProperty(ref _largeFileThresholdKB, value);
+    }
+
+    private string _largeFileThresholdLabel = string.Empty;
+    public string LargeFileThresholdLabel
+    {
+        get => _largeFileThresholdLabel;
+        set => SetProperty(ref _largeFileThresholdLabel, value);
+    }
     
     public string[] LogStorageModes { get; } =
     {
@@ -173,6 +189,7 @@ public class SettingsViewModel : BaseViewModel
         settings.ExtensionsToEncrypt = ExtensionsToEncrypt ?? string.Empty;
         settings.BusinessSoftware = BusinessSoftware ?? string.Empty;
         settings.PriorityExtension = PriorityExtension ?? string.Empty;
+        settings.LargeFileThresholdKB = LargeFileThresholdKB;
         settings.LogStorageMode = (LogStorageMode)SelectedLogStorageModeIndex;
         settings.LogServerIp = LogServerIp;
         settings.LogServerPort = LogServerPort;
@@ -191,6 +208,7 @@ public class SettingsViewModel : BaseViewModel
         ExtensionsToEncryptLabel = _localization.GetString("extensions_to_encrypt");
         BusinessSoftwareLabel = _localization.GetString("business_software");
         PriorityExtensionLabel = _localization.GetString("priority_extension");
+        LargeFileThresholdLabel = _localization.GetString("large_file_threshold_kb");
         SaveSettingsText = _localization.GetString("save_settings");
     }
 }

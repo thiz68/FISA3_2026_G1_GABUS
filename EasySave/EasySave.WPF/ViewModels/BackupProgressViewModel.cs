@@ -12,6 +12,10 @@ public class BackupProgressItemViewModel : BaseViewModel
     private readonly string _jobName;
     private double _progressPercent;
     private bool _isFailed;
+    public bool _stopRequested;
+
+    // Command for emergency stop button
+    public ICommand EmergencyStopCommand { get; }
 
     public string JobName => _jobName;
 
@@ -25,6 +29,7 @@ public class BackupProgressItemViewModel : BaseViewModel
             {
                 OnPropertyChanged(nameof(ProgressDisplay));
             }
+            CommandManager.InvalidateRequerySuggested();
         }
     }
 
@@ -38,6 +43,7 @@ public class BackupProgressItemViewModel : BaseViewModel
             {
                 OnPropertyChanged(nameof(ProgressDisplay));
             }
+            CommandManager.InvalidateRequerySuggested();
         }
     }
 
@@ -57,6 +63,19 @@ public class BackupProgressItemViewModel : BaseViewModel
         _jobName = jobName;
         _progressPercent = 0;
         _isFailed = false;
+        _stopRequested = false;
+        EmergencyStopCommand = new RelayCommand(ExecuteEmergencyStop, CanEmergencyStop);
+    }
+
+    private void ExecuteEmergencyStop(object? parameter)
+    {
+        _stopRequested = true;
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    private bool CanEmergencyStop(object? parameter)
+    {
+        return ProgressPercent < 100 && !IsFailed && !_stopRequested;
     }
 }
 
@@ -175,5 +194,11 @@ public class BackupProgressViewModel : BaseViewModel
         ProgressColumnHeader = _localization.GetString("progression");
         ActionColumnHeader = _localization.GetString("actions");
         EmergencyStopText = _localization.GetString("emergency_stop");
+    }
+
+    public bool IsStopRequested(string jobName)
+    {
+        var item = JobProgressItems.FirstOrDefault(x => x.JobName == jobName);
+        return item != null && item._stopRequested;
     }
 }

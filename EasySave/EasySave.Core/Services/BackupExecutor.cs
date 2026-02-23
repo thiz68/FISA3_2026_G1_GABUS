@@ -21,7 +21,11 @@ public class BackupExecutor
 
     // Execute jobs in parallel using SemaphoreSlim to limit concurrency based on processor count
     // Returns "backup_completed" if all succeeded, "backup_failed" if any failed
-    public string ExecuteSequential(List<IJob> jobs, ILogger logger, IStateManager stateManager, Func<bool>? shouldStop = null)
+    public string ExecuteSequential(
+        List<IJob> jobs,
+        ILogger logger,
+        IStateManager stateManager,
+        Func<string, bool>? shouldStop = null)
     {
         // Determine maximum concurrency: clamp between 1 and 8 based on logical processors
         int maxConcurrency = Math.Clamp(Environment.ProcessorCount, 1, 8);
@@ -41,7 +45,15 @@ public class BackupExecutor
                     stateManager.UpdateJobState(job, state);
 
                     // Copy all files from source to target
-                    bool success = _fileBackupService.CopyDirectory(job.SourcePath, job.TargetPath, job, logger, stateManager, _localization, shouldStop);
+                    bool success = _fileBackupService.CopyDirectory(
+                        job.SourcePath,
+                        job.TargetPath,
+                        job,
+                        logger,
+                        stateManager,
+                        _localization,
+                        () => shouldStop?.Invoke(job.Name) ?? false
+                    );
 
                     if (success)
                     {
@@ -81,7 +93,7 @@ public class BackupExecutor
         IStateManager stateManager,
         Action<string, double, bool> progressCallback,
         Action<bool> completionCallback,
-        Func<bool>? shouldStop = null)
+        Func<string, bool>? shouldStop = null)
     {
         // Determine maximum concurrency (max threads available on computer)
         int maxConcurrency = Math.Clamp(Environment.ProcessorCount, 1, 8);
@@ -107,7 +119,15 @@ public class BackupExecutor
                     progressStateManager.UpdateJobState(job, state);
 
                     // Copy all files from source to target
-                    bool success = _fileBackupService.CopyDirectory(job.SourcePath, job.TargetPath, job, logger, progressStateManager, _localization, shouldStop);
+                    bool success = _fileBackupService.CopyDirectory(
+                        job.SourcePath,
+                        job.TargetPath,
+                        job,
+                        logger,
+                        progressStateManager,
+                        _localization,
+                        () => shouldStop?.Invoke(job.Name) ?? false
+                    );
 
                     if (success)
                     {

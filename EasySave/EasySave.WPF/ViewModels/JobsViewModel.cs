@@ -424,6 +424,36 @@ public class JobsViewModel : BaseViewModel
 
         Func<string, bool> shouldStopFunc = jobName => progressViewModel.IsStopRequested(jobName);
 
+        // Pause state callback: show popup when entering pause (only once)
+        bool pausePopupShown = false;
+        object pauseLock = new object();
+        Action<bool> onPauseStateChanged = (isPaused) =>
+        {
+            if (isPaused)
+            {
+                lock (pauseLock)
+                {
+                    if (pausePopupShown) return;
+                    pausePopupShown = true;
+                }
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    MessageBox.Show(
+                        _localization.GetString("temporary_pause"),
+                        _localization.GetString("warning"),
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                });
+            }
+            else
+            {
+                lock (pauseLock)
+                {
+                    pausePopupShown = false;
+                }
+            }
+        };
+
         // Start the backup execution with progress tracking
         _backupExecutor.ExecuteWithProgress(
             jobs,
@@ -432,7 +462,8 @@ public class JobsViewModel : BaseViewModel
             progressCallback,
             completionCallback,
             shouldStopFunc,
-            shouldPause);
+            shouldPause,
+            onPauseStateChanged);
 
         // Show the progress window (modal dialog)
         progressWindow.ShowDialog();

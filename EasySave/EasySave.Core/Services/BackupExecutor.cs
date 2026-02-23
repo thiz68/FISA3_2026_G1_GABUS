@@ -25,12 +25,31 @@ public class BackupExecutor
         List<IJob> jobs,
         ILogger logger,
         IStateManager stateManager,
-        Func<string, bool>? shouldStop = null)
+        Func<string, bool>? shouldStop = null,
+        Func<string, bool>? shouldPause = null)
     {
         // Determine maximum concurrency: clamp between 1 and 8 based on logical processors
         int maxConcurrency = Math.Clamp(Environment.ProcessorCount, 1, 8);
         var semaphore = new SemaphoreSlim(maxConcurrency);
         var tasks = new List<Task<bool>>();
+
+        // Build global priority gate: pre-scan all jobs so the counter is complete before any copy starts
+        var settings1 = new ConfigManager().LoadSettings();
+        string priorityExt = NormalizePriorityExtension(settings1.PriorityExtension);
+        PriorityGate? gate = null;
+        if (!string.IsNullOrEmpty(priorityExt))
+        {
+            gate = new PriorityGate();
+            int total = 0;
+            foreach (var j in jobs)
+                total += _fileBackupService.CountPriorityFiles(j.SourcePath, j.TargetPath, j.Type, priorityExt);
+            gate.Add(total);
+        }
+
+        // Build global large-file gate (null = disabled)
+        LargeFileGate? largeFileGate = settings1.LargeFileThresholdKB > 0
+            ? new LargeFileGate(settings1.LargeFileThresholdKB)
+            : null;
 
         foreach (var job in jobs)
         {
@@ -52,7 +71,11 @@ public class BackupExecutor
                         logger,
                         stateManager,
                         _localization,
-                        () => shouldStop?.Invoke(job.Name) ?? false
+                        () => shouldStop?.Invoke(job.Name) ?? false,
+                        gate,
+                        priorityExt,
+                        largeFileGate,
+                        () => shouldPause?.Invoke(job.Name) ?? false
                     );
 
                     if (success)
@@ -97,13 +120,31 @@ public class BackupExecutor
         Action<string, double, bool> progressCallback,
         Action<bool> completionCallback,
         Func<string, bool>? shouldStop = null,
-        Func<bool>? shouldPause = null,
+        Func<string, bool>? shouldPause = null,
         Action<bool>? onPauseStateChanged = null)
     {
         // Determine maximum concurrency (max threads available on computer)
         int maxConcurrency = Math.Clamp(Environment.ProcessorCount, 1, 8);
         var semaphore = new SemaphoreSlim(maxConcurrency);
         var tasks = new List<Task<bool>>();
+
+        // Build global priority gate (same logic as ExecuteSequential)
+        var settings2 = new ConfigManager().LoadSettings();
+        string priorityExt = NormalizePriorityExtension(settings2.PriorityExtension);
+        PriorityGate? gate = null;
+        if (!string.IsNullOrEmpty(priorityExt))
+        {
+            gate = new PriorityGate();
+            int total = 0;
+            foreach (var j in jobs)
+                total += _fileBackupService.CountPriorityFiles(j.SourcePath, j.TargetPath, j.Type, priorityExt);
+            gate.Add(total);
+        }
+
+        // Build global large-file gate (null = disabled)
+        LargeFileGate? largeFileGate = settings2.LargeFileThresholdKB > 0
+            ? new LargeFileGate(settings2.LargeFileThresholdKB)
+            : null;
 
         // Get progress in job
         var progressStateManager = new ProgressTrackingStateManager(stateManager, progressCallback);
@@ -132,8 +173,10 @@ public class BackupExecutor
                         progressStateManager,
                         _localization,
                         () => shouldStop?.Invoke(job.Name) ?? false,
-                        shouldPause,
-                        onPauseStateChanged
+                        gate,
+                        priorityExt,
+                        largeFileGate,
+                        () => shouldPause?.Invoke(job.Name) ?? false
                     );
 
                     if (success)
@@ -167,6 +210,84 @@ public class BackupExecutor
             completionCallback(allSuccess);
         });
     }
+
+    // Normalize priority extension: "exe" or ".EXE" → ".exe"; null/empty → ""
+    private static string NormalizePriorityExtension(string? ext)
+    {
+        if (string.IsNullOrWhiteSpace(ext)) return string.Empty;
+        ext = ext.Trim().ToLowerInvariant();
+        return ext.StartsWith('.') ? ext : '.' + ext;
+    }
+}
+
+// Global priority gate: blocks non-priority file copies until all priority files across all jobs are done
+public sealed class PriorityGate
+{
+    private int _pending;
+    private readonly object _sync = new();
+
+    // Add count of priority files before any copy starts (called from BackupExecutor, single-threaded)
+    public void Add(int count)
+    {
+        lock (_sync) { _pending += count; }
+    }
+
+    // Signal that one priority file has been fully processed (copy + encrypt + log)
+    public void Done()
+    {
+        lock (_sync)
+        {
+            if (--_pending <= 0)
+            {
+                _pending = 0;
+                Monitor.PulseAll(_sync); // wake all waiting non-priority threads
+            }
+        }
+    }
+
+    // Block the calling thread until pendingPriority == 0; checks shouldStop every 200 ms.
+    // If shouldPause fires, keeps waiting (no return/failed) until the pause clears.
+    public void WaitIfBlocked(Func<bool>? shouldStop, Func<bool>? shouldPause = null)
+    {
+        lock (_sync)
+        {
+            while (_pending > 0)
+            {
+                // Pause active: don't check stop, just keep waiting.
+                if (shouldPause?.Invoke() == true) { Monitor.Wait(_sync, 200); continue; }
+                if (shouldStop?.Invoke() == true) return;
+                Monitor.Wait(_sync, 200);
+            }
+        }
+    }
+}
+
+// Global large-file gate: at most one transfer of a file > ThresholdKB is allowed at a time.
+// Files <= ThresholdKB are never blocked by this gate.
+// Scope: shared across all concurrent jobs (created once in BackupExecutor).
+public sealed class LargeFileGate
+{
+    private readonly SemaphoreSlim _semaphore = new(1, 1);
+    public long ThresholdKB { get; }
+
+    public LargeFileGate(long thresholdKb) => ThresholdKB = thresholdKb;
+
+    // Acquires the slot. Returns true if acquired, false if shouldStop fired.
+    // If shouldPause fires while waiting, yields without holding the semaphore so
+    // other non-paused jobs can use the bandwidth slot; resumes when pause clears.
+    public bool Acquire(Func<bool>? shouldStop, Func<bool>? shouldPause = null)
+    {
+        while (true)
+        {
+            if (shouldStop?.Invoke() == true) return false;
+            // Paused: don't try to grab the slot, just wait and retry.
+            if (shouldPause?.Invoke() == true) { Thread.Sleep(200); continue; }
+            if (_semaphore.Wait(200)) return true;
+        }
+    }
+
+    // Always call from a finally block so the slot is never leaked on error.
+    public void Release() => _semaphore.Release();
 }
 
 // Intercepts updates to report progress to popup progress window

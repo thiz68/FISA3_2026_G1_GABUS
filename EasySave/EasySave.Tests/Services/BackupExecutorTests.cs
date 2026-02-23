@@ -47,7 +47,7 @@ public class BackupExecutorTests
     {
         var job = new SaveJob { Name = "TestJob", SourcePath = Directory.GetCurrentDirectory(), TargetPath = "/tmp/target", Type = "full" };
         var jobs = new List<IJob> { job };
-        bool shouldStop() => true; // Force stop
+        Func<string, bool> shouldStop = _ => true; // Force stop
         var result = _backupExecutor.ExecuteSequential(jobs, _mockLogger.Object, _mockStateManager.Object, shouldStop);
         Assert.Equal("backup_failed", result);
     }

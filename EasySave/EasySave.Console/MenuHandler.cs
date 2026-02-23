@@ -434,24 +434,16 @@ public class MenuHandler
 
             System.Console.WriteLine(_localization.GetString("backup_started"));
 
-            // Create callback to check if business software starts during backup
-            Func<bool>? shouldStop = null;
+            // Pause backup when business software is running; resume automatically when it exits
+            Func<string, bool>? shouldPause = null;
             if (!string.IsNullOrWhiteSpace(settings.BusinessSoftware))
             {
-                shouldStop = () => checker.IsBusinessSoftwareRunning(settings.BusinessSoftware);
+                shouldPause = _ => checker.IsBusinessSoftwareRunning(settings.BusinessSoftware);
             }
 
-            var result = _backupExecutor.ExecuteSequential(jobs, _logger, _stateManager, shouldStop);
+            var result = _backupExecutor.ExecuteSequential(jobs, _logger, _stateManager, null, shouldPause);
 
-            // Show specific message if stopped due to business software
-            if (result == "backup_failed" && shouldStop?.Invoke() == true)
-            {
-                System.Console.WriteLine(_localization.GetString("business_software_stopped"));
-            }
-            else
-            {
-                System.Console.WriteLine(_localization.GetString(result));
-            }
+            System.Console.WriteLine(_localization.GetString(result));
             System.Console.WriteLine(_localization.GetString("press_to_continue"));
             System.Console.ReadKey();
         }

@@ -117,6 +117,8 @@ public class LocalizationService : ILocalizationService
             ["business_software"] = "Business Software (process name)",
             ["business_software_detected"] = "Business software detected. Backup cannot start.",
             ["business_software_stopped"] = "Backup stopped: business software detected",
+            ["priority_extension"] = "Priority Extension (e.g. .exe)",
+            ["large_file_threshold_kb"] = "Large File Threshold (KB, 0 = disabled)",
 
             // Backup progress popup
             ["backup_progress_header"] = "Starting backups with {0} threads available",
@@ -230,6 +232,8 @@ public class LocalizationService : ILocalizationService
             ["business_software"] = "Logiciel metier (nom du processus)",
             ["business_software_detected"] = "Logiciel metier detecte. Impossible de demarrer la sauvegarde.",
             ["business_software_stopped"] = "Sauvegarde arretee : logiciel metier detecte",
+            ["priority_extension"] = "Extension prioritaire (ex. .exe)",
+            ["large_file_threshold_kb"] = "Seuil grands fichiers (Ko, 0 = desactive)",
 
             // Backup progress popup
             ["backup_progress_header"] = "Demarrage des backups avec {0} threads disponibles",

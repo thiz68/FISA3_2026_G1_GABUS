@@ -367,11 +367,7 @@ public class JobsViewModel : BaseViewModel
         var settings = _configManager.LoadSettings();
         if (_businessChecker.IsBusinessSoftwareRunning(settings.BusinessSoftware))
         {
-            MessageBox.Show(
-                _localization.GetString("business_software_detected"),
-                "Info",
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
+            ShowBusinessSoftwareDetectedPopup();
             return;
         }
 
@@ -401,6 +397,7 @@ public class JobsViewModel : BaseViewModel
         var progressWindow = new BackupProgressWindow(progressViewModel);
         progressWindow.Owner = Application.Current.MainWindow;
 
+        var monitorCts = new CancellationTokenSource();
         // Callback to check if business software is running (for pause)
         Func<bool> shouldPause = () => _businessChecker.IsBusinessSoftwareRunning(settings.BusinessSoftware);
 
@@ -416,13 +413,16 @@ public class JobsViewModel : BaseViewModel
         // Completion callback: enable the OK button on the UI thread
         Action<bool> completionCallback = (allSuccess) =>
         {
+            monitorCts.Cancel();
             Application.Current.Dispatcher.Invoke(() =>
             {
                 progressViewModel.SetCompleted();
             });
         };
 
-        Func<string, bool> shouldStopFunc = jobName => progressViewModel.IsStopRequested(jobName);
+        // Hard stop: user pressed the emergency stop button for a specific job
+        Func<string, bool> shouldStopFunc = jobName =>
+            progressViewModel.IsStopRequested(jobName);
 
         // Pause state callback: show popup when entering pause (only once)
         bool pausePopupShown = false;
@@ -454,6 +454,10 @@ public class JobsViewModel : BaseViewModel
             }
         };
 
+        // Soft pause: a business-critical software is running → suspend until it exits
+        Func<string, bool> shouldPauseFunc = _ =>
+            _businessChecker.IsBusinessSoftwareRunning(settings.BusinessSoftware);
+
         // Start the backup execution with progress tracking
         _backupExecutor.ExecuteWithProgress(
             jobs,
@@ -462,11 +466,45 @@ public class JobsViewModel : BaseViewModel
             progressCallback,
             completionCallback,
             shouldStopFunc,
-            shouldPause,
+            shouldPauseFunc,
             onPauseStateChanged);
+
+        // Monitor business software during backup: one popup per false→true transition
+        if (!string.IsNullOrWhiteSpace(settings.BusinessSoftware))
+        {
+            bool wasPaused = false;
+            Task.Run(async () =>
+            {
+                while (!monitorCts.Token.IsCancellationRequested)
+                {
+                    bool isRunning = _businessChecker.IsBusinessSoftwareRunning(settings.BusinessSoftware);
+                    if (isRunning && !wasPaused)
+                    {
+                        wasPaused = true;
+                        Application.Current.Dispatcher.Invoke(ShowBusinessSoftwareDetectedPopup);
+                    }
+                    else if (!isRunning)
+                    {
+                        wasPaused = false;
+                    }
+                    try { await Task.Delay(500, monitorCts.Token); }
+                    catch (OperationCanceledException) { break; }
+                }
+            });
+        }
 
         // Show the progress window (modal dialog)
         progressWindow.ShowDialog();
+    }
+
+    // Popup "business software detected" — reused for pre-check and mid-run monitoring
+    private void ShowBusinessSoftwareDetectedPopup()
+    {
+        MessageBox.Show(
+            _localization.GetString("business_software_detected"),
+            "Info",
+            MessageBoxButton.OK,
+            MessageBoxImage.Warning);
     }
 
     // Delete a job

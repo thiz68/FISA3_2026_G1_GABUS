@@ -98,14 +98,22 @@ public class FileBackupService
             progression = totalFiles > 0 ? Math.Round((1 - (double)filesRemaining / totalFiles) * 100, 2) : 0;
             UpdateStateForFile(job, sourceFile, targetFile, filesRemaining, sizeRemaining, progression, stateManager, localization);
 
-            // Check if we should stop (business software detected)
-            if (shouldStop?.Invoke() == true)
+            // Pause while business software is running
+            while (shouldStop?.Invoke() == true)
             {
-                // Log the stop immediately (before user might close the business software)
-                var settings = new ConfigManager().LoadSettings();
-                logger.LogBusinessSoftwareStop(DateTime.Now, job.Name, settings.BusinessSoftware);
-                success = false;
-                return;
+                // Update state to paused
+                var pausedState = new JobState
+                {
+                    State = localization.GetString("paused"),
+                    NbFilesLeftToDo = filesRemaining,
+                    NbSizeLeftToDo = sizeRemaining,
+                    Progression = progression,
+                    CurrentSourceFilePath = sourceFile,
+                    CurrentTargetFilePath = targetFile
+                };
+                stateManager.UpdateJobState(job, pausedState);
+
+                Thread.Sleep(1000); // Check every second
             }
         }
 

@@ -59,6 +59,8 @@ public class LocalizationService : ILocalizationService
             ["inactive"] = "Inactive",
             ["completed"] = "Completed",
             ["failed"] = "Failed",
+            ["paused"] = "Paused",
+            ["temporary_pause"] = "Temporary pause: business software launched",
             ["log_format_changed"] = "Log format changed to",
 
             // Errors
@@ -170,6 +172,8 @@ public class LocalizationService : ILocalizationService
             ["inactive"] = "Inactif",
             ["completed"] = "Complete",
             ["failed"] = "Echoue",
+            ["paused"] = "En pause",
+            ["temporary_pause"] = "Pause temporaire : logiciel metier lance",
             ["log_format_changed"] = "Format des logs changes en",
 
             // Errors

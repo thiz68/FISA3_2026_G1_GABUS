@@ -13,7 +13,7 @@ public class FileBackupService
     
     //Copy an entire dir from source to target
     //Returns true if backup succeeded, false if it failed (drive unavailable, etc.)
-    public bool CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger, IStateManager stateManager, ILocalizationService localization, Func<bool>? shouldStop = null)
+    public bool CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger, IStateManager stateManager, ILocalizationService localization, Func<bool>? shouldStop = null, Func<bool>? shouldPause = null, Action<bool>? onPauseStateChanged = null)
     {
         //Counting how many files need to copy and total size
         var (totalFiles, totalSize) = CalculateEligibleFiles(sourceDir, targetDir, job.Type);
@@ -50,13 +50,13 @@ public class FileBackupService
 
         //Copy progress
         bool success = true;
-        CopyDirectoryRecursive(sourceDir, targetDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, localization, shouldStop);
+        CopyDirectoryRecursive(sourceDir, targetDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, localization, shouldStop, shouldPause, onPauseStateChanged);
         return success;
     }
 
     //Copy all files and subfolders
     private void CopyDirectoryRecursive(string sourceDir, string targetDir, IJob job, ILogger logger,
-    IStateManager stateManager, int totalFiles, long totalSize, ref int filesRemaining, ref long sizeRemaining, ref bool success, ILocalizationService localization, Func<bool>? shouldStop = null)
+    IStateManager stateManager, int totalFiles, long totalSize, ref int filesRemaining, ref long sizeRemaining, ref bool success, ILocalizationService localization, Func<bool>? shouldStop = null, Func<bool>? shouldPause = null, Action<bool>? onPauseStateChanged = null)
     {
         // Get list of files, handle errors if drive becomes unavailable (USB unplugged)
         string[] files;
@@ -98,14 +98,45 @@ public class FileBackupService
             progression = totalFiles > 0 ? Math.Round((1 - (double)filesRemaining / totalFiles) * 100, 2) : 0;
             UpdateStateForFile(job, sourceFile, targetFile, filesRemaining, sizeRemaining, progression, stateManager, localization);
 
-            // Check if we should stop (business software detected)
+            // Check if emergency stop was requested (definitive stop)
             if (shouldStop?.Invoke() == true)
             {
-                // Log the stop immediately (before user might close the business software)
-                var settings = new ConfigManager().LoadSettings();
-                logger.LogBusinessSoftwareStop(DateTime.Now, job.Name, settings.BusinessSoftware);
                 success = false;
                 return;
+            }
+
+            // Pause while business software is running (temporary pause, auto-resume)
+            if (shouldPause?.Invoke() == true)
+            {
+                // Notify UI that we're entering pause state
+                onPauseStateChanged?.Invoke(true);
+
+                while (shouldPause.Invoke())
+                {
+                    // Update state to paused
+                    var pausedState = new JobState
+                    {
+                        State = localization.GetString("paused"),
+                        NbFilesLeftToDo = filesRemaining,
+                        NbSizeLeftToDo = sizeRemaining,
+                        Progression = progression,
+                        CurrentSourceFilePath = sourceFile,
+                        CurrentTargetFilePath = targetFile
+                    };
+                    stateManager.UpdateJobState(job, pausedState);
+
+                    Thread.Sleep(1000); // Check every second
+
+                    // Also check for emergency stop while paused
+                    if (shouldStop?.Invoke() == true)
+                    {
+                        success = false;
+                        return;
+                    }
+                }
+
+                // Notify UI that we're exiting pause state
+                onPauseStateChanged?.Invoke(false);
             }
         }
 
@@ -135,7 +166,7 @@ public class FileBackupService
                 success = false;
                 return;
             }
-            CopyDirectoryRecursive(subDir, targetSubDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, localization, shouldStop);
+            CopyDirectoryRecursive(subDir, targetSubDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, localization, shouldStop, shouldPause, onPauseStateChanged);
             if (!success) return;
         }
     }

@@ -422,6 +422,7 @@ public class JobsViewModel : BaseViewModel
             });
         };
 
+<<<<<<< feature-pause_resume_business_software
         // Pause state callback: show popup when entering pause (only once)
         bool pausePopupShown = false;
         object pauseLock = new object();
@@ -452,6 +453,9 @@ public class JobsViewModel : BaseViewModel
                 }
             }
         };
+=======
+        Func<string, bool> shouldStopFunc = jobName => progressViewModel.IsStopRequested(jobName);
+>>>>>>> develop
 
         // Start the backup execution with progress tracking
         _backupExecutor.ExecuteWithProgress(
@@ -460,8 +464,12 @@ public class JobsViewModel : BaseViewModel
             _stateManager,
             progressCallback,
             completionCallback,
+<<<<<<< feature-pause_resume_business_software
             shouldStop,
             onPauseStateChanged);
+=======
+            shouldStopFunc);
+>>>>>>> develop
 
         // Show the progress window (modal dialog)
         progressWindow.ShowDialog();

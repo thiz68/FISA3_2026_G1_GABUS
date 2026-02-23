@@ -115,6 +115,7 @@ public class LocalizationService : ILocalizationService
             ["business_software"] = "Business Software (process name)",
             ["business_software_detected"] = "Business software detected. Backup cannot start.",
             ["business_software_stopped"] = "Backup stopped: business software detected",
+            ["priority_extension"] = "Priority file extension (e.g. .exe) — processed before all others",
         },
 
         // French dict
@@ -215,6 +216,7 @@ public class LocalizationService : ILocalizationService
             ["business_software"] = "Logiciel metier (nom du processus)",
             ["business_software_detected"] = "Logiciel metier detecte. Impossible de demarrer la sauvegarde.",
             ["business_software_stopped"] = "Sauvegarde arretee : logiciel metier detecte",
+            ["priority_extension"] = "Extension prioritaire (ex: .exe) — traitee avant les autres",
         }
     };
 

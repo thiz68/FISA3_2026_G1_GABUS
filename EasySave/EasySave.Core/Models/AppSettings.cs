@@ -12,4 +12,8 @@ public class AppSettings
     public string ExtensionsToEncrypt { get; set; } = string.Empty;
 
     public string BusinessSoftware { get; set; } = string.Empty;
+
+    // Single priority extension (e.g. ".exe"). Non-priority files are blocked until all
+    // priority files across all running jobs are fully processed.
+    public string PriorityExtension { get; set; } = string.Empty;
 }

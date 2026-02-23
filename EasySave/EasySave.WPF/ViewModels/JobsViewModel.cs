@@ -395,7 +395,7 @@ public class JobsViewModel : BaseViewModel
 
         Func<bool> shouldStop = () => _businessChecker.IsBusinessSoftwareRunning(settings.BusinessSoftware);
 
-        var executionResult = _backupExecutor.ExecuteSequential(
+        var executionResult = _backupExecutor.ExecuteParallel(
             jobs,
             _logger,
             _stateManager,

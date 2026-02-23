@@ -1,147 +1,158 @@
-﻿namespace EasySave.Core.Services;
+namespace EasySave.Core.Services;
 
 using System.Diagnostics;
 using EasySave.Core.Models;
 using EasySave.Core.Interfaces;
 
-//This class heandles operations of copying for backups
-//It supports full and differential backups
+// Handles copy operations for backup jobs (full and differential).
+// When a PriorityController is supplied, non-priority files are blocked until all
+// priority files (globally across all parallel jobs) have been fully processed.
 public class FileBackupService
 {
-    //Process CryptoSoft
     private readonly CryptoSoftRunner _cryptoRunner = new();
-    
-    //Copy an entire dir from source to target
-    //Returns true if backup succeeded, false if it failed (drive unavailable, etc.)
-    public bool CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger, IStateManager stateManager, ILocalizationService localization, Func<bool>? shouldStop = null)
-    {
-        //Counting how many files need to copy and total size
-        var (totalFiles, totalSize) = CalculateEligibleFiles(sourceDir, targetDir, job.Type);
 
-        // If no files found, drive might be unavailable
+    // Copy an entire directory tree from sourceDir to targetDir.
+    // Files are globally sorted (priority-first) before processing so that within-job
+    // ordering is correct even in sequential mode.
+    // Returns true on success, false on any failure (I/O error, business software, etc.).
+    public bool CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger,
+        IStateManager stateManager, ILocalizationService localization,
+        Func<bool>? shouldStop = null, PriorityController? priority = null)
+    {
+        // Resolve the active priority extension:
+        //   - from the shared controller when running in parallel mode
+        //   - from settings directly when running in sequential mode (no controller)
+        string priorityExt;
+        if (priority?.IsActive == true)
+        {
+            priorityExt = priority.Ext;
+        }
+        else
+        {
+            var raw = (new ConfigManager().LoadSettings().PriorityExtension ?? "").Trim().ToLower();
+            priorityExt = raw.Length > 0 && raw[0] != '.' ? "." + raw : raw;
+        }
+
+        bool isPrio(string path) =>
+            priorityExt.Length > 0 &&
+            Path.GetExtension(path).Equals(priorityExt, StringComparison.OrdinalIgnoreCase);
+
+        // Collect all eligible files upfront (honours diff-backup filter)
+        var eligibleFiles = GetEligibleFiles(sourceDir, targetDir, job.Type);
+        int totalFiles = eligibleFiles.Count;
+        long totalSize = 0;
+        foreach (var f in eligibleFiles)
+        {
+            try { totalSize += new FileInfo(f).Length; } catch { }
+        }
+
         if (totalFiles == 0 && totalSize == 0)
         {
-            // Check if source directory is actually empty or if there was an error
             try
             {
-                if (!Directory.Exists(sourceDir))
-                    return false;
+                if (!Directory.Exists(sourceDir)) return false;
             }
+            catch (IOException) { return false; }
+        }
+
+        try { Directory.CreateDirectory(targetDir); }
+        catch (IOException)
+        {
+            // Release all expected priority-file slots so parallel jobs are not deadlocked
+            priority?.ReleaseRemaining(eligibleFiles.Count(f => isPrio(f)));
+            return false;
+        }
+
+        // Global sort: priority files first so ordering is correct on a single thread too
+        if (priorityExt.Length > 0)
+            eligibleFiles = eligibleFiles.OrderBy(f => isPrio(f) ? 0 : 1).ToList();
+
+        // Track how many priority files we still owe notifications for (used on early exit)
+        int priorityOwed = eligibleFiles.Count(f => isPrio(f));
+
+        int filesRemaining = totalFiles;
+        long sizeRemaining = totalSize;
+
+        for (int i = 0; i < eligibleFiles.Count; i++)
+        {
+            var sourceFile = eligibleFiles[i];
+            var rel = Path.GetRelativePath(sourceDir, sourceFile);
+            var targetFile = Path.Combine(targetDir, rel);
+
+            try { Directory.CreateDirectory(Path.GetDirectoryName(targetFile)!); }
             catch (IOException)
             {
+                // Ensure every unprocessed priority slot is released from this index on
+                priority?.ReleaseRemaining(priorityOwed);
+                return false;
+            }
+
+            // Non-priority file: block until all globally-pending priority files are done
+            priority?.WaitIfNonPriority(sourceFile);
+
+            var progression = totalFiles > 0
+                ? Math.Round((1 - (double)filesRemaining / totalFiles) * 100, 2) : 0;
+            UpdateStateForFile(job, sourceFile, targetFile, filesRemaining, sizeRemaining,
+                progression, stateManager, localization);
+
+            long fileSize = CopyFile(sourceFile, targetFile, logger, job);
+
+            // Priority file fully done (copy + optional encrypt + log written inside CopyFile)
+            if (isPrio(sourceFile))
+            {
+                priority?.NotifyDone();
+                priorityOwed--;
+            }
+
+            filesRemaining--;
+            sizeRemaining -= fileSize;
+
+            progression = totalFiles > 0
+                ? Math.Round((1 - (double)filesRemaining / totalFiles) * 100, 2) : 0;
+            UpdateStateForFile(job, sourceFile, targetFile, filesRemaining, sizeRemaining,
+                progression, stateManager, localization);
+
+            if (shouldStop?.Invoke() == true)
+            {
+                // Release any remaining priority slots (files i+1 … end) so waiting threads
+                // in other parallel jobs are not stuck indefinitely
+                priority?.ReleaseRemaining(priorityOwed);
+                var settings = new ConfigManager().LoadSettings();
+                logger.LogBusinessSoftwareStop(DateTime.Now, job.Name, settings.BusinessSoftware);
                 return false;
             }
         }
 
-        //counters
-        int filesRemaining = totalFiles;
-        long sizeRemaining = totalSize;
-
-        // Try to create target folder, handle errors if drive is unavailable
-        try
-        {
-            Directory.CreateDirectory(targetDir);
-        }
-        catch (IOException)
-        {
-            // Cannot create target directory, abort backup
-            return false;
-        }
-
-        //Copy progress
-        bool success = true;
-        CopyDirectoryRecursive(sourceDir, targetDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, localization, shouldStop);
-        return success;
+        return true;
     }
 
-    //Copy all files and subfolders
-    private void CopyDirectoryRecursive(string sourceDir, string targetDir, IJob job, ILogger logger,
-    IStateManager stateManager, int totalFiles, long totalSize, ref int filesRemaining, ref long sizeRemaining, ref bool success, ILocalizationService localization, Func<bool>? shouldStop = null)
+    // Returns the list of files that need to be copied (all for full, only changed for diff)
+    private List<string> GetEligibleFiles(string sourceDir, string targetDir, string type)
     {
-        // Get list of files, handle errors if drive becomes unavailable (USB unplugged)
-        string[] files;
+        string[] allFiles;
         try
         {
-            files = Directory.GetFiles(sourceDir);
+            allFiles = Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories);
         }
-        catch (IOException)
-        {
-            // Drive unavailable, mark as failed and stop
-            success = false;
-            return;
-        }
+        catch (IOException) { return []; }
 
-        //Copy all files in the current folder
-        foreach (var sourceFile in files)
+        var result = new List<string>();
+        foreach (var file in allFiles)
         {
-            var relativePath = Path.GetRelativePath(sourceDir, sourceFile);
-            var targetFile = Path.Combine(targetDir, relativePath);
-            // Check if file needs to be copied (for differential backup)
-            if (job.Type == "diff")
+            if (type == "diff")
             {
-                if (File.Exists(targetFile) && File.GetLastWriteTime(targetFile) >= File.GetLastWriteTime(sourceFile))
+                var rel = Path.GetRelativePath(sourceDir, file);
+                var target = Path.Combine(targetDir, rel);
+                if (File.Exists(target) && File.GetLastWriteTime(target) >= File.GetLastWriteTime(file))
                     continue;
             }
-
-            // Update state before copying
-            var progression = totalFiles > 0 ? Math.Round((1 - (double)filesRemaining / totalFiles) * 100, 2) : 0;
-            UpdateStateForFile(job, sourceFile, targetFile, filesRemaining, sizeRemaining, progression, stateManager, localization);
-
-            // Copy the file and log
-            long fileSize = CopyFile(sourceFile, targetFile, logger, job);
-
-            // Update counters
-            filesRemaining--;
-            sizeRemaining -= fileSize;
-
-            // Update progression after copy
-            progression = totalFiles > 0 ? Math.Round((1 - (double)filesRemaining / totalFiles) * 100, 2) : 0;
-            UpdateStateForFile(job, sourceFile, targetFile, filesRemaining, sizeRemaining, progression, stateManager, localization);
-
-            // Check if we should stop (business software detected)
-            if (shouldStop?.Invoke() == true)
-            {
-                // Log the stop immediately (before user might close the business software)
-                var settings = new ConfigManager().LoadSettings();
-                logger.LogBusinessSoftwareStop(DateTime.Now, job.Name, settings.BusinessSoftware);
-                success = false;
-                return;
-            }
+            result.Add(file);
         }
-
-        // Get subdirectories, handle errors
-        string[] subDirs;
-        try
-        {
-            subDirs = Directory.GetDirectories(sourceDir);
-        }
-        catch (IOException)
-        {
-            success = false;
-            return;
-        }
-
-        // Recurse into subdirectories
-        foreach (var subDir in subDirs)
-        {
-            var relativePath = Path.GetRelativePath(sourceDir, subDir);
-            var targetSubDir = Path.Combine(targetDir, relativePath);
-            try
-            {
-                Directory.CreateDirectory(targetSubDir);
-            }
-            catch (IOException)
-            {
-                success = false;
-                return;
-            }
-            CopyDirectoryRecursive(subDir, targetSubDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, localization, shouldStop);
-            if (!success) return;
-        }
+        return result;
     }
 
-    //Copy a single file from source to target
-    //Returns the size of the file copied
+    // Copy a single file, optionally encrypt it, then write the transfer log entry.
+    // Returns the file size (always; never throws – errors are logged with negative time).
     private long CopyFile(string sourceFile, string targetFile, ILogger logger, IJob job)
     {
         var fileInfo = new FileInfo(sourceFile);
@@ -207,46 +218,10 @@ public class FileBackupService
         return fileSize;
     }
 
-
-    private (int fileCount, long totalSize) CalculateEligibleFiles(string sourceDir, string targetDir, string type)
-    {
-        int count = 0;
-        long size = 0;
-
-        // Get all files recursively, handle errors if drive becomes unavailable
-        string[] allFiles;
-        try
-        {
-            allFiles = Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories);
-        }
-        catch (IOException)
-        {
-            // Drive unavailable, return zero files
-            return (0, 0);
-        }
-
-        foreach (var file in allFiles)
-        {
-            var fileInfo = new FileInfo(file);
-            if (type == "diff")
-            {
-                var relativePath = Path.GetRelativePath(sourceDir, file);
-                var targetFile = Path.Combine(targetDir, relativePath);
-                if (File.Exists(targetFile) && File.GetLastWriteTime(targetFile) >= File.GetLastWriteTime(file))
-                    continue;
-            }
-
-            count++;
-            size += fileInfo.Length;
-        }
-        return (count, size);
-    }
-
-    // Update  state manager progress information.
     private void UpdateStateForFile(IJob job, string currentSource, string currentTarget,
-    int remainingFiles, long remainingSize, double progression, IStateManager stateManager, ILocalizationService localization)
+        int remainingFiles, long remainingSize, double progression,
+        IStateManager stateManager, ILocalizationService localization)
     {
-        // Create state object with all information.
         var state = new JobState
         {
             State = localization.GetString("active"),
@@ -257,7 +232,6 @@ public class FileBackupService
             CurrentTargetFilePath = currentTarget
         };
 
-        //Update state manager
         stateManager.UpdateJobState(job, state);
     }
 }

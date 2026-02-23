@@ -401,9 +401,6 @@ public class JobsViewModel : BaseViewModel
         var progressWindow = new BackupProgressWindow(progressViewModel);
         progressWindow.Owner = Application.Current.MainWindow;
 
-        // Callback to check if business software is running
-        Func<bool> shouldStop = () => _businessChecker.IsBusinessSoftwareRunning(settings.BusinessSoftware);
-
         // Progress callback: update the ViewModel on the UI thread
         Action<string, double, bool> progressCallback = (jobName, progressPercent, isFailed) =>
         {
@@ -422,7 +419,10 @@ public class JobsViewModel : BaseViewModel
             });
         };
 
-        Func<string, bool> shouldStopFunc = jobName => progressViewModel.IsStopRequested(jobName);
+        // Combine stop button + business software into a single delegate passed to the executor
+        Func<string, bool> shouldStopFunc = jobName =>
+            progressViewModel.IsStopRequested(jobName) ||
+            _businessChecker.IsBusinessSoftwareRunning(settings.BusinessSoftware);
 
         // Start the backup execution with progress tracking
         _backupExecutor.ExecuteWithProgress(

@@ -25,7 +25,8 @@ public class BackupExecutor
         List<IJob> jobs,
         ILogger logger,
         IStateManager stateManager,
-        Func<string, bool>? shouldStop = null)
+        Func<string, bool>? shouldStop = null,
+        Func<string, bool>? shouldPause = null)
     {
         // Determine maximum concurrency: clamp between 1 and 8 based on logical processors
         int maxConcurrency = Math.Clamp(Environment.ProcessorCount, 1, 8);
@@ -73,7 +74,8 @@ public class BackupExecutor
                         () => shouldStop?.Invoke(job.Name) ?? false,
                         gate,
                         priorityExt,
-                        largeFileGate
+                        largeFileGate,
+                        () => shouldPause?.Invoke(job.Name) ?? false
                     );
 
                     if (success)
@@ -114,7 +116,8 @@ public class BackupExecutor
         IStateManager stateManager,
         Action<string, double, bool> progressCallback,
         Action<bool> completionCallback,
-        Func<string, bool>? shouldStop = null)
+        Func<string, bool>? shouldStop = null,
+        Func<string, bool>? shouldPause = null)
     {
         // Determine maximum concurrency (max threads available on computer)
         int maxConcurrency = Math.Clamp(Environment.ProcessorCount, 1, 8);
@@ -168,7 +171,8 @@ public class BackupExecutor
                         () => shouldStop?.Invoke(job.Name) ?? false,
                         gate,
                         priorityExt,
-                        largeFileGate
+                        largeFileGate,
+                        () => shouldPause?.Invoke(job.Name) ?? false
                     );
 
                     if (success)

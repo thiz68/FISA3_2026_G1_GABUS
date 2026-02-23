@@ -419,9 +419,12 @@ public class JobsViewModel : BaseViewModel
             });
         };
 
-        // Combine stop button + business software into a single delegate passed to the executor
+        // Hard stop: user pressed the emergency stop button for a specific job
         Func<string, bool> shouldStopFunc = jobName =>
-            progressViewModel.IsStopRequested(jobName) ||
+            progressViewModel.IsStopRequested(jobName);
+
+        // Soft pause: a business-critical software is running → suspend until it exits
+        Func<string, bool> shouldPauseFunc = _ =>
             _businessChecker.IsBusinessSoftwareRunning(settings.BusinessSoftware);
 
         // Start the backup execution with progress tracking
@@ -431,7 +434,8 @@ public class JobsViewModel : BaseViewModel
             _stateManager,
             progressCallback,
             completionCallback,
-            shouldStopFunc);
+            shouldStopFunc,
+            shouldPauseFunc);
 
         // Show the progress window (modal dialog)
         progressWindow.ShowDialog();

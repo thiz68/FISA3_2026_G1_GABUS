@@ -38,10 +38,13 @@ public class FileBackupService
     //   Phase 1 – copy priority files only; call gate.Done() after each (copy+encrypt+log chain).
     //   Phase 2 – wait for the global priority phase to end, then copy the rest.
     // Returns true if the backup fully succeeded, false otherwise.
+    // shouldPause: when non-null and returns true, the current file is deferred until it returns false
+    //              (business-software pause). Distinct from shouldStop (hard abort by the user).
     public bool CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger,
         IStateManager stateManager, ILocalizationService localization,
         Func<bool>? shouldStop = null, PriorityGate? gate = null,
-        string priorityExtension = "", LargeFileGate? largeFileGate = null)
+        string priorityExtension = "", LargeFileGate? largeFileGate = null,
+        Func<bool>? shouldPause = null)
     {
         // Collect all files that need to be copied (diff filter applied)
         List<(string src, string tgt)> eligible;
@@ -76,6 +79,8 @@ public class FileBackupService
             try
             {
                 if (shouldStop?.Invoke() == true) { success = false; break; }
+                WaitWhilePaused(shouldStop, shouldPause);           // pause until business software stops
+                if (shouldStop?.Invoke() == true) { success = false; break; }
                 try { Directory.CreateDirectory(Path.GetDirectoryName(tgt)!); }
                 catch (IOException) { success = false; break; }
 
@@ -94,13 +99,6 @@ public class FileBackupService
 
                 prog = totalFiles > 0 ? Math.Round((1 - (double)filesRemaining / totalFiles) * 100, 2) : 0;
                 UpdateStateForFile(job, src, tgt, filesRemaining, sizeRemaining, prog, stateManager, localization);
-
-                if (shouldStop?.Invoke() == true)
-                {
-                    var cfg = new ConfigManager().LoadSettings();
-                    logger.LogBusinessSoftwareStop(DateTime.Now, job.Name, cfg.BusinessSoftware);
-                    success = false;
-                }
             }
             finally
             {
@@ -122,12 +120,16 @@ public class FileBackupService
         // ── Wait for the global priority phase to finish ─────────────────────────
         gate?.WaitIfBlocked(shouldStop);
         if (shouldStop?.Invoke() == true) return false;
+        WaitWhilePaused(shouldStop, shouldPause);           // business software may still be active
+        if (shouldStop?.Invoke() == true) return false;
 
         // ── Phase 2: non-priority files ──────────────────────────────────────────
         if (success)
         {
             foreach (var (src, tgt) in nonPriorityFiles)
             {
+                if (shouldStop?.Invoke() == true) { success = false; break; }
+                WaitWhilePaused(shouldStop, shouldPause);           // pause until business software stops
                 if (shouldStop?.Invoke() == true) { success = false; break; }
                 try { Directory.CreateDirectory(Path.GetDirectoryName(tgt)!); }
                 catch (IOException) { success = false; break; }
@@ -150,13 +152,6 @@ public class FileBackupService
 
                     prog = totalFiles > 0 ? Math.Round((1 - (double)filesRemaining / totalFiles) * 100, 2) : 0;
                     UpdateStateForFile(job, src, tgt, filesRemaining, sizeRemaining, prog, stateManager, localization);
-
-                    if (shouldStop?.Invoke() == true)
-                    {
-                        var cfg = new ConfigManager().LoadSettings();
-                        logger.LogBusinessSoftwareStop(DateTime.Now, job.Name, cfg.BusinessSoftware);
-                        success = false;
-                    }
                 }
                 finally
                 {
@@ -251,6 +246,18 @@ public class FileBackupService
         }
 
         return fileSize;
+    }
+
+    // Block the calling thread while shouldPause returns true (business software running),
+    // polling every 500 ms. Returns as soon as the software stops or a hard stop fires.
+    private static void WaitWhilePaused(Func<bool>? shouldStop, Func<bool>? shouldPause)
+    {
+        if (shouldPause == null) return;
+        while (shouldPause.Invoke())
+        {
+            if (shouldStop?.Invoke() == true) return;
+            Thread.Sleep(500);
+        }
     }
 
     // Update state manager progress information.

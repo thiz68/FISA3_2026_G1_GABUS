@@ -5,112 +5,142 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         mc:Ignorable="d"
         Title="Backup Progress"
-        Height="400" Width="700"
+        Height="440" Width="740"
+        MinHeight="380" MinWidth="600"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
-        WindowStyle="ToolWindow">
+        ResizeMode="CanResize"
+        WindowStyle="SingleBorderWindow"
+        Background="{DynamicResource BackgroundBrush}">
 
-    <Grid Margin="20">
+    <Grid Margin="28,24,28,24">
         <Grid.RowDefinitions>
-            <!-- Header row -->
+            <!-- Header -->
             <RowDefinition Height="Auto"/>
-            <!-- DataGrid row -->
+            <!-- Separator -->
+            <RowDefinition Height="16"/>
+            <!-- DataGrid card -->
             <RowDefinition Height="*"/>
-            <!-- OK button row -->
+            <!-- Footer gap -->
+            <RowDefinition Height="16"/>
+            <!-- OK button -->
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header text displaying thread count -->
-        <TextBlock Grid.Row="0"
-                   Text="{Binding HeaderText}"
-                   FontSize="16"
-                   FontWeight="Bold"
-                   Margin="0,0,0,15"
-                   HorizontalAlignment="Center"/>
+        <!-- ── Header ─────────────────────────────────────── -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock Text="&#xE896;"
+                       FontFamily="Segoe MDL2 Assets"
+                       FontSize="20"
+                       Foreground="{DynamicResource AccentBrush}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,12,0"/>
+            <TextBlock Text="{Binding HeaderText}"
+                       FontFamily="Segoe UI Variable Display, Segoe UI"
+                       FontSize="20"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource PrimaryTextBrush}"
+                       VerticalAlignment="Center"/>
+        </StackPanel>
 
-        <!-- Progress DataGrid -->
-        <DataGrid Grid.Row="1"
-                  ItemsSource="{Binding JobProgressItems}"
-                  AutoGenerateColumns="False"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  IsReadOnly="True"
-                  SelectionMode="Single"
-                  GridLinesVisibility="Horizontal"
-                  HeadersVisibility="Column"
-                  AlternatingRowBackground="#F5F5F5"
-                  Margin="0,0,0,15">
+        <!-- ── Progress DataGrid Card ─────────────────────── -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="12"
+                BorderBrush="{DynamicResource CardBorderBrush}"
+                BorderThickness="1"
+                ClipToBounds="True">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="16" ShadowDepth="2"
+                                  Direction="270" Color="#28000000"
+                                  Opacity="1"/>
+            </Border.Effect>
 
-            <DataGrid.Columns>
-                <!-- Job Name column -->
-                <DataGridTextColumn Header="{Binding DataContext.NameColumnHeader, RelativeSource={RelativeSource AncestorType=Window}}"
-                                    Binding="{Binding JobName}"
-                                    Width="2*"/>
+            <DataGrid ItemsSource="{Binding JobProgressItems}"
+                      IsReadOnly="True"
+                      SelectionMode="Single">
 
-                <!-- Progress column -->
-                <DataGridTemplateColumn Header="{Binding DataContext.ProgressColumnHeader, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        Width="*">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding ProgressDisplay}"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Style.Triggers>
-                                            <!-- Red text if failed -->
-                                            <DataTrigger Binding="{Binding IsFailed}" Value="True">
-                                                <Setter Property="Foreground" Value="Red"/>
-                                                <Setter Property="FontWeight" Value="Bold"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+                <DataGrid.Columns>
 
-                <!-- Actions column with Pause/Resume and Stop buttons -->
-                <DataGridTemplateColumn Header="{Binding DataContext.ActionColumnHeader, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        Width="Auto">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
-                                <!-- Pause/Resume button -->
-                                <Button Content="{Binding PauseResumeButtonText}"
-                                        Width="80"
-                                        Height="25"
-                                        Margin="5"
-                                        Background="#FF4488DD"
-                                        Foreground="White"
-                                        FontWeight="Bold"
-                                        Command="{Binding PauseResumeCommand}"/>
+                    <!-- Job Name -->
+                    <DataGridTextColumn
+                        Header="{Binding DataContext.NameColumnHeader,
+                                 RelativeSource={RelativeSource AncestorType=Window}}"
+                        Binding="{Binding JobName}"
+                        Width="2*"/>
 
-                                <!-- Emergency Stop button -->
-                                <Button Content="{Binding DataContext.EmergencyStopText, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        Width="80"
-                                        Height="25"
-                                        Margin="5"
-                                        IsEnabled="True"
-                                        Background="#FFDD4444"
-                                        Foreground="White"
-                                        FontWeight="Bold"
-									    Command="{Binding EmergencyStopCommand}"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
+                    <!-- Progress -->
+                    <DataGridTemplateColumn
+                        Header="{Binding DataContext.ProgressColumnHeader,
+                                 RelativeSource={RelativeSource AncestorType=Window}}"
+                        Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding ProgressDisplay}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontWeight="Medium">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground"
+                                                    Value="{DynamicResource PrimaryTextBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsFailed}" Value="True">
+                                                    <Setter Property="Foreground"
+                                                            Value="{DynamicResource DangerTextBrush}"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
 
-        <!-- OK button (visible only when completed) -->
-        <Button Grid.Row="2"
+                    <!-- Actions: Pause/Resume + Emergency Stop -->
+                    <DataGridTemplateColumn
+                        Header="{Binding DataContext.ActionColumnHeader,
+                                 RelativeSource={RelativeSource AncestorType=Window}}"
+                        Width="Auto">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="0,4">
+
+                                    <!-- Pause / Resume -->
+                                    <Button Content="{Binding PauseResumeButtonText}"
+                                            MinWidth="88"
+                                            Height="30"
+                                            Margin="0,0,8,0"
+                                            Style="{StaticResource PauseButtonStyle}"
+                                            Command="{Binding PauseResumeCommand}"/>
+
+                                    <!-- Emergency Stop -->
+                                    <Button Content="{Binding DataContext.EmergencyStopText,
+                                                      RelativeSource={RelativeSource AncestorType=Window}}"
+                                            MinWidth="88"
+                                            Height="30"
+                                            Style="{StaticResource DangerButtonStyle}"
+                                            Command="{Binding EmergencyStopCommand}"/>
+
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <!-- ── OK button (shown when complete) ───────────── -->
+        <Button Grid.Row="4"
                 Content="OK"
-                Width="100"
-                Height="35"
+                MinWidth="120"
+                Height="40"
                 HorizontalAlignment="Center"
+                Style="{StaticResource ActionButtonStyle}"
                 Command="{Binding CloseCommand}"
-                Visibility="{Binding IsCompleted, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                Visibility="{Binding IsCompleted,
+                             Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
     </Grid>
 </Window>

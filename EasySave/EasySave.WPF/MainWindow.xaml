@@ -8,16 +8,19 @@
         xmlns:views="clr-namespace:EasySave.WPF.Views"
         mc:Ignorable="d"
         Title="{Binding AppTitle}"
-        Height="700"
+        Height="720"
         Width="1200"
-        WindowStartupLocation="CenterScreen">
+        MinHeight="600"
+        MinWidth="900"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BackgroundBrush}">
 
     <Window.DataContext>
         <vm:MainViewModel/>
     </Window.DataContext>
 
+    <!-- ViewModel → View mapping (DataTemplates) -->
     <Window.Resources>
-        <!-- DataTemplates for ViewModel to View mapping -->
         <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
             <views:DashboardView/>
         </DataTemplate>
@@ -29,82 +32,141 @@
         </DataTemplate>
     </Window.Resources>
 
+    <!-- ══════════════════════════════════════════════════
+         ROOT LAYOUT: Sidebar | Content
+         ══════════════════════════════════════════════════ -->
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="50"/>
-            <RowDefinition/>
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <!-- Sidebar -->
+            <ColumnDefinition Width="210"/>
+            <!-- Thin separator line -->
+            <ColumnDefinition Width="1"/>
+            <!-- Main content -->
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-        <!-- ====== TOP MENU BAR ====== -->
-        <DockPanel Background="{StaticResource PrimaryColor}" Grid.Row="0">
+        <!-- ── SIDEBAR ─────────────────────────────────── -->
+        <Border Grid.Column="0"
+                Background="{DynamicResource SidebarBrush}">
+            <DockPanel LastChildFill="True">
 
-            <TextBlock Text="{Binding AppTitle}"
-                       Foreground="White"
-                       FontSize="18"
-                       FontWeight="Bold"
-                       VerticalAlignment="Center"
-                       Margin="20,0"/>
+                <!-- App branding at top -->
+                <Border DockPanel.Dock="Top"
+                        Padding="20,24,20,20">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- App icon using Segoe MDL2 Assets -->
+                        <TextBlock Text="&#xE753;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="20"
+                                   Foreground="{DynamicResource AccentBrush}"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,10,0"/>
+                        <TextBlock Text="{Binding AppTitle}"
+                                   FontFamily="Segoe UI Variable Display, Segoe UI"
+                                   FontSize="17"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
 
-            <StackPanel Orientation="Horizontal"
-                        HorizontalAlignment="Right"
-                        Margin="0,0,20,0">
+                <!-- Separator -->
+                <Rectangle DockPanel.Dock="Top"
+                           Height="1"
+                           Fill="{DynamicResource SeparatorBrush}"
+                           Margin="16,0,16,8"/>
 
-                <Button Content="FR"
-                        Width="40"
-                        Margin="5"
-                        Style="{StaticResource TopBarButtonStyle}"
-                        Command="{Binding SetLanguageFrCommand}"/>
+                <!-- Exit button pinned at bottom -->
+                <Border DockPanel.Dock="Bottom"
+                        Padding="8,12">
+                    <Button Style="{StaticResource MenuButtonStyle}"
+                            Command="{Binding ExitCommand}"
+                            HorizontalAlignment="Stretch">
+                        <StackPanel Orientation="Horizontal" Margin="4,0">
+                            <TextBlock Text="&#xE7E8;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource SecondaryTextBrush}"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,10,0"/>
+                            <TextBlock Text="{Binding ExitText}"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource SecondaryTextBrush}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </Border>
 
-                <Button Content="EN"
-                        Width="40"
-                        Margin="5"
-                        Style="{StaticResource TopBarButtonStyle}"
-                        Command="{Binding SetLanguageEnCommand}"/>
+                <!-- Bottom separator -->
+                <Rectangle DockPanel.Dock="Bottom"
+                           Height="1"
+                           Fill="{DynamicResource SeparatorBrush}"
+                           Margin="16,0,16,4"/>
 
-                <Button Content="{Binding ExitText}"
-                        Width="60"
-                        Margin="5"
-                        Style="{StaticResource TopBarButtonStyle}"
-                        Command="{Binding ExitCommand}"/>
-            </StackPanel>
+                <!-- Navigation items -->
+                <StackPanel Margin="8,4">
 
-        </DockPanel>
+                    <!-- Dashboard -->
+                    <Button Style="{StaticResource MenuButtonStyle}"
+                            Command="{Binding NavigateToDashboardCommand}"
+                            HorizontalAlignment="Stretch">
+                        <StackPanel Orientation="Horizontal" Margin="4,0">
+                            <TextBlock Text="&#xE80F;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="16"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,10,0"/>
+                            <TextBlock Text="{Binding DashboardText}"
+                                       FontSize="14"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
 
-        <!-- ====== MAIN AREA ====== -->
-        <Grid Grid.Row="1">
+                    <!-- Backup Jobs -->
+                    <Button Style="{StaticResource MenuButtonStyle}"
+                            Command="{Binding NavigateToJobsCommand}"
+                            HorizontalAlignment="Stretch">
+                        <StackPanel Orientation="Horizontal" Margin="4,0">
+                            <TextBlock Text="&#xE8A1;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="16"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,10,0"/>
+                            <TextBlock Text="{Binding BackupJobsText}"
+                                       FontSize="14"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
 
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200"/>
-                <ColumnDefinition/>
-            </Grid.ColumnDefinitions>
+                    <!-- Settings -->
+                    <Button Style="{StaticResource MenuButtonStyle}"
+                            Command="{Binding NavigateToSettingsCommand}"
+                            HorizontalAlignment="Stretch">
+                        <StackPanel Orientation="Horizontal" Margin="4,0">
+                            <TextBlock Text="&#xE713;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="16"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,10,0"/>
+                            <TextBlock Text="{Binding SettingsText}"
+                                       FontSize="14"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
 
-            <!-- SIDE MENU -->
-            <StackPanel Background="{StaticResource SecondaryColor}"
-                        Grid.Column="0">
+                </StackPanel>
 
-                <Button Content="{Binding DashboardText}"
-                        Margin="10"
-                        Height="40"
-                        Style="{StaticResource MenuButtonStyle}"
-                        Command="{Binding NavigateToDashboardCommand}"/>
+            </DockPanel>
+        </Border>
 
-                <Button Content="{Binding BackupJobsText}"
-                        Margin="10"
-                        Height="40"
-                        Style="{StaticResource MenuButtonStyle}"
-                        Command="{Binding NavigateToJobsCommand}"/>
+        <!-- ── SIDEBAR / CONTENT DIVIDER ───────────────── -->
+        <Rectangle Grid.Column="1"
+                   Fill="{DynamicResource SeparatorBrush}"/>
 
-                <Button Content="{Binding SettingsText}"
-                        Margin="10"
-                        Height="40"
-                        Style="{StaticResource MenuButtonStyle}"
-                        Command="{Binding NavigateToSettingsCommand}"/>
-            </StackPanel>
-
-            <!-- CONTENT AREA -->
-            <ContentControl Grid.Column="1"
-                            Content="{Binding CurrentViewModel}"/>
-        </Grid>
+        <!-- ── CONTENT AREA ────────────────────────────── -->
+        <ContentControl Grid.Column="2"
+                        Content="{Binding CurrentViewModel}"
+                        Background="{DynamicResource BackgroundBrush}"/>
 
     </Grid>
 </Window>

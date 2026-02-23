@@ -5,80 +5,195 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:EasySave.WPF.Views"
              mc:Ignorable="d"
-             d:DesignHeight="600" d:DesignWidth="900">
+             d:DesignHeight="700" d:DesignWidth="920"
+             Background="{DynamicResource BackgroundBrush}">
 
-    <Grid Margin="20">
-        <StackPanel MaxWidth="500" HorizontalAlignment="Left">
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="32,28,32,32"
+                    MaxWidth="640"
+                    HorizontalAlignment="Left">
 
-            <!-- Settings Title -->
+            <!-- ── Page title ──────────────────────────────── -->
             <TextBlock Text="{Binding GeneralSettingsTitle}"
-                       FontSize="24"
-                       FontWeight="Bold"
-                       Margin="0,0,0,30"/>
+                       Style="{StaticResource TitleStyle}"
+                       Margin="0,0,0,24"/>
 
-            <!-- Log Format -->
-            <TextBlock Text="{Binding LogFormatLabel}"
-                       FontSize="14"
-                       Margin="0,0,0,5"/>
-            <ComboBox Height="35"
-                      Margin="0,0,0,20"
-                      ItemsSource="{Binding LogFormats}"
-                      SelectedIndex="{Binding SelectedLogFormatIndex}"/>
-            
-            <!-- Extensions to Encrypt -->
-            <TextBlock Text="{Binding ExtensionsToEncryptLabel}"
-                       FontSize="14"
-                       Margin="0,0,0,5"/>
+            <!-- ══════════════════════════════════════════════
+                 CARD: Appearance
+                 ══════════════════════════════════════════════ -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel>
 
-            <TextBox Height="35"
-                     Margin="0,0,0,20"
-                     Text="{Binding ExtensionsToEncrypt, UpdateSourceTrigger=PropertyChanged}"/>
+                    <!-- Card title -->
+                    <TextBlock Text="APPEARANCE"
+                               Style="{StaticResource SectionTitleStyle}"
+                               Margin="0,0,0,16"/>
 
-            <!-- Business Software -->
-            <TextBlock Text="{Binding BusinessSoftwareLabel}"
-                       FontSize="14"
-                       Margin="0,0,0,5"/>
-            <TextBox Height="35"
-                     Margin="0,0,0,20"
-                     Text="{Binding BusinessSoftware, UpdateSourceTrigger=PropertyChanged}"/>
+                    <!-- Theme toggle -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="Dark Mode"
+                                       FontSize="14"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"/>
+                            <TextBlock Text="Switch between light and dark interface"
+                                       Style="{StaticResource SecondaryTextStyle}"
+                                       Margin="0,2,0,0"/>
+                        </StackPanel>
+                        <ToggleButton x:Name="ThemeToggle"
+                                      Grid.Column="1"
+                                      Style="{StaticResource ThemeToggleStyle}"
+                                      Click="OnThemeToggleClick"/>
+                    </Grid>
 
-            <!-- Priority Extension -->
-            <TextBlock Text="{Binding PriorityExtensionLabel}"
-                       FontSize="14"
-                       Margin="0,0,0,5"/>
-            <TextBox Height="35"
-                     Margin="0,0,0,20"
-                     Text="{Binding PriorityExtension, UpdateSourceTrigger=PropertyChanged}"
-                     ToolTip="Ex: .exe  —  laisser vide pour désactiver la priorité"/>
-            
-            <!-- Large File Threshold -->
-            <TextBlock Text="{Binding LargeFileThresholdLabel}"
-                       FontSize="14"
-                       Margin="0,0,0,5"/>
-            <TextBox Height="35"
-                     Margin="0,0,0,20"
-                     Text="{Binding LargeFileThresholdKB, UpdateSourceTrigger=PropertyChanged}"
-                     ToolTip="Ex: 1024  —  0 ou vide pour désactiver"/>
+                    <!-- Separator -->
+                    <Rectangle Height="1"
+                               Fill="{DynamicResource SeparatorBrush}"
+                               Margin="0,4,0,16"/>
 
-            <!-- LOGS -->
-            <TextBlock Text="Log Storage Mode"/>
-            <ComboBox ItemsSource="{Binding LogStorageModes}"
-                      SelectedIndex="{Binding SelectedLogStorageModeIndex}"/>
+                    <!-- Language -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="Language"
+                                       FontSize="14"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"/>
+                            <TextBlock Text="Interface language"
+                                       Style="{StaticResource SecondaryTextStyle}"
+                                       Margin="0,2,0,0"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                            <Button Content="FR"
+                                    Style="{StaticResource LangButtonStyle}"
+                                    Margin="0,0,6,0"
+                                    Command="{Binding DataContext.SetLanguageFrCommand,
+                                              RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            <Button Content="EN"
+                                    Style="{StaticResource LangButtonStyle}"
+                                    Command="{Binding DataContext.SetLanguageEnCommand,
+                                              RelativeSource={RelativeSource AncestorType=Window}}"/>
+                        </StackPanel>
+                    </Grid>
 
-            <TextBlock Text="Server IP"/>
-            <TextBox Text="{Binding LogServerIp}"/>
+                </StackPanel>
+            </Border>
 
-            <TextBlock Text="Server Port"/>
-            <TextBox Text="{Binding LogServerPort}"/>
-            
-            <!-- Save Button -->
+            <!-- ══════════════════════════════════════════════
+                 CARD: Backup Settings
+                 ══════════════════════════════════════════════ -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel>
+
+                    <!-- Card title -->
+                    <TextBlock Text="BACKUP"
+                               Style="{StaticResource SectionTitleStyle}"
+                               Margin="0,0,0,16"/>
+
+                    <!-- Log Format -->
+                    <TextBlock Text="{Binding LogFormatLabel}"
+                               Style="{StaticResource LabelStyle}"/>
+                    <ComboBox Margin="0,0,0,20"
+                              ItemsSource="{Binding LogFormats}"
+                              SelectedIndex="{Binding SelectedLogFormatIndex}"/>
+
+                    <!-- Extensions to Encrypt -->
+                    <TextBlock Text="{Binding ExtensionsToEncryptLabel}"
+                               Style="{StaticResource LabelStyle}"/>
+                    <TextBox Margin="0,0,0,20"
+                             Height="36"
+                             Padding="10,7"
+                             Text="{Binding ExtensionsToEncrypt,
+                                    UpdateSourceTrigger=PropertyChanged}"/>
+
+                    <!-- Business Software -->
+                    <TextBlock Text="{Binding BusinessSoftwareLabel}"
+                               Style="{StaticResource LabelStyle}"/>
+                    <TextBox Margin="0,0,0,20"
+                             Height="36"
+                             Padding="10,7"
+                             Text="{Binding BusinessSoftware,
+                                    UpdateSourceTrigger=PropertyChanged}"/>
+
+                    <!-- Priority Extension -->
+                    <TextBlock Text="{Binding PriorityExtensionLabel}"
+                               Style="{StaticResource LabelStyle}"/>
+                    <TextBox Margin="0,0,0,20"
+                             Height="36"
+                             Padding="10,7"
+                             ToolTip="Ex: .exe  —  leave empty to disable"
+                             Text="{Binding PriorityExtension,
+                                    UpdateSourceTrigger=PropertyChanged}"/>
+
+                    <!-- Large File Threshold -->
+                    <TextBlock Text="{Binding LargeFileThresholdLabel}"
+                               Style="{StaticResource LabelStyle}"/>
+                    <TextBox Height="36"
+                             Padding="10,7"
+                             ToolTip="Ex: 1024 KB  —  0 or empty to disable"
+                             Text="{Binding LargeFileThresholdKB,
+                                    UpdateSourceTrigger=PropertyChanged}"/>
+
+                </StackPanel>
+            </Border>
+
+            <!-- ══════════════════════════════════════════════
+                 CARD: Log Server
+                 ══════════════════════════════════════════════ -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel>
+
+                    <!-- Card title -->
+                    <TextBlock Text="LOG SERVER"
+                               Style="{StaticResource SectionTitleStyle}"
+                               Margin="0,0,0,16"/>
+
+                    <!-- Log Storage Mode -->
+                    <TextBlock Text="Log Storage Mode"
+                               Style="{StaticResource LabelStyle}"/>
+                    <ComboBox Margin="0,0,0,20"
+                              ItemsSource="{Binding LogStorageModes}"
+                              SelectedIndex="{Binding SelectedLogStorageModeIndex}"/>
+
+                    <!-- Server IP -->
+                    <TextBlock Text="Server IP"
+                               Style="{StaticResource LabelStyle}"/>
+                    <TextBox Margin="0,0,0,20"
+                             Height="36"
+                             Padding="10,7"
+                             Text="{Binding LogServerIp,
+                                    UpdateSourceTrigger=PropertyChanged}"/>
+
+                    <!-- Server Port -->
+                    <TextBlock Text="Server Port"
+                               Style="{StaticResource LabelStyle}"/>
+                    <TextBox Height="36"
+                             Padding="10,7"
+                             Text="{Binding LogServerPort,
+                                    UpdateSourceTrigger=PropertyChanged}"/>
+
+                </StackPanel>
+            </Border>
+
+            <!-- ── Save button ──────────────────────────────── -->
             <Button Content="{Binding SaveSettingsText}"
-                    Width="150"
+                    MinWidth="160"
                     Height="40"
                     HorizontalAlignment="Left"
                     Style="{StaticResource ActionButtonStyle}"
-                    Command="{Binding SaveSettingsCommand}"/>
+                    Command="{Binding SaveSettingsCommand}"
+                    Margin="0,8,0,0"/>
 
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </UserControl>

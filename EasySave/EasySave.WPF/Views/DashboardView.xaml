@@ -5,87 +5,138 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:EasySave.WPF.Views"
              mc:Ignorable="d"
-             d:DesignHeight="600" d:DesignWidth="900">
+             d:DesignHeight="650" d:DesignWidth="920"
+             Background="{DynamicResource BackgroundBrush}">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
     </UserControl.Resources>
 
-    <Grid Margin="20">
-        <StackPanel>
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="32,28,32,32">
 
-            <!-- Dashboard Title and Server Status -->
-            <Grid Margin="0,0,0,20">
+            <!-- ── Page header ─────────────────────────────── -->
+            <Grid Margin="0,0,0,24">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="{Binding DashboardTitle}"
-                           FontSize="24"
-                           FontWeight="Bold"
-                           Grid.Column="0"/>
+                <TextBlock Grid.Column="0"
+                           Text="{Binding DashboardTitle}"
+                           Style="{StaticResource TitleStyle}"/>
 
-                <!-- Server Status Indicator -->
+                <!-- Server unreachable badge -->
                 <Border Grid.Column="1"
-                        Padding="10,5"
-                        CornerRadius="5"
-                        VerticalAlignment="Center"
-                        Visibility="{Binding IsServerUnreachable, Converter={StaticResource BoolToVisibility}}">
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <Setter Property="Background" Value="#FFFFCCCC"/>
-                            <Setter Property="BorderBrush" Value="#FFCC0000"/>
-                            <Setter Property="BorderThickness" Value="1"/>
-                        </Style>
-                    </Border.Style>
-                    <TextBlock Text="{Binding ServerStatus}"
-                               Foreground="#FFCC0000"
-                               FontWeight="SemiBold"/>
+                        Style="{StaticResource ServerStatusBadgeStyle}"
+                        Visibility="{Binding IsServerUnreachable,
+                                     Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xEB90;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="12"
+                                   Foreground="#CC0000"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,6,0"/>
+                        <TextBlock Text="{Binding ServerStatus}"
+                                   Foreground="#CC0000"
+                                   FontWeight="SemiBold"
+                                   FontSize="13"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
                 </Border>
             </Grid>
 
-            <!-- State File Preview -->
-            <Border BorderBrush="Gray"
-                    BorderThickness="1"
-                    Padding="15"
-                    Margin="0,0,0,10">
-
+            <!-- ── State File Card ────────────────────────── -->
+            <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
-                    <TextBlock Text="{Binding StateFileTitle}"
-                               FontWeight="Bold"
-                               Margin="0,0,0,10"/>
-                    <TextBox Height="200"
+
+                    <!-- Card header -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE9F5;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource AccentBrush}"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0"/>
+                            <TextBlock Text="{Binding StateFileTitle}"
+                                       FontFamily="Segoe UI Variable Text, Segoe UI"
+                                       FontSize="15"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Separator -->
+                    <Rectangle Height="1"
+                               Fill="{DynamicResource SeparatorBrush}"
+                               Margin="0,0,0,16"/>
+
+                    <!-- State file content -->
+                    <TextBox Height="180"
                              TextWrapping="Wrap"
+                             Style="{StaticResource MultilineTextBoxStyle}"
                              VerticalScrollBarVisibility="Auto"
                              HorizontalScrollBarVisibility="Auto"
                              Text="{Binding StateContent, Mode=OneWay}"
                              IsReadOnly="True"
-                             FontFamily="Consolas"
-                             FontSize="12"/>
+                             FontFamily="Cascadia Code, Consolas, Courier New"
+                             FontSize="12"
+                             Foreground="{DynamicResource SecondaryTextBrush}"
+                             Background="{DynamicResource SecondarySurfaceBrush}"
+                             Padding="12"/>
                 </StackPanel>
             </Border>
 
-            <!-- Log File Preview -->
-            <Border BorderBrush="Gray"
-                    BorderThickness="1"
-                    Padding="15">
-
+            <!-- ── Log File Card ──────────────────────────── -->
+            <Border Style="{StaticResource CardStyle}">
                 <StackPanel>
-                    <TextBlock Text="{Binding LogFileTitle}"
-                               FontWeight="Bold"
-                               Margin="0,0,0,10"/>
-                    <TextBox Height="200"
+
+                    <!-- Card header -->
+                    <Grid Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE9D9;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource AccentBrush}"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0"/>
+                            <TextBlock Text="{Binding LogFileTitle}"
+                                       FontFamily="Segoe UI Variable Text, Segoe UI"
+                                       FontSize="15"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Separator -->
+                    <Rectangle Height="1"
+                               Fill="{DynamicResource SeparatorBrush}"
+                               Margin="0,0,0,16"/>
+
+                    <!-- Log file content -->
+                    <TextBox Height="180"
                              TextWrapping="Wrap"
+                             Style="{StaticResource MultilineTextBoxStyle}"
                              VerticalScrollBarVisibility="Auto"
                              HorizontalScrollBarVisibility="Auto"
                              Text="{Binding LogContent, Mode=OneWay}"
                              IsReadOnly="True"
-                             FontFamily="Consolas"
-                             FontSize="12"/>
+                             FontFamily="Cascadia Code, Consolas, Courier New"
+                             FontSize="12"
+                             Foreground="{DynamicResource SecondaryTextBrush}"
+                             Background="{DynamicResource SecondarySurfaceBrush}"
+                             Padding="12"/>
                 </StackPanel>
             </Border>
 
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </UserControl>

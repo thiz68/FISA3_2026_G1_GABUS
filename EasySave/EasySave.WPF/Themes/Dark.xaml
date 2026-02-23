@@ -1,0 +1,62 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+    ╔══════════════════════════════════════════╗
+    ║   EASYSAVE — DARK THEME                  ║
+    ║   macOS-inspired dark palette            ║
+    ╚══════════════════════════════════════════╝
+    -->
+
+    <!-- ── Background hierarchy ─────────────────────────────── -->
+    <SolidColorBrush x:Key="BackgroundBrush"           Color="#1C1C1E"/>
+    <SolidColorBrush x:Key="SurfaceBrush"              Color="#2C2C2E"/>
+    <SolidColorBrush x:Key="SecondarySurfaceBrush"     Color="#3A3A3C"/>
+    <SolidColorBrush x:Key="SidebarBrush"              Color="#232325"/>
+    <SolidColorBrush x:Key="TopBarBrush"               Color="#1E1E20"/>
+
+    <!-- ── Accent & interactive ──────────────────────────────── -->
+    <SolidColorBrush x:Key="AccentBrush"               Color="#0A84FF"/>
+    <SolidColorBrush x:Key="AccentHoverBrush"          Color="#3E9FFF"/>
+    <SolidColorBrush x:Key="AccentPressedBrush"        Color="#006EDB"/>
+    <SolidColorBrush x:Key="DangerBrush"               Color="#FF453A"/>
+    <SolidColorBrush x:Key="DangerHoverBrush"          Color="#FF6961"/>
+    <SolidColorBrush x:Key="PauseBrush"                Color="#FF9F0A"/>
+    <SolidColorBrush x:Key="PauseHoverBrush"           Color="#FFB340"/>
+    <SolidColorBrush x:Key="SecondaryButtonBrush"      Color="#3A3A3C"/>
+    <SolidColorBrush x:Key="SecondaryButtonHoverBrush" Color="#48484A"/>
+    <SolidColorBrush x:Key="SuccessBrush"              Color="#30D158"/>
+
+    <!-- ── Text ──────────────────────────────────────────────── -->
+    <SolidColorBrush x:Key="PrimaryTextBrush"          Color="#F5F5F7"/>
+    <SolidColorBrush x:Key="SecondaryTextBrush"        Color="#8E8E93"/>
+    <SolidColorBrush x:Key="TertiaryTextBrush"         Color="#636366"/>
+    <SolidColorBrush x:Key="OnAccentTextBrush"         Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="AccentTextBrush"           Color="#0A84FF"/>
+    <SolidColorBrush x:Key="DangerTextBrush"           Color="#FF453A"/>
+
+    <!-- ── Borders & separators ──────────────────────────────── -->
+    <SolidColorBrush x:Key="SeparatorBrush"            Color="#38383A"/>
+    <SolidColorBrush x:Key="CardBorderBrush"           Color="#38383A"/>
+    <SolidColorBrush x:Key="InputBorderBrush"          Color="#48484A"/>
+    <SolidColorBrush x:Key="InputBorderFocusBrush"     Color="#0A84FF"/>
+    <SolidColorBrush x:Key="InputBackgroundBrush"      Color="#2C2C2E"/>
+
+    <!-- ── DataGrid ───────────────────────────────────────────── -->
+    <SolidColorBrush x:Key="DataGridHeaderBrush"       Color="#232325"/>
+    <SolidColorBrush x:Key="DataGridHeaderTextBrush"   Color="#8E8E93"/>
+    <SolidColorBrush x:Key="RowHoverBrush"             Color="#1E3553"/>
+    <SolidColorBrush x:Key="RowAlternatingBrush"       Color="#2E2E30"/>
+    <SolidColorBrush x:Key="RowSelectedBrush"          Color="#1A3A5C"/>
+    <SolidColorBrush x:Key="RowSelectedTextBrush"      Color="#F5F5F7"/>
+
+    <!-- ── Sidebar navigation ────────────────────────────────── -->
+    <SolidColorBrush x:Key="NavItemHoverBrush"         Color="#38383A"/>
+    <SolidColorBrush x:Key="NavItemActiveBrush"        Color="#1A3A5C"/>
+    <SolidColorBrush x:Key="NavItemActiveTextBrush"    Color="#0A84FF"/>
+
+    <!-- ── Misc ───────────────────────────────────────────────── -->
+    <Color x:Key="ShadowColor">#60000000</Color>
+    <SolidColorBrush x:Key="OverlayBrush"              Color="#90000000"/>
+
+</ResourceDictionary>

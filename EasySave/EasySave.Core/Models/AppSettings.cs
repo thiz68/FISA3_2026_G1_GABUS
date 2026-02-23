@@ -13,6 +13,9 @@ public class AppSettings
 
     public string BusinessSoftware { get; set; } = string.Empty;
 
+    // Single file extension that gets absolute priority over all other files across all concurrent jobs
+    public string PriorityExtension { get; set; } = string.Empty;
+
     //LOG DOCKER
     public LogStorageMode LogStorageMode { get; set; } = LogStorageMode.LocalOnly;
 

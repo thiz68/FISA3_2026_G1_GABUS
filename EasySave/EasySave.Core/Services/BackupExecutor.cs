@@ -32,6 +32,18 @@ public class BackupExecutor
         var semaphore = new SemaphoreSlim(maxConcurrency);
         var tasks = new List<Task<bool>>();
 
+        // Build global priority gate: pre-scan all jobs so the counter is complete before any copy starts
+        string priorityExt = NormalizePriorityExtension(new ConfigManager().LoadSettings().PriorityExtension);
+        PriorityGate? gate = null;
+        if (!string.IsNullOrEmpty(priorityExt))
+        {
+            gate = new PriorityGate();
+            int total = 0;
+            foreach (var j in jobs)
+                total += _fileBackupService.CountPriorityFiles(j.SourcePath, j.TargetPath, j.Type, priorityExt);
+            gate.Add(total);
+        }
+
         foreach (var job in jobs)
         {
             // Create a task for each job
@@ -52,7 +64,9 @@ public class BackupExecutor
                         logger,
                         stateManager,
                         _localization,
-                        () => shouldStop?.Invoke(job.Name) ?? false
+                        () => shouldStop?.Invoke(job.Name) ?? false,
+                        gate,
+                        priorityExt
                     );
 
                     if (success)
@@ -100,6 +114,18 @@ public class BackupExecutor
         var semaphore = new SemaphoreSlim(maxConcurrency);
         var tasks = new List<Task<bool>>();
 
+        // Build global priority gate (same logic as ExecuteSequential)
+        string priorityExt = NormalizePriorityExtension(new ConfigManager().LoadSettings().PriorityExtension);
+        PriorityGate? gate = null;
+        if (!string.IsNullOrEmpty(priorityExt))
+        {
+            gate = new PriorityGate();
+            int total = 0;
+            foreach (var j in jobs)
+                total += _fileBackupService.CountPriorityFiles(j.SourcePath, j.TargetPath, j.Type, priorityExt);
+            gate.Add(total);
+        }
+
         // Get progress in job
         var progressStateManager = new ProgressTrackingStateManager(stateManager, progressCallback);
 
@@ -126,7 +152,9 @@ public class BackupExecutor
                         logger,
                         progressStateManager,
                         _localization,
-                        () => shouldStop?.Invoke(job.Name) ?? false
+                        () => shouldStop?.Invoke(job.Name) ?? false,
+                        gate,
+                        priorityExt
                     );
 
                     if (success)
@@ -159,6 +187,53 @@ public class BackupExecutor
             bool allSuccess = tasks.All(task => task.Result);
             completionCallback(allSuccess);
         });
+    }
+
+    // Normalize priority extension: "exe" or ".EXE" → ".exe"; null/empty → ""
+    private static string NormalizePriorityExtension(string? ext)
+    {
+        if (string.IsNullOrWhiteSpace(ext)) return string.Empty;
+        ext = ext.Trim().ToLowerInvariant();
+        return ext.StartsWith('.') ? ext : '.' + ext;
+    }
+}
+
+// Global priority gate: blocks non-priority file copies until all priority files across all jobs are done
+public sealed class PriorityGate
+{
+    private int _pending;
+    private readonly object _sync = new();
+
+    // Add count of priority files before any copy starts (called from BackupExecutor, single-threaded)
+    public void Add(int count)
+    {
+        lock (_sync) { _pending += count; }
+    }
+
+    // Signal that one priority file has been fully processed (copy + encrypt + log)
+    public void Done()
+    {
+        lock (_sync)
+        {
+            if (--_pending <= 0)
+            {
+                _pending = 0;
+                Monitor.PulseAll(_sync); // wake all waiting non-priority threads
+            }
+        }
+    }
+
+    // Block the calling thread until pendingPriority == 0; checks shouldStop every 200 ms
+    public void WaitIfBlocked(Func<bool>? shouldStop)
+    {
+        lock (_sync)
+        {
+            while (_pending > 0)
+            {
+                if (shouldStop?.Invoke() == true) return;
+                Monitor.Wait(_sync, 200);
+            }
+        }
     }
 }
 

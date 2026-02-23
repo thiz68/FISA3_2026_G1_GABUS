@@ -11,9 +11,32 @@ public class FileBackupService
     //Process CryptoSoft
     private readonly CryptoSoftRunner _cryptoRunner = new();
     
+    // Count priority-eligible files for pre-registration in the PriorityGate
+    public int CountPriorityFiles(string sourceDir, string targetDir, string jobType, string priorityExtension)
+    {
+        if (string.IsNullOrEmpty(priorityExtension)) return 0;
+        string[] allFiles;
+        try { allFiles = Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories); }
+        catch (IOException) { return 0; }
+
+        int count = 0;
+        foreach (var file in allFiles)
+        {
+            if (Path.GetExtension(file).ToLowerInvariant() != priorityExtension) continue;
+            if (jobType == "diff")
+            {
+                var rel = Path.GetRelativePath(sourceDir, file);
+                var tf = Path.Combine(targetDir, rel);
+                if (File.Exists(tf) && File.GetLastWriteTime(tf) >= File.GetLastWriteTime(file)) continue;
+            }
+            count++;
+        }
+        return count;
+    }
+
     //Copy an entire dir from source to target
     //Returns true if backup succeeded, false if it failed (drive unavailable, etc.)
-    public bool CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger, IStateManager stateManager, ILocalizationService localization, Func<bool>? shouldStop = null)
+    public bool CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger, IStateManager stateManager, ILocalizationService localization, Func<bool>? shouldStop = null, PriorityGate? gate = null, string priorityExtension = "")
     {
         //Counting how many files need to copy and total size
         var (totalFiles, totalSize) = CalculateEligibleFiles(sourceDir, targetDir, job.Type);
@@ -50,13 +73,13 @@ public class FileBackupService
 
         //Copy progress
         bool success = true;
-        CopyDirectoryRecursive(sourceDir, targetDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, localization, shouldStop);
+        CopyDirectoryRecursive(sourceDir, targetDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, localization, shouldStop, gate, priorityExtension);
         return success;
     }
 
     //Copy all files and subfolders
     private void CopyDirectoryRecursive(string sourceDir, string targetDir, IJob job, ILogger logger,
-    IStateManager stateManager, int totalFiles, long totalSize, ref int filesRemaining, ref long sizeRemaining, ref bool success, ILocalizationService localization, Func<bool>? shouldStop = null)
+    IStateManager stateManager, int totalFiles, long totalSize, ref int filesRemaining, ref long sizeRemaining, ref bool success, ILocalizationService localization, Func<bool>? shouldStop, PriorityGate? gate, string priorityExtension)
     {
         // Get list of files, handle errors if drive becomes unavailable (USB unplugged)
         string[] files;
@@ -83,12 +106,25 @@ public class FileBackupService
                     continue;
             }
 
+            // Priority gate: block non-priority files until all priority files across all jobs are done
+            bool isPriority = !string.IsNullOrEmpty(priorityExtension) &&
+                              Path.GetExtension(sourceFile).ToLowerInvariant() == priorityExtension;
+            if (!isPriority)
+            {
+                gate?.WaitIfBlocked(shouldStop);
+                if (shouldStop?.Invoke() == true) { success = false; return; }
+            }
+
             // Update state before copying
             var progression = totalFiles > 0 ? Math.Round((1 - (double)filesRemaining / totalFiles) * 100, 2) : 0;
             UpdateStateForFile(job, sourceFile, targetFile, filesRemaining, sizeRemaining, progression, stateManager, localization);
 
-            // Copy the file and log
+            // Copy the file and log (includes encryption + log write)
             long fileSize = CopyFile(sourceFile, targetFile, logger, job);
+
+            // Signal gate: priority file fully processed (copy + encrypt + log done)
+            if (isPriority)
+                gate?.Done();
 
             // Update counters
             filesRemaining--;
@@ -135,7 +171,7 @@ public class FileBackupService
                 success = false;
                 return;
             }
-            CopyDirectoryRecursive(subDir, targetSubDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, localization, shouldStop);
+            CopyDirectoryRecursive(subDir, targetSubDir, job, logger, stateManager, totalFiles, totalSize, ref filesRemaining, ref sizeRemaining, ref success, localization, shouldStop, gate, priorityExtension);
             if (!success) return;
         }
     }

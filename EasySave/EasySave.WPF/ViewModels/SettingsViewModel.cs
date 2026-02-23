@@ -85,6 +85,7 @@ public class SettingsViewModel : BaseViewModel
 
         ExtensionsToEncrypt = settings.ExtensionsToEncrypt;
         BusinessSoftware = settings.BusinessSoftware;
+        PriorityExtension = settings.PriorityExtension;
 
         // Load log storage settings
         SelectedLogStorageModeIndex = (int)settings.LogStorageMode;
@@ -119,6 +120,21 @@ public class SettingsViewModel : BaseViewModel
     {
         get => _businessSoftwareLabel;
         set => SetProperty(ref _businessSoftwareLabel, value);
+    }
+
+    // Priority extension (e.g. ".exe" or "exe") – single value, case-insensitive at save time
+    private string _priorityExtension = string.Empty;
+    public string PriorityExtension
+    {
+        get => _priorityExtension;
+        set => SetProperty(ref _priorityExtension, value);
+    }
+
+    private string _priorityExtensionLabel = string.Empty;
+    public string PriorityExtensionLabel
+    {
+        get => _priorityExtensionLabel;
+        set => SetProperty(ref _priorityExtensionLabel, value);
     }
     
     public string[] LogStorageModes { get; } =
@@ -156,6 +172,7 @@ public class SettingsViewModel : BaseViewModel
         settings.LogFormat = SelectedLogFormat;
         settings.ExtensionsToEncrypt = ExtensionsToEncrypt ?? string.Empty;
         settings.BusinessSoftware = BusinessSoftware ?? string.Empty;
+        settings.PriorityExtension = PriorityExtension ?? string.Empty;
         settings.LogStorageMode = (LogStorageMode)SelectedLogStorageModeIndex;
         settings.LogServerIp = LogServerIp;
         settings.LogServerPort = LogServerPort;
@@ -173,6 +190,7 @@ public class SettingsViewModel : BaseViewModel
         LogFormatLabel = _localization.GetString("log_format");
         ExtensionsToEncryptLabel = _localization.GetString("extensions_to_encrypt");
         BusinessSoftwareLabel = _localization.GetString("business_software");
+        PriorityExtensionLabel = _localization.GetString("priority_extension");
         SaveSettingsText = _localization.GetString("save_settings");
     }
 }

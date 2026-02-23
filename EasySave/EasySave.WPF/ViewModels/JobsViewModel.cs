@@ -401,8 +401,8 @@ public class JobsViewModel : BaseViewModel
         var progressWindow = new BackupProgressWindow(progressViewModel);
         progressWindow.Owner = Application.Current.MainWindow;
 
-        // Callback to check if business software is running
-        Func<bool> shouldStop = () => _businessChecker.IsBusinessSoftwareRunning(settings.BusinessSoftware);
+        // Callback to check if business software is running (for pause)
+        Func<bool> shouldPause = () => _businessChecker.IsBusinessSoftwareRunning(settings.BusinessSoftware);
 
         // Progress callback: update the ViewModel on the UI thread
         Action<string, double, bool> progressCallback = (jobName, progressPercent, isFailed) =>
@@ -431,7 +431,8 @@ public class JobsViewModel : BaseViewModel
             _stateManager,
             progressCallback,
             completionCallback,
-            shouldStopFunc);
+            shouldStopFunc,
+            shouldPause);
 
         // Show the progress window (modal dialog)
         progressWindow.ShowDialog();

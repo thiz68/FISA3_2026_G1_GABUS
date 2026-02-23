@@ -87,13 +87,16 @@ public class BackupExecutor
 
     // Execute jobs in parallel with callback for view updates
     // progressCallback: (jobName, progressPercent, isFailed)
+    // shouldStop: emergency stop callback (definitive stop)
+    // shouldPause: business software callback (temporary pause)
     public void ExecuteWithProgress(
         List<IJob> jobs,
         ILogger logger,
         IStateManager stateManager,
         Action<string, double, bool> progressCallback,
         Action<bool> completionCallback,
-        Func<string, bool>? shouldStop = null)
+        Func<string, bool>? shouldStop = null,
+        Func<bool>? shouldPause = null)
     {
         // Determine maximum concurrency (max threads available on computer)
         int maxConcurrency = Math.Clamp(Environment.ProcessorCount, 1, 8);
@@ -126,7 +129,8 @@ public class BackupExecutor
                         logger,
                         progressStateManager,
                         _localization,
-                        () => shouldStop?.Invoke(job.Name) ?? false
+                        () => shouldStop?.Invoke(job.Name) ?? false,
+                        shouldPause
                     );
 
                     if (success)

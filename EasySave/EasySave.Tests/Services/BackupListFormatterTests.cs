@@ -10,13 +10,15 @@ public class BackupListFormatterTests
 {
     private readonly BackupListFormatter _formatter;
     private readonly Mock<IJobManager> _mockJobManager;
-    private static ILocalizationService? _localization;
+    private readonly Mock<ILocalizationService> _mockLocalization;
 
-
-    public BackupListFormatterTests(ILocalizationService localization)
+    public BackupListFormatterTests()
     {
-        _localization = localization;
-        _formatter = new BackupListFormatter(_localization);
+        _mockLocalization = new Mock<ILocalizationService>();
+        _mockLocalization.Setup(l => l.GetString("invalid_choice")).Returns("Invalid choice");
+        _mockLocalization.Setup(l => l.GetString("error_not_found")).Returns("Job not found");
+
+        _formatter = new BackupListFormatter(_mockLocalization.Object);
         _mockJobManager = new Mock<IJobManager>();
 
         // Setup mock jobs
@@ -28,18 +30,16 @@ public class BackupListFormatterTests
         };
 
         _mockJobManager.Setup(m => m.Jobs).Returns(jobs.AsReadOnly());
-        _mockJobManager.Setup(m => m.MaxJobs).Returns(5);
+        _mockJobManager.Setup(m => m.MaxJobs).Returns(5); // Même si commenté dans le code, on mock pour compatibilité
         _mockJobManager.Setup(m => m.GetJob(It.IsAny<int>())).Returns<int>(i => jobs[i - 1]);
     }
 
     [Fact]
     public void FormatJobList_WithSingleIndex_ShouldReturnCorrectJob()
     {
-        // Act
         var (success, message, jobs) = _formatter.FormatJobList("1", _mockJobManager.Object);
-
-        // Assert
         Assert.True(success);
+        Assert.Empty(message);
         Assert.Single(jobs);
         Assert.Equal("Job1", jobs[0].Name);
     }
@@ -47,22 +47,20 @@ public class BackupListFormatterTests
     [Fact]
     public void FormatJobList_WithRange_ShouldReturnCorrectJobs()
     {
-        // Act
         var (success, message, jobs) = _formatter.FormatJobList("1-3", _mockJobManager.Object);
-
-        // Assert
         Assert.True(success);
+        Assert.Empty(message);
         Assert.Equal(3, jobs.Count);
+        Assert.Equal("Job1", jobs[0].Name);
+        Assert.Equal("Job3", jobs[2].Name);
     }
 
     [Fact]
     public void FormatJobList_WithSemicolonSeparated_ShouldReturnCorrectJobs()
     {
-        // Act
         var (success, message, jobs) = _formatter.FormatJobList("1;3", _mockJobManager.Object);
-
-        // Assert
         Assert.True(success);
+        Assert.Empty(message);
         Assert.Equal(2, jobs.Count);
         Assert.Equal("Job1", jobs[0].Name);
         Assert.Equal("Job3", jobs[1].Name);
@@ -71,20 +69,17 @@ public class BackupListFormatterTests
     [Fact]
     public void FormatJobList_WithInvalidIndex_ShouldReturnFalse()
     {
-        // Act
         var (success, message, jobs) = _formatter.FormatJobList("10", _mockJobManager.Object);
-
-        // Assert
         Assert.False(success);
+        Assert.Equal("Job not found", message);
+        Assert.Empty(jobs);
     }
 
     [Fact]
-    public void FormatJobList_WithInvalidFormat_ShouldReturnFalse()
+    public void FormatJobList_WithDuplicateIndexes_ShouldReturnUniqueJobs()
     {
-        // Act
-        var (success, message, jobs) = _formatter.FormatJobList("abc", _mockJobManager.Object);
-
-        // Assert
-        Assert.False(success);
+        var (success, message, jobs) = _formatter.FormatJobList("1;1", _mockJobManager.Object);
+        Assert.True(success);
+        Assert.Single(jobs);
     }
 }

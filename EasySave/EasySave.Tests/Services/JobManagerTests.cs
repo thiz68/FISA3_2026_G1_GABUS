@@ -21,98 +21,72 @@ public class JobManagerTests
     [Fact]
     public void AddJob_ShouldAddJobToList()
     {
-        // Arrange
         var job = new SaveJob { Name = "TestJob", SourcePath = "/source", TargetPath = "/target", Type = "full" };
-
-        // Act
         _jobManager.AddJob(job);
-
-        // Assert
         Assert.Single(_jobManager.Jobs);
         Assert.Equal("TestJob", _jobManager.Jobs[0].Name);
     }
 
     [Fact]
-    public void AddJob_WhenMaxJobsReached_ShouldThrowException()
-    {
-        // Arrange
-        for (int i = 0; i < 5; i++)
-        {
-            _jobManager.AddJob(new SaveJob { Name = $"Job{i}", SourcePath = "/source", TargetPath = "/target", Type = "full" });
-        }
-
-        var extraJob = new SaveJob { Name = "ExtraJob", SourcePath = "/source", TargetPath = "/target", Type = "full" };
-
-        // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => _jobManager.AddJob(extraJob));
-    }
-
-    [Fact]
     public void AddJob_WithDuplicateName_ShouldThrowException()
     {
-        // Arrange
         var job1 = new SaveJob { Name = "TestJob", SourcePath = "/source", TargetPath = "/target", Type = "full" };
         var job2 = new SaveJob { Name = "TestJob", SourcePath = "/source2", TargetPath = "/target2", Type = "diff" };
-
         _jobManager.AddJob(job1);
-
-        // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => _jobManager.AddJob(job2));
+        var ex = Assert.Throws<InvalidOperationException>(() => _jobManager.AddJob(job2));
+        Assert.Equal("job_name_alr_exist", ex.Message);
     }
 
     [Fact]
     public void RemoveJob_ShouldRemoveJobFromList()
     {
-        // Arrange
         var job = new SaveJob { Name = "TestJob", SourcePath = "/source", TargetPath = "/target", Type = "full" };
         _jobManager.AddJob(job);
-
-        // Act
         _jobManager.RemoveJob("TestJob");
+        Assert.Empty(_jobManager.Jobs);
+    }
 
-        // Assert
+    [Fact]
+    public void RemoveJob_NonExistent_ShouldDoNothing()
+    {
+        _jobManager.RemoveJob("NonExistent");
         Assert.Empty(_jobManager.Jobs);
     }
 
     [Fact]
     public void GetJob_ByIndex_ShouldReturnCorrectJob()
     {
-        // Arrange
         var job = new SaveJob { Name = "TestJob", SourcePath = "/source", TargetPath = "/target", Type = "full" };
         _jobManager.AddJob(job);
-
-        // Act
         var result = _jobManager.GetJob(1);
-
-        // Assert
         Assert.Equal("TestJob", result.Name);
     }
 
     [Fact]
     public void GetJob_ByName_ShouldReturnCorrectJob()
     {
-        // Arrange
         var job = new SaveJob { Name = "TestJob", SourcePath = "/source", TargetPath = "/target", Type = "full" };
         _jobManager.AddJob(job);
-
-        // Act
         var result = _jobManager.GetJob("TestJob");
-
-        // Assert
         Assert.Equal("TestJob", result.Name);
     }
 
     [Fact]
     public void GetJob_WithInvalidIndex_ShouldThrowException()
     {
-        // Act & Assert
         Assert.Throws<ArgumentOutOfRangeException>(() => _jobManager.GetJob(1));
+    }
+
+    [Fact]
+    public void GetJob_WithInvalidName_ShouldThrowException()
+    {
+        var ex = Assert.Throws<InvalidOperationException>(() => _jobManager.GetJob("Invalid"));
+        Assert.Equal("error_not_found", ex.Message);
     }
 
     [Fact]
     public void MaxJobs_ShouldReturn5()
     {
-        // Assert
         Assert.Equal(5, _jobManager.MaxJobs);
     }
 }

@@ -422,6 +422,8 @@ public class JobsViewModel : BaseViewModel
             });
         };
 
+        Func<string, bool> shouldStopFunc = jobName => progressViewModel.IsStopRequested(jobName);
+
         // Start the backup execution with progress tracking
         _backupExecutor.ExecuteWithProgress(
             jobs,
@@ -429,7 +431,7 @@ public class JobsViewModel : BaseViewModel
             _stateManager,
             progressCallback,
             completionCallback,
-            shouldStop);
+            shouldStopFunc);
 
         // Show the progress window (modal dialog)
         progressWindow.ShowDialog();

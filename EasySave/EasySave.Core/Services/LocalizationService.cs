@@ -116,6 +116,11 @@ public class LocalizationService : ILocalizationService
             ["business_software_detected"] = "Business software detected. Backup cannot start.",
             ["business_software_stopped"] = "Backup stopped: business software detected",
 
+            // Backup progress popup
+            ["backup_progress_header"] = "Starting backups with {0} threads available",
+            ["progression"] = "Progress",
+            ["emergency_stop"] = "Stop",
+
             // Server status
             ["server_unreachable"] = "Log server unreachable",
             ["server_connected"] = "Log server connected",
@@ -221,6 +226,11 @@ public class LocalizationService : ILocalizationService
             ["business_software"] = "Logiciel metier (nom du processus)",
             ["business_software_detected"] = "Logiciel metier detecte. Impossible de demarrer la sauvegarde.",
             ["business_software_stopped"] = "Sauvegarde arretee : logiciel metier detecte",
+
+            // Backup progress popup
+            ["backup_progress_header"] = "Demarrage des backups avec {0} threads disponibles",
+            ["progression"] = "Progression",
+            ["emergency_stop"] = "Arrêt",
 
             // Server status
             ["server_unreachable"] = "Serveur de logs inaccessible",

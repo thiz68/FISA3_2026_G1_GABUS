@@ -86,7 +86,7 @@ public class FileBackupService
 
                 if (largeFileGate != null && new FileInfo(src).Length > largeFileGate.ThresholdKB * 1024L)
                 {
-                    acquired = largeFileGate.Acquire(shouldStop);
+                    acquired = largeFileGate.Acquire(shouldStop, shouldPause);
                     if (!acquired) { success = false; break; }
                 }
 
@@ -118,9 +118,11 @@ public class FileBackupService
                 gate.Done();
 
         // ── Wait for the global priority phase to finish ─────────────────────────
-        gate?.WaitIfBlocked(shouldStop);
+        WaitWhilePaused(shouldStop, shouldPause);           // pause before entering gate wait
         if (shouldStop?.Invoke() == true) return false;
-        WaitWhilePaused(shouldStop, shouldPause);           // business software may still be active
+        gate?.WaitIfBlocked(shouldStop, shouldPause);
+        if (shouldStop?.Invoke() == true) return false;
+        WaitWhilePaused(shouldStop, shouldPause);           // pause if active after gate opens
         if (shouldStop?.Invoke() == true) return false;
 
         // ── Phase 2: non-priority files ──────────────────────────────────────────
@@ -139,7 +141,7 @@ public class FileBackupService
                 {
                     if (largeFileGate != null && new FileInfo(src).Length > largeFileGate.ThresholdKB * 1024L)
                     {
-                        acquired = largeFileGate.Acquire(shouldStop);
+                        acquired = largeFileGate.Acquire(shouldStop, shouldPause);
                         if (!acquired) { success = false; break; }
                     }
 

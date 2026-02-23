@@ -241,13 +241,16 @@ public sealed class PriorityGate
         }
     }
 
-    // Block the calling thread until pendingPriority == 0; checks shouldStop every 200 ms
-    public void WaitIfBlocked(Func<bool>? shouldStop)
+    // Block the calling thread until pendingPriority == 0; checks shouldStop every 200 ms.
+    // If shouldPause fires, keeps waiting (no return/failed) until the pause clears.
+    public void WaitIfBlocked(Func<bool>? shouldStop, Func<bool>? shouldPause = null)
     {
         lock (_sync)
         {
             while (_pending > 0)
             {
+                // Pause active: don't check stop, just keep waiting.
+                if (shouldPause?.Invoke() == true) { Monitor.Wait(_sync, 200); continue; }
                 if (shouldStop?.Invoke() == true) return;
                 Monitor.Wait(_sync, 200);
             }
@@ -266,14 +269,17 @@ public sealed class LargeFileGate
     public LargeFileGate(long thresholdKb) => ThresholdKB = thresholdKb;
 
     // Acquires the slot. Returns true if acquired, false if shouldStop fired.
-    // Uses timed waits (200 ms) to remain responsive to stop signals.
-    public bool Acquire(Func<bool>? shouldStop)
+    // If shouldPause fires while waiting, yields without holding the semaphore so
+    // other non-paused jobs can use the bandwidth slot; resumes when pause clears.
+    public bool Acquire(Func<bool>? shouldStop, Func<bool>? shouldPause = null)
     {
-        while (!_semaphore.Wait(200))
+        while (true)
         {
             if (shouldStop?.Invoke() == true) return false;
+            // Paused: don't try to grab the slot, just wait and retry.
+            if (shouldPause?.Invoke() == true) { Thread.Sleep(200); continue; }
+            if (_semaphore.Wait(200)) return true;
         }
-        return true;
     }
 
     // Always call from a finally block so the slot is never leaked on error.

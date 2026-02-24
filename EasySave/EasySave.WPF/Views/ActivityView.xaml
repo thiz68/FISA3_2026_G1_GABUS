@@ -55,7 +55,7 @@
                                    Foreground="{DynamicResource AccentBrush}"
                                    VerticalAlignment="Center"
                                    Margin="0,0,8,0"/>
-                        <TextBlock Text="RECENT ACTIVITY"
+                        <TextBlock Text="{Binding RecentActivityText}"
                                    Style="{StaticResource SectionTitleStyle}"
                                    VerticalAlignment="Center"/>
                     </StackPanel>

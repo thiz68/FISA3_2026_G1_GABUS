@@ -114,6 +114,20 @@ public class BackupProgressItemViewModel : BaseViewModel
         }
     }
 
+    // Localized text for Failed display
+    private string _failedText = "Failed";
+    public string FailedText
+    {
+        get => _failedText;
+        set
+        {
+            if (SetProperty(ref _failedText, value))
+            {
+                OnPropertyChanged(nameof(ProgressDisplay));
+            }
+        }
+    }
+
     // Text displayed on the Pause/Resume button
     // Shows "Resume" if manually paused OR paused by business software, otherwise "Pause"
     public string PauseResumeButtonText
@@ -126,13 +140,13 @@ public class BackupProgressItemViewModel : BaseViewModel
         }
     }
 
-    // Display string: "Failed" if failed, otherwise "XX%"
+    // Display string: localized "Failed" if failed, otherwise "XX%"
     public string ProgressDisplay
     {
         get
         {
             if (_isFailed)
-                return "Failed";
+                return _failedText;
             return $"{Math.Round(_progressPercent, 0)}%";
         }
     }
@@ -273,6 +287,27 @@ public class BackupProgressViewModel : BaseViewModel
         set => SetProperty(ref _resumeText, value);
     }
 
+    private string _titleText = string.Empty;
+    public string TitleText
+    {
+        get => _titleText;
+        set => SetProperty(ref _titleText, value);
+    }
+
+    private string _okText = string.Empty;
+    public string OkText
+    {
+        get => _okText;
+        set => SetProperty(ref _okText, value);
+    }
+
+    private string _failedText = string.Empty;
+    public string FailedText
+    {
+        get => _failedText;
+        set => SetProperty(ref _failedText, value);
+    }
+
     public BackupProgressViewModel(ILocalizationService localization, int threadCount, List<string> jobNames)
     {
         _localization = localization;
@@ -289,9 +324,10 @@ public class BackupProgressViewModel : BaseViewModel
         foreach (var jobName in jobNames)
         {
             var item = new BackupProgressItemViewModel(jobName);
-            // Set localized text for Pause/Resume buttons
+            // Set localized text for Pause/Resume/Failed display
             item.PauseText = _pauseText;
             item.ResumeText = _resumeText;
+            item.FailedText = _failedText;
             JobProgressItems.Add(item);
         }
 
@@ -337,6 +373,9 @@ public class BackupProgressViewModel : BaseViewModel
         EmergencyStopText = _localization.GetString("emergency_stop");
         PauseText = _localization.GetString("pause");
         ResumeText = _localization.GetString("resume");
+        TitleText = _localization.GetString("backup_progress_title");
+        OkText = _localization.GetString("ok");
+        FailedText = _localization.GetString("failed");
     }
 
     public bool IsStopRequested(string jobName)

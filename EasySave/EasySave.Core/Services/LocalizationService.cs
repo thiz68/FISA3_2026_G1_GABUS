@@ -137,6 +137,26 @@ public class LocalizationService : ILocalizationService
             ["activity"] = "Activity",
             ["open_logs_folder"] = "Open Logs Folder",
             ["no_logs_today"] = "No logs for today",
+            ["recent_activity"] = "RECENT ACTIVITY",
+
+            // Settings sections
+            ["appearance"] = "APPEARANCE",
+            ["dark_mode"] = "Dark Mode",
+            ["dark_mode_description"] = "Switch between light and dark interface",
+            ["language"] = "Language",
+            ["interface_language"] = "Interface language",
+            ["backup_section"] = "BACKUP",
+            ["log_server"] = "LOG SERVER",
+            ["log_storage_mode"] = "Log Storage Mode",
+            ["server_ip"] = "Server IP",
+            ["server_port"] = "Server Port",
+            ["priority_extension_hint"] = "Ex: .exe  —  leave empty to disable",
+            ["large_file_threshold_hint"] = "Ex: 1024 KB  —  0 or empty to disable",
+
+            // Dialog
+            ["browse"] = "Browse…",
+            ["ok"] = "OK",
+            ["backup_progress_title"] = "Backup Progress",
         },
 
         // French dict
@@ -259,6 +279,26 @@ public class LocalizationService : ILocalizationService
             ["activity"] = "Activite",
             ["open_logs_folder"] = "Ouvrir le dossier des logs",
             ["no_logs_today"] = "Aucun log pour aujourd'hui",
+            ["recent_activity"] = "ACTIVITE RECENTE",
+
+            // Settings sections
+            ["appearance"] = "APPARENCE",
+            ["dark_mode"] = "Mode sombre",
+            ["dark_mode_description"] = "Basculer entre interface claire et sombre",
+            ["language"] = "Langue",
+            ["interface_language"] = "Langue de l'interface",
+            ["backup_section"] = "SAUVEGARDE",
+            ["log_server"] = "SERVEUR DE LOGS",
+            ["log_storage_mode"] = "Mode de stockage des logs",
+            ["server_ip"] = "IP du serveur",
+            ["server_port"] = "Port du serveur",
+            ["priority_extension_hint"] = "Ex: .exe  —  laisser vide pour desactiver",
+            ["large_file_threshold_hint"] = "Ex: 1024 Ko  —  0 ou vide pour desactiver",
+
+            // Dialog
+            ["browse"] = "Parcourir…",
+            ["ok"] = "OK",
+            ["backup_progress_title"] = "Progression des sauvegardes",
         }
     };
 

@@ -152,7 +152,91 @@ public class SettingsViewModel : BaseViewModel
         get => _largeFileThresholdLabel;
         set => SetProperty(ref _largeFileThresholdLabel, value);
     }
-    
+
+    private string _appearanceSectionTitle = string.Empty;
+    public string AppearanceSectionTitle
+    {
+        get => _appearanceSectionTitle;
+        set => SetProperty(ref _appearanceSectionTitle, value);
+    }
+
+    private string _darkModeLabel = string.Empty;
+    public string DarkModeLabel
+    {
+        get => _darkModeLabel;
+        set => SetProperty(ref _darkModeLabel, value);
+    }
+
+    private string _darkModeDescription = string.Empty;
+    public string DarkModeDescription
+    {
+        get => _darkModeDescription;
+        set => SetProperty(ref _darkModeDescription, value);
+    }
+
+    private string _languageLabel = string.Empty;
+    public string LanguageLabel
+    {
+        get => _languageLabel;
+        set => SetProperty(ref _languageLabel, value);
+    }
+
+    private string _interfaceLanguageLabel = string.Empty;
+    public string InterfaceLanguageLabel
+    {
+        get => _interfaceLanguageLabel;
+        set => SetProperty(ref _interfaceLanguageLabel, value);
+    }
+
+    private string _backupSectionTitle = string.Empty;
+    public string BackupSectionTitle
+    {
+        get => _backupSectionTitle;
+        set => SetProperty(ref _backupSectionTitle, value);
+    }
+
+    private string _logServerSectionTitle = string.Empty;
+    public string LogServerSectionTitle
+    {
+        get => _logServerSectionTitle;
+        set => SetProperty(ref _logServerSectionTitle, value);
+    }
+
+    private string _logStorageModeLabel = string.Empty;
+    public string LogStorageModeLabel
+    {
+        get => _logStorageModeLabel;
+        set => SetProperty(ref _logStorageModeLabel, value);
+    }
+
+    private string _serverIpLabel = string.Empty;
+    public string ServerIpLabel
+    {
+        get => _serverIpLabel;
+        set => SetProperty(ref _serverIpLabel, value);
+    }
+
+    private string _serverPortLabel = string.Empty;
+    public string ServerPortLabel
+    {
+        get => _serverPortLabel;
+        set => SetProperty(ref _serverPortLabel, value);
+    }
+
+    private string _priorityExtensionHint = string.Empty;
+    public string PriorityExtensionHint
+    {
+        get => _priorityExtensionHint;
+        set => SetProperty(ref _priorityExtensionHint, value);
+    }
+
+    private string _largeFileThresholdHint = string.Empty;
+    public string LargeFileThresholdHint
+    {
+        get => _largeFileThresholdHint;
+        set => SetProperty(ref _largeFileThresholdHint, value);
+    }
+
     public string[] LogStorageModes { get; } =
     {
         "LocalOnly",
@@ -210,5 +294,18 @@ public class SettingsViewModel : BaseViewModel
         PriorityExtensionLabel = _localization.GetString("priority_extension");
         LargeFileThresholdLabel = _localization.GetString("large_file_threshold_kb");
         SaveSettingsText = _localization.GetString("save_settings");
+
+        AppearanceSectionTitle = _localization.GetString("appearance");
+        DarkModeLabel = _localization.GetString("dark_mode");
+        DarkModeDescription = _localization.GetString("dark_mode_description");
+        LanguageLabel = _localization.GetString("language");
+        InterfaceLanguageLabel = _localization.GetString("interface_language");
+        BackupSectionTitle = _localization.GetString("backup_section");
+        LogServerSectionTitle = _localization.GetString("log_server");
+        LogStorageModeLabel = _localization.GetString("log_storage_mode");
+        ServerIpLabel = _localization.GetString("server_ip");
+        ServerPortLabel = _localization.GetString("server_port");
+        PriorityExtensionHint = _localization.GetString("priority_extension_hint");
+        LargeFileThresholdHint = _localization.GetString("large_file_threshold_hint");
     }
 }

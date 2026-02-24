@@ -157,6 +157,41 @@ public class JobsViewModel : BaseViewModel
         set => SetProperty(ref _editText, value);
     }
 
+    private string _browseText = string.Empty;
+    public string BrowseText
+    {
+        get => _browseText;
+        set => SetProperty(ref _browseText, value);
+    }
+
+    private string _fullText = string.Empty;
+    public string FullText
+    {
+        get => _fullText;
+        set => SetProperty(ref _fullText, value);
+    }
+
+    private string _diffText = string.Empty;
+    public string DiffText
+    {
+        get => _diffText;
+        set => SetProperty(ref _diffText, value);
+    }
+
+    private string _cancelText = string.Empty;
+    public string CancelText
+    {
+        get => _cancelText;
+        set => SetProperty(ref _cancelText, value);
+    }
+
+    private string _saveText = string.Empty;
+    public string SaveText
+    {
+        get => _saveText;
+        set => SetProperty(ref _saveText, value);
+    }
+
     // Add/Edit dialog properties
     private bool _isDialogOpen;
     public bool IsDialogOpen
@@ -555,6 +590,11 @@ public class JobsViewModel : BaseViewModel
         ActionsHeader = _localization.GetString("actions");
         DeleteText = _localization.GetString("delete");
         EditText = _localization.GetString("edit");
+        BrowseText = _localization.GetString("browse");
+        FullText = _localization.GetString("full");
+        DiffText = _localization.GetString("diff");
+        CancelText = _localization.GetString("cancel");
+        SaveText = _localization.GetString("save");
 
         // Update job type displays
         foreach (var job in Jobs)

@@ -132,6 +132,11 @@ public class LocalizationService : ILocalizationService
             ["server_connected"] = "Log server connected",
             ["server_unreachable_message"] = "The log server is not reachable. Logs will be saved locally only.",
             ["warning"] = "Warning",
+
+            // Activity panel
+            ["activity"] = "Activity",
+            ["open_logs_folder"] = "Open Logs Folder",
+            ["no_logs_today"] = "No logs for today",
         },
 
         // French dict
@@ -249,6 +254,11 @@ public class LocalizationService : ILocalizationService
             ["server_connected"] = "Serveur de logs connecte",
             ["server_unreachable_message"] = "Le serveur de logs est inaccessible. Les logs seront enregistres localement uniquement.",
             ["warning"] = "Avertissement",
+
+            // Activity panel
+            ["activity"] = "Activite",
+            ["open_logs_folder"] = "Ouvrir le dossier des logs",
+            ["no_logs_today"] = "Aucun log pour aujourd'hui",
         }
     };
 

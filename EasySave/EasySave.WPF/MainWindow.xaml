@@ -30,6 +30,9 @@
         <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
             <views:SettingsView/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ActivityViewModel}">
+            <views:ActivityView/>
+        </DataTemplate>
     </Window.Resources>
 
     <!-- ══════════════════════════════════════════════════
@@ -149,6 +152,22 @@
                                        VerticalAlignment="Center"
                                        Margin="0,0,10,0"/>
                             <TextBlock Text="{Binding SettingsText}"
+                                       FontSize="14"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Activity -->
+                    <Button Style="{StaticResource MenuButtonStyle}"
+                            Command="{Binding NavigateToActivityCommand}"
+                            HorizontalAlignment="Stretch">
+                        <StackPanel Orientation="Horizontal" Margin="4,0">
+                            <TextBlock Text="&#xE9D9;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="16"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,10,0"/>
+                            <TextBlock Text="{Binding ActivityText}"
                                        FontSize="14"
                                        VerticalAlignment="Center"/>
                         </StackPanel>

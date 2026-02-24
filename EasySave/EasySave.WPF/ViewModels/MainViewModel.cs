@@ -31,11 +31,13 @@ public class MainViewModel : BaseViewModel
     public DashboardViewModel DashboardViewModel { get; }
     public JobsViewModel JobsViewModel { get; }
     public SettingsViewModel SettingsViewModel { get; }
+    public ActivityViewModel ActivityViewModel { get; }
 
     // Navigation commands
     public ICommand NavigateToDashboardCommand { get; }
     public ICommand NavigateToJobsCommand { get; }
     public ICommand NavigateToSettingsCommand { get; }
+    public ICommand NavigateToActivityCommand { get; }
     public ICommand ExitCommand { get; }
     public ICommand SetLanguageFrCommand { get; }
     public ICommand SetLanguageEnCommand { get; }
@@ -67,6 +69,13 @@ public class MainViewModel : BaseViewModel
     {
         get => _settingsText;
         set => SetProperty(ref _settingsText, value);
+    }
+
+    private string _activityText = string.Empty;
+    public string ActivityText
+    {
+        get => _activityText;
+        set => SetProperty(ref _activityText, value);
     }
 
     private string _exitText = string.Empty;
@@ -107,11 +116,13 @@ public class MainViewModel : BaseViewModel
         Task.Run(async () => await DashboardViewModel.RefreshContentAsync());
         JobsViewModel = new JobsViewModel(_localization, _jobManager, _configManager, _backupExecutor, _logger, _stateManager, _pathValidator, _cryptoRunner);
         SettingsViewModel = new SettingsViewModel(_localization, _configManager);
+        ActivityViewModel = new ActivityViewModel(_localization, _logger);
 
         // Initialize commands
         NavigateToDashboardCommand = new RelayCommand(_ => NavigateToDashboard());
         NavigateToJobsCommand = new RelayCommand(_ => NavigateToJobs());
         NavigateToSettingsCommand = new RelayCommand(_ => NavigateToSettings());
+        NavigateToActivityCommand = new RelayCommand(_ => NavigateToActivity());
         ExitCommand = new RelayCommand(_ => ExitApplication());
         SetLanguageFrCommand = new RelayCommand(_ => SetLanguage("fr"));
         SetLanguageEnCommand = new RelayCommand(_ => SetLanguage("en"));
@@ -141,6 +152,12 @@ public class MainViewModel : BaseViewModel
         CurrentViewModel = SettingsViewModel;
     }
 
+    private void NavigateToActivity()
+    {
+        _ = ActivityViewModel.LoadLogsAsync();
+        CurrentViewModel = ActivityViewModel;
+    }
+
     private void ExitApplication()
     {
         // Save jobs before exiting
@@ -165,6 +182,7 @@ public class MainViewModel : BaseViewModel
         await DashboardViewModel.UpdateLocalizedStringsAsync();
         JobsViewModel.UpdateLocalizedStrings();
         SettingsViewModel.UpdateLocalizedStrings();
+        ActivityViewModel.UpdateLocalizedStrings();
     }
 
     private void UpdateLocalizedStrings()
@@ -173,6 +191,7 @@ public class MainViewModel : BaseViewModel
         DashboardText = _localization.GetString("dashboard");
         BackupJobsText = _localization.GetString("backup_jobs");
         SettingsText = _localization.GetString("settings");
+        ActivityText = _localization.GetString("activity");
         ExitText = _localization.GetString("exit");
     }
 

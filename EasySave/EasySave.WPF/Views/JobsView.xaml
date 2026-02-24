@@ -113,13 +113,14 @@
                     <DataGridTemplateColumn
                         Header="{Binding DataContext.ActionsHeader,
                                  RelativeSource={RelativeSource AncestorType=UserControl}}"
-                        Width="170">
+                        Width="Auto"
+                        MinWidth="210">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <StackPanel Orientation="Horizontal" Margin="0,4">
+                                <StackPanel Orientation="Horizontal" Margin="4,4">
                                     <Button Content="{Binding DataContext.EditText,
                                                       RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            MinWidth="64"
+                                            MinWidth="80"
                                             Margin="0,0,6,0"
                                             Style="{StaticResource TopBarButtonStyle}"
                                             Command="{Binding DataContext.EditJobCommand,
@@ -127,7 +128,7 @@
                                             CommandParameter="{Binding}"/>
                                     <Button Content="{Binding DataContext.DeleteText,
                                                       RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            MinWidth="72"
+                                            MinWidth="100"
                                             Style="{StaticResource DangerButtonStyle}"
                                             Command="{Binding DataContext.DeleteJobCommand,
                                                       RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -192,7 +193,7 @@
                         <TextBox Grid.Column="0"
                                  Text="{Binding DialogSourcePath, UpdateSourceTrigger=PropertyChanged}"/>
                         <Button Grid.Column="2"
-                                Content="Browse…"
+                                Content="{Binding BrowseText}"
                                 MinWidth="80"
                                 Style="{StaticResource TopBarButtonStyle}"
                                 Click="BrowseSource_Click"/>
@@ -210,7 +211,7 @@
                         <TextBox Grid.Column="0"
                                  Text="{Binding DialogTargetPath, UpdateSourceTrigger=PropertyChanged}"/>
                         <Button Grid.Column="2"
-                                Content="Browse…"
+                                Content="{Binding BrowseText}"
                                 MinWidth="80"
                                 Style="{StaticResource TopBarButtonStyle}"
                                 Click="BrowseTarget_Click"/>
@@ -220,12 +221,12 @@
                     <TextBlock Text="{Binding TypeHeader}"
                                Style="{StaticResource LabelStyle}"/>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,28">
-                        <RadioButton Content="Full"
+                        <RadioButton Content="{Binding FullText}"
                                      IsChecked="{Binding DialogType,
                                                  Converter={StaticResource BackupTypeConverter},
                                                  ConverterParameter=full}"
                                      Margin="0,0,24,0"/>
-                        <RadioButton Content="Differential"
+                        <RadioButton Content="{Binding DiffText}"
                                      IsChecked="{Binding DialogType,
                                                  Converter={StaticResource BackupTypeConverter},
                                                  ConverterParameter=diff}"/>
@@ -239,12 +240,12 @@
                     <!-- ── Dialog buttons ── -->
                     <StackPanel Orientation="Horizontal"
                                 HorizontalAlignment="Right">
-                        <Button Content="Cancel"
+                        <Button Content="{Binding CancelText}"
                                 MinWidth="88"
                                 Margin="0,0,10,0"
                                 Style="{StaticResource TopBarButtonStyle}"
                                 Command="{Binding CancelDialogCommand}"/>
-                        <Button Content="Save"
+                        <Button Content="{Binding SaveText}"
                                 MinWidth="88"
                                 Style="{StaticResource ActionButtonStyle}"
                                 Command="{Binding SaveJobCommand}"/>

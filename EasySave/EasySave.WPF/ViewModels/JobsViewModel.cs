@@ -1,3 +1,13 @@
+/*
+ * JobsViewModel: manages the backup job list and drives job execution.
+ * Execution is handled on a background thread via BackupExecutor.ExecuteWithProgress.
+ * Two pause signals are composed at runtime:
+ *   - Business software pause (automatic): detected by polling every 500 ms.
+ *   - Manual pause (user-initiated): toggled per-job via BackupProgressItemViewModel.
+ * Business software has priority: when it is running, the Resume button is disabled.
+ * A lock-protected flag (pausePopupShown) ensures the warning popup appears at most
+ * once per false→true pause transition, regardless of how many jobs are running.
+ */
 namespace EasySave.WPF.ViewModels;
 
 using System.Collections.ObjectModel;
@@ -10,7 +20,7 @@ using EasySave.WPF.Commands;
 using EasySave.WPF.Views;
 using EasySaveLog;
 
-// ViewModel for a single job item in the list
+// ViewModel for a single job item in the list.
 public class JobItemViewModel : BaseViewModel
 {
     private readonly IJob _job;
@@ -29,7 +39,7 @@ public class JobItemViewModel : BaseViewModel
 
     public string Type => _job.Type;
 
-    // For selection in DataGrid
+    // Used for multi-selection in the DataGrid.
     private bool _isSelected;
     public bool IsSelected
     {
@@ -54,8 +64,6 @@ public class JobItemViewModel : BaseViewModel
     }
 }
 
-// ViewModel for the Jobs view
-// Manages the list of backup jobs and operations
 public class JobsViewModel : BaseViewModel
 {
     private readonly ILocalizationService _localization;
@@ -68,10 +76,9 @@ public class JobsViewModel : BaseViewModel
     private readonly CryptoSoftRunner _cryptoRunner;
     private readonly BusinessSoftwareChecker _businessChecker = new();
 
-    // Observable collection of jobs for DataGrid binding
+    // Observable collection of jobs for DataGrid binding.
     public ObservableCollection<JobItemViewModel> Jobs { get; } = new();
 
-    // Selected job for editing/deletion
     private JobItemViewModel? _selectedJob;
     public JobItemViewModel? SelectedJob
     {
@@ -79,7 +86,6 @@ public class JobsViewModel : BaseViewModel
         set => SetProperty(ref _selectedJob, value);
     }
 
-    // Commands
     public ICommand AddJobCommand { get; }
     public ICommand ExecuteAllCommand { get; }
     public ICommand ExecuteSelectedCommand { get; }
@@ -246,7 +252,6 @@ public class JobsViewModel : BaseViewModel
         _pathValidator = pathValidator;
         _cryptoRunner = cryptoRunner;
 
-        // Initialize commands
         AddJobCommand = new RelayCommand(_ => OpenAddDialog());
         ExecuteAllCommand = new RelayCommand(_ => ExecuteAll(), _ => Jobs.Count > 0);
         ExecuteSelectedCommand = new RelayCommand(_ => ExecuteSelected(), _ => Jobs.Any(j => j.IsSelected));
@@ -259,7 +264,6 @@ public class JobsViewModel : BaseViewModel
         RefreshJobs();
     }
 
-    // Refresh the jobs list from the manager
     public void RefreshJobs()
     {
         Jobs.Clear();
@@ -269,7 +273,6 @@ public class JobsViewModel : BaseViewModel
         }
     }
 
-    // Open dialog to add a new job
     private void OpenAddDialog()
     {
         _isEditMode = false;
@@ -281,7 +284,6 @@ public class JobsViewModel : BaseViewModel
         IsDialogOpen = true;
     }
 
-    // Open dialog to edit an existing job
     private void OpenEditDialog(JobItemViewModel? jobVm)
     {
         if (jobVm == null) return;
@@ -295,10 +297,8 @@ public class JobsViewModel : BaseViewModel
         IsDialogOpen = true;
     }
 
-    // Save job (add or edit)
     private void SaveJob()
     {
-        // Validate inputs
         if (string.IsNullOrWhiteSpace(DialogJobName))
         {
             MessageBox.Show(_localization.GetString("error_invalid_name"), "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -321,14 +321,13 @@ public class JobsViewModel : BaseViewModel
         {
             if (_isEditMode && _editingJob != null)
             {
-                // Check if name is unique (excluding current job)
+                // Name uniqueness check excludes the job being edited.
                 if (_jobManager.Jobs.Any(j => j != _editingJob && j.Name.Equals(DialogJobName, StringComparison.OrdinalIgnoreCase)))
                 {
                     MessageBox.Show(_localization.GetString("job_name_alr_exist"), "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                // Update existing job
                 _editingJob.Name = DialogJobName;
                 _editingJob.SourcePath = DialogSourcePath;
                 _editingJob.TargetPath = DialogTargetPath;
@@ -338,14 +337,12 @@ public class JobsViewModel : BaseViewModel
             }
             else
             {
-                // Check if name is unique
                 if (_jobManager.Jobs.Any(j => j.Name.Equals(DialogJobName, StringComparison.OrdinalIgnoreCase)))
                 {
                     MessageBox.Show(_localization.GetString("job_name_alr_exist"), "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                // Add new job
                 var newJob = new SaveJob
                 {
                     Name = DialogJobName,
@@ -368,7 +365,6 @@ public class JobsViewModel : BaseViewModel
         }
     }
 
-    // Close the dialog
     private void CloseDialog()
     {
         IsDialogOpen = false;
@@ -376,14 +372,12 @@ public class JobsViewModel : BaseViewModel
         _editingJob = null;
     }
 
-    // Execute all jobs sequentially
     private void ExecuteAll()
     {
         var jobsToExecute = _jobManager.Jobs.ToList();
         ExecuteJobs(jobsToExecute);
     }
 
-    // Execute selected jobs
     private void ExecuteSelected()
     {
         var selectedJobs = Jobs.Where(j => j.IsSelected).Select(j => j.Job).ToList();
@@ -395,10 +389,10 @@ public class JobsViewModel : BaseViewModel
         ExecuteJobs(selectedJobs);
     }
 
-    // Execute a list of jobs with progress popup
+    // Build the progress popup and start backup execution with the composed pause/stop callbacks.
     private void ExecuteJobs(List<IJob> jobs)
     {
-        // Vérification Logiciel Métier
+        // Pre-execution check: abort if business software is already running.
         var settings = _configManager.LoadSettings();
         if (_businessChecker.IsBusinessSoftwareRunning(settings.BusinessSoftware))
         {
@@ -406,7 +400,7 @@ public class JobsViewModel : BaseViewModel
             return;
         }
 
-        //Vérification CryptoSoft
+        // Warn if CryptoSoft.exe is missing; user can still proceed without encryption.
         if (!_cryptoRunner.IsCryptoSoftAvailable())
         {
             var result = MessageBox.Show(
@@ -419,22 +413,16 @@ public class JobsViewModel : BaseViewModel
                 return;
         }
 
-        // Get the number of available threads
         int threadCount = BackupExecutor.MaxConcurrency;
-
-        // Get job names for the progress popup
         var jobNames = jobs.Select(j => j.Name).ToList();
-
-        // Create the progress ViewModel
         var progressViewModel = new BackupProgressViewModel(_localization, threadCount, jobNames);
 
-        // Create and show the progress popup window
         var progressWindow = new BackupProgressWindow(progressViewModel);
         progressWindow.Owner = Application.Current.MainWindow;
 
         var monitorCts = new CancellationTokenSource();
 
-        // Progress callback: update the ViewModel on the UI thread
+        // Progress callback: marshal the update onto the UI thread.
         Action<string, double, bool> progressCallback = (jobName, progressPercent, isFailed) =>
         {
             Application.Current.Dispatcher.Invoke(() =>
@@ -443,7 +431,7 @@ public class JobsViewModel : BaseViewModel
             });
         };
 
-        // Completion callback: enable the OK button on the UI thread
+        // Completion callback: enable the OK button and stop the business software monitor.
         Action<bool> completionCallback = (allSuccess) =>
         {
             monitorCts.Cancel();
@@ -453,21 +441,23 @@ public class JobsViewModel : BaseViewModel
             });
         };
 
-        // Hard stop: user pressed the emergency stop button for a specific job
+        // Hard stop: user pressed the emergency stop button for a specific job.
         Func<string, bool> shouldStopFunc = jobName =>
             progressViewModel.IsStopRequested(jobName);
 
-        // Pause state callback: show popup when entering pause (only once) due to business software
+        /* Pause state callback: shows a popup on the first false→true business software transition.
+         * A lock-protected flag (pausePopupShown) prevents duplicate popups when multiple
+         * jobs all enter the paused state at roughly the same time. */
         bool pausePopupShown = false;
         object pauseLock = new object();
         Action<bool> onPauseStateChanged = (isPaused) =>
         {
             if (isPaused)
             {
-                // Only show popup for business software pause, not manual pause
+                // Only show popup for business software pause, not manual pause.
                 bool isBusinessSoftwareRunning = _businessChecker.IsBusinessSoftwareRunning(settings.BusinessSoftware);
                 if (!isBusinessSoftwareRunning)
-                    return; // Manual pause, no popup
+                    return;
 
                 lock (pauseLock)
                 {
@@ -492,23 +482,22 @@ public class JobsViewModel : BaseViewModel
             }
         };
 
-        // Soft pause: business software running OR manual pause from user
-        // Business software has priority: if running, Resume button is disabled
+        /* Soft pause: returns true when business software is running OR when the user has
+         * manually paused the specific job. Business software takes priority: while it is
+         * running, the Resume button is disabled so the user cannot override it. */
         Func<string, bool> shouldPauseFunc = jobName =>
         {
             bool isBusinessSoftwareRunning = _businessChecker.IsBusinessSoftwareRunning(settings.BusinessSoftware);
 
-            // Update business software pause state in progress items (on UI thread)
+            // Reflect business software state in the progress item (UI thread required).
             Application.Current.Dispatcher.Invoke(() =>
             {
                 progressViewModel.UpdateBusinessSoftwarePauseState(isBusinessSoftwareRunning);
             });
 
-            // Pause if business software is running OR if user manually paused this job
             return isBusinessSoftwareRunning || progressViewModel.IsManuallyPaused(jobName);
         };
 
-        // Start the backup execution with progress tracking
         _backupExecutor.ExecuteWithProgress(
             jobs,
             _logger,
@@ -519,7 +508,7 @@ public class JobsViewModel : BaseViewModel
             shouldPauseFunc,
             onPauseStateChanged);
 
-        // Monitor business software during backup: one popup per false→true transition
+        // Background monitor: show the business software popup on each false→true transition.
         if (!string.IsNullOrWhiteSpace(settings.BusinessSoftware))
         {
             bool wasPaused = false;
@@ -543,11 +532,10 @@ public class JobsViewModel : BaseViewModel
             });
         }
 
-        // Show the progress window (modal dialog)
         progressWindow.ShowDialog();
     }
 
-    // Popup "business software detected" — reused for pre-check and mid-run monitoring
+    // Shows the "business software detected" warning; reused for the pre-check and mid-run monitor.
     private void ShowBusinessSoftwareDetectedPopup()
     {
         MessageBox.Show(
@@ -557,7 +545,6 @@ public class JobsViewModel : BaseViewModel
             MessageBoxImage.Warning);
     }
 
-    // Delete a job
     private void DeleteJob(JobItemViewModel? jobVm)
     {
         if (jobVm == null) return;
@@ -577,7 +564,7 @@ public class JobsViewModel : BaseViewModel
         }
     }
 
-    // Update localized strings when language changes
+    // Update localized strings when language changes.
     public void UpdateLocalizedStrings()
     {
         AddJobText = _localization.GetString("add_job");
@@ -596,7 +583,6 @@ public class JobsViewModel : BaseViewModel
         CancelText = _localization.GetString("cancel");
         SaveText = _localization.GetString("save");
 
-        // Update job type displays
         foreach (var job in Jobs)
         {
             job.UpdateTypeDisplay();

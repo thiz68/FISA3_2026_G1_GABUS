@@ -1,3 +1,9 @@
+/*
+ * MainViewModel: application root ViewModel; owns all shared services and child ViewModels.
+ * Drives navigation by changing CurrentViewModel, which is bound to a ContentControl
+ * in MainWindow.xaml via DataTemplates. Language changes are broadcast to all child
+ * ViewModels via the ILocalizationService.LanguageChanged event.
+ */
 namespace EasySave.WPF.ViewModels;
 
 using System.Windows.Input;
@@ -6,10 +12,8 @@ using EasySave.Core.Services;
 using EasySave.WPF.Commands;
 using EasySaveLog;
 
-// Main ViewModel that manages navigation and shared services
 public class MainViewModel : BaseViewModel
 {
-    // Services shared across the application
     private readonly ILocalizationService _localization;
     private readonly IJobManager _jobManager;
     private readonly ConfigManager _configManager;
@@ -19,7 +23,7 @@ public class MainViewModel : BaseViewModel
     private readonly PathValidator _pathValidator;
     private readonly CryptoSoftRunner _cryptoRunner;
 
-    // Current view displayed in the main content area
+    // Current view displayed in the main content area.
     private BaseViewModel _currentViewModel = null!;
     public BaseViewModel CurrentViewModel
     {
@@ -87,7 +91,6 @@ public class MainViewModel : BaseViewModel
 
     public MainViewModel()
     {
-        // Initialize services
         _localization = new LocalizationService();
         _jobManager = new JobManager(_localization);
         _configManager = new ConfigManager();
@@ -97,28 +100,25 @@ public class MainViewModel : BaseViewModel
         _pathValidator = new PathValidator();
         _cryptoRunner = new CryptoSoftRunner();
 
-        // Initialize logger
         _logger.Initialize();
         _logger.SetLogFormat(_configManager.LoadSettings().LogFormat);
 
-        // Load existing jobs from config
+        // Load existing jobs from config before child ViewModels are created.
         _configManager.LoadJobs(_jobManager);
 
-        // Load settings and apply language
+        // Apply persisted language before the UI is shown.
         var settings = _configManager.LoadSettings();
         _localization.SetLanguage(settings.Language);
 
-        // Subscribe to language changes
+        // Broadcast language changes to all child ViewModels.
         _localization.LanguageChanged += OnLanguageChanged;
 
-        // Initialize child ViewModels
         DashboardViewModel = new DashboardViewModel(_localization, _stateManager, _logger, _configManager);
         Task.Run(async () => await DashboardViewModel.RefreshContentAsync());
         JobsViewModel = new JobsViewModel(_localization, _jobManager, _configManager, _backupExecutor, _logger, _stateManager, _pathValidator, _cryptoRunner);
         SettingsViewModel = new SettingsViewModel(_localization, _configManager);
         ActivityViewModel = new ActivityViewModel(_localization, _logger);
 
-        // Initialize commands
         NavigateToDashboardCommand = new RelayCommand(_ => NavigateToDashboard());
         NavigateToJobsCommand = new RelayCommand(_ => NavigateToJobs());
         NavigateToSettingsCommand = new RelayCommand(_ => NavigateToSettings());
@@ -127,14 +127,10 @@ public class MainViewModel : BaseViewModel
         SetLanguageFrCommand = new RelayCommand(_ => SetLanguage("fr"));
         SetLanguageEnCommand = new RelayCommand(_ => SetLanguage("en"));
 
-        // Set initial view to Dashboard
         CurrentViewModel = DashboardViewModel;
-
-        // Load localized strings
         UpdateLocalizedStrings();
     }
 
-    // Navigation methods
     private async void NavigateToDashboard()
     {
         await DashboardViewModel.RefreshContentAsync();
@@ -160,7 +156,7 @@ public class MainViewModel : BaseViewModel
 
     private void ExitApplication()
     {
-        // Save jobs before exiting
+        // Persist jobs before shutdown so no CRUD changes are lost.
         _configManager.SaveJobs(_jobManager);
         System.Windows.Application.Current.Shutdown();
     }
@@ -169,13 +165,12 @@ public class MainViewModel : BaseViewModel
     {
         _localization.SetLanguage(languageCode);
 
-        // Save language preference
         var settings = _configManager.LoadSettings();
         settings.Language = languageCode;
         _configManager.SaveSettings(settings);
     }
 
-    // Called when language changes to update all localized strings
+    // Called when language changes: re-localizes this ViewModel and all child ViewModels.
     private async void OnLanguageChanged(object? sender, EventArgs e)
     {
         UpdateLocalizedStrings();

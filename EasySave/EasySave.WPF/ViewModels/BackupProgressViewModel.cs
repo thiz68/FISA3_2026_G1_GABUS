@@ -1,3 +1,12 @@
+/*
+ * BackupProgressViewModel: drives the real-time progress popup shown during backup execution.
+ * Each job has a BackupProgressItemViewModel that tracks progress, failed/stop state, and
+ * two independent pause sources:
+ *   - IsManuallyPaused:         user clicked the Pause button.
+ *   - IsBusinessSoftwarePaused: set externally when business software is detected.
+ * Business software pause takes priority: Resume is disabled (CanPauseResume returns false)
+ * while IsBusinessSoftwarePaused is true, so the user cannot override it.
+ */
 namespace EasySave.WPF.ViewModels;
 
 using System.Collections.ObjectModel;
@@ -6,7 +15,7 @@ using EasySave.Core.Interfaces;
 using EasySave.Core.Services;
 using EasySave.WPF.Commands;
 
-// ViewModel for a single backup job progress item in the progress popup
+// ViewModel for a single backup job progress item in the progress popup.
 public class BackupProgressItemViewModel : BaseViewModel
 {
     private readonly string _jobName;
@@ -14,25 +23,21 @@ public class BackupProgressItemViewModel : BaseViewModel
     private bool _isFailed;
     public bool _stopRequested;
 
-    // Manual pause flag (user clicked Pause button)
+    // Manual pause flag (user clicked Pause button).
     private bool _isManuallyPaused;
 
-    // Flag indicating if paused by business software (priority over manual pause)
+    // Set externally when business software is detected; takes priority over manual pause.
     private bool _isBusinessSoftwarePaused;
 
-    // Localized text for Pause and Resume buttons
     private string _pauseText = "Pause";
     private string _resumeText = "Resume";
 
-    // Command for emergency stop button
     public ICommand EmergencyStopCommand { get; }
-
-    // Command for pause/resume button
     public ICommand PauseResumeCommand { get; }
 
     public string JobName => _jobName;
 
-    // Progress percentage (0-100), or -1 if failed
+    // Progress percentage (0–100), or -1 when the job has failed.
     public double ProgressPercent
     {
         get => _progressPercent;
@@ -46,7 +51,6 @@ public class BackupProgressItemViewModel : BaseViewModel
         }
     }
 
-    // Flag indicating if the job has failed
     public bool IsFailed
     {
         get => _isFailed;
@@ -60,7 +64,6 @@ public class BackupProgressItemViewModel : BaseViewModel
         }
     }
 
-    // Manual pause state (user clicked Pause)
     public bool IsManuallyPaused
     {
         get => _isManuallyPaused;
@@ -74,7 +77,6 @@ public class BackupProgressItemViewModel : BaseViewModel
         }
     }
 
-    // Business software pause state (set externally when business software is detected)
     public bool IsBusinessSoftwarePaused
     {
         get => _isBusinessSoftwarePaused;
@@ -88,7 +90,6 @@ public class BackupProgressItemViewModel : BaseViewModel
         }
     }
 
-    // Localized text for Pause button
     public string PauseText
     {
         get => _pauseText;
@@ -101,7 +102,6 @@ public class BackupProgressItemViewModel : BaseViewModel
         }
     }
 
-    // Localized text for Resume button
     public string ResumeText
     {
         get => _resumeText;
@@ -114,7 +114,6 @@ public class BackupProgressItemViewModel : BaseViewModel
         }
     }
 
-    // Localized text for Failed display
     private string _failedText = "Failed";
     public string FailedText
     {
@@ -128,8 +127,7 @@ public class BackupProgressItemViewModel : BaseViewModel
         }
     }
 
-    // Text displayed on the Pause/Resume button
-    // Shows "Resume" if manually paused OR paused by business software, otherwise "Pause"
+    // Shows "Resume" when paused (either source); otherwise shows "Pause".
     public string PauseResumeButtonText
     {
         get
@@ -140,7 +138,7 @@ public class BackupProgressItemViewModel : BaseViewModel
         }
     }
 
-    // Display string: localized "Failed" if failed, otherwise "XX%"
+    // Shows localized "Failed" if the job failed; otherwise shows the rounded percentage.
     public string ProgressDisplay
     {
         get
@@ -174,45 +172,37 @@ public class BackupProgressItemViewModel : BaseViewModel
         return ProgressPercent < 100 && !IsFailed && !_stopRequested;
     }
 
-    // Toggle pause/resume state
     private void ExecutePauseResume(object? parameter)
     {
-        // Toggle manual pause state
         IsManuallyPaused = !IsManuallyPaused;
     }
 
-    // Pause/Resume button is enabled only if:
-    // - Job is not completed (progress < 100)
-    // - Job has not failed
-    // - Job was not stopped by emergency stop
-    // - If currently paused by business software, Resume is disabled (greyed out)
+    /* Pause/Resume button availability rules:
+     *   - Disabled when the job is completed, failed, or stopped.
+     *   - When showing "Resume" (job is paused), disabled if business software is still running
+     *     because the backup will not resume until the software exits regardless. */
     private bool CanPauseResume(object? parameter)
     {
-        // Cannot use button if job is completed, failed, or stopped
         if (ProgressPercent >= 100 || IsFailed || _stopRequested)
             return false;
 
-        // If showing "Resume" (job is paused), check if business software is blocking
         if (_isManuallyPaused || _isBusinessSoftwarePaused)
         {
-            // Resume is disabled when business software is running
+            // Resume is blocked while business software holds the pause.
             return !_isBusinessSoftwarePaused;
         }
 
-        // Pause is always available when job is running
         return true;
     }
 }
 
-// ViewModel for the backup progress popup window
+// ViewModel for the backup progress popup window.
 public class BackupProgressViewModel : BaseViewModel
 {
     private readonly ILocalizationService _localization;
 
-    // Collection of job progress items for the DataGrid
     public ObservableCollection<BackupProgressItemViewModel> JobProgressItems { get; } = new();
 
-    // Number of available threads for display
     private int _threadCount;
     public int ThreadCount
     {
@@ -220,7 +210,6 @@ public class BackupProgressViewModel : BaseViewModel
         set => SetProperty(ref _threadCount, value);
     }
 
-    // Header text displaying thread count
     private string _headerText = string.Empty;
     public string HeaderText
     {
@@ -228,7 +217,7 @@ public class BackupProgressViewModel : BaseViewModel
         set => SetProperty(ref _headerText, value);
     }
 
-    // Flag indicating if all backups are completed (shows OK button)
+    // When true, all backups have finished and the OK button becomes enabled.
     private bool _isCompleted;
     public bool IsCompleted
     {
@@ -236,10 +225,9 @@ public class BackupProgressViewModel : BaseViewModel
         set => SetProperty(ref _isCompleted, value);
     }
 
-    // Command to close the popup (bound to OK button)
     public ICommand CloseCommand { get; }
 
-    // Action to close the window (set by the Window)
+    // Set by the Window so the ViewModel can close it without a direct reference.
     public Action? CloseAction { get; set; }
 
     // Localized column headers
@@ -271,7 +259,6 @@ public class BackupProgressViewModel : BaseViewModel
         set => SetProperty(ref _emergencyStopText, value);
     }
 
-    // Localized text for Pause button
     private string _pauseText = string.Empty;
     public string PauseText
     {
@@ -279,7 +266,6 @@ public class BackupProgressViewModel : BaseViewModel
         set => SetProperty(ref _pauseText, value);
     }
 
-    // Localized text for Resume button
     private string _resumeText = string.Empty;
     public string ResumeText
     {
@@ -314,28 +300,22 @@ public class BackupProgressViewModel : BaseViewModel
         _threadCount = threadCount;
         IsCompleted = false;
 
-        // Initialize localized strings
         UpdateLocalizedStrings();
 
-        // Initialize header with thread count
         HeaderText = string.Format(_localization.GetString("backup_progress_header"), threadCount);
 
-        // Create progress items for each job
         foreach (var jobName in jobNames)
         {
             var item = new BackupProgressItemViewModel(jobName);
-            // Set localized text for Pause/Resume/Failed display
             item.PauseText = _pauseText;
             item.ResumeText = _resumeText;
             item.FailedText = _failedText;
             JobProgressItems.Add(item);
         }
 
-        // Close command for OK button
         CloseCommand = new RelayCommand(_ => CloseAction?.Invoke(), _ => IsCompleted);
     }
 
-    // Update progress for a specific job
     public void UpdateProgress(string jobName, double progressPercent, bool isFailed)
     {
         var item = JobProgressItems.FirstOrDefault(x => x.JobName == jobName);
@@ -346,8 +326,8 @@ public class BackupProgressViewModel : BaseViewModel
         }
     }
 
-    // Update business software pause state for all jobs
-    // Called when business software detection state changes
+    // Propagates the business software detection state to all job items.
+    // Called from JobsViewModel's shouldPauseFunc on each polling cycle.
     public void UpdateBusinessSoftwarePauseState(bool isBusinessSoftwareRunning)
     {
         foreach (var item in JobProgressItems)
@@ -356,15 +336,12 @@ public class BackupProgressViewModel : BaseViewModel
         }
     }
 
-    // Called when all backups are completed
     public void SetCompleted()
     {
         IsCompleted = true;
-        // Force command to re-evaluate CanExecute
         CommandManager.InvalidateRequerySuggested();
     }
 
-    // Update localized strings
     private void UpdateLocalizedStrings()
     {
         NameColumnHeader = _localization.GetString("name");
@@ -384,7 +361,7 @@ public class BackupProgressViewModel : BaseViewModel
         return item != null && item._stopRequested;
     }
 
-    // Check if a job is manually paused (not by business software)
+    // Returns true only for manual pause; business software pause is tracked separately.
     public bool IsManuallyPaused(string jobName)
     {
         var item = JobProgressItems.FirstOrDefault(x => x.JobName == jobName);

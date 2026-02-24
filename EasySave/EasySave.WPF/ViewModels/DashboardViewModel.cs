@@ -1,3 +1,9 @@
+/*
+ * DashboardViewModel: displays real-time state and today's log file as text previews.
+ * Log reads use a 3 s timeout; if the remote server is slow, the dashboard falls back
+ * to reading the local log file directly so the UI never blocks indefinitely.
+ * The server-unreachable warning is shown at most once per session (_serverWarningShown flag).
+ */
 using System.IO;
 
 namespace EasySave.WPF.ViewModels;
@@ -8,9 +14,6 @@ using EasySave.Core.Models;
 using EasySave.Core.Services;
 using EasySaveLog;
 
-
-// ViewModel for the Dashboard view
-// Displays real-time state and log file previews
 public class DashboardViewModel : BaseViewModel
 {
     private readonly ILocalizationService _localization;
@@ -78,7 +81,7 @@ public class DashboardViewModel : BaseViewModel
         _logger = logger;
         _configManager = configManager;
 
-        // Subscribe to server unreachable events
+        // Subscribe to remote server failure events raised by CompositeLogWriter.
         Logger.RemoteServerUnreachable += OnRemoteServerUnreachable;
 
         InitializeDashboard();
@@ -89,7 +92,7 @@ public class DashboardViewModel : BaseViewModel
         IsServerUnreachable = true;
         ServerStatus = _localization.GetString("server_unreachable");
 
-        // Show warning only once per session
+        // Show warning only once per session to avoid repeated popups during a long backup.
         if (!_serverWarningShown)
         {
             _serverWarningShown = true;
@@ -110,10 +113,10 @@ public class DashboardViewModel : BaseViewModel
         await RefreshContentAsync();
     }
 
-    // Rafraichir le contenu en fonction du settings de format de log
+    // Refresh state and log content, accounting for the configured log format and storage mode.
     public async Task RefreshContentAsync()
     {
-        // Récupération état local
+        // Read state from the local state file (always available, no network required).
         var stateContent = _stateManager.ReadStateFileContent();
         StateContent = string.IsNullOrEmpty(stateContent)
             ? _localization.GetString("state_preview_placeholder")
@@ -123,7 +126,7 @@ public class DashboardViewModel : BaseViewModel
         var format = _logger.GetCurrentLogFormat();
         var storageMode = settings.LogStorageMode;
 
-        // Check server reachability for remote modes (non-blocking)
+        // Check server reachability for remote modes (fire-and-forget, non-blocking).
         if (storageMode != LogStorageMode.LocalOnly)
         {
             _ = CheckServerReachabilityAsync();
@@ -134,7 +137,7 @@ public class DashboardViewModel : BaseViewModel
             ServerStatus = string.Empty;
         }
 
-        // Récupération logs avec timeout
+        // Read logs with a 3 s timeout; fall back to the local file if the remote is slow.
         string logContent = string.Empty;
 
         try
@@ -150,7 +153,7 @@ public class DashboardViewModel : BaseViewModel
             }
             else
             {
-                // Timeout - try to read local logs as fallback
+                // Timeout — fall back to local logs so the dashboard stays usable.
                 logContent = await ReadLocalLogsAsync(format);
 
                 if (storageMode != LogStorageMode.LocalOnly && !_serverWarningShown)
@@ -162,7 +165,6 @@ public class DashboardViewModel : BaseViewModel
         }
         catch
         {
-            // Fallback to local logs
             logContent = await ReadLocalLogsAsync(format);
         }
 
@@ -196,7 +198,7 @@ public class DashboardViewModel : BaseViewModel
         }
         catch
         {
-            // Ignore errors
+            // Ignore — dashboard will show placeholder text instead.
         }
 
         return string.Empty;
@@ -226,7 +228,7 @@ public class DashboardViewModel : BaseViewModel
         }
     }
 
-    // Update localized strings when language changes or after settings update
+    // Re-localize strings and re-read logs with a 3 s timeout on language change.
     public async Task UpdateLocalizedStringsAsync()
     {
         DashboardTitle = _localization.GetString("dashboard");
@@ -235,7 +237,6 @@ public class DashboardViewModel : BaseViewModel
         var format = _logger.GetCurrentLogFormat().ToUpper();
         LogFileTitle = $"{_localization.GetString("log_file_preview")} ({format})";
 
-        // Mettre à jour le contenu log avec timeout
         string logContent = string.Empty;
 
         try
@@ -251,7 +252,6 @@ public class DashboardViewModel : BaseViewModel
             }
             else
             {
-                // Timeout - fallback to local
                 logContent = await ReadLocalLogsAsync(format.ToLower());
             }
         }

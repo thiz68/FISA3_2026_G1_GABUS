@@ -1,3 +1,9 @@
+/*
+ * RemoteLogWriter: sends log entries to a TCP log server over a simple text protocol.
+ * Wire format per line: "LOG|<format>|<json_entry>"
+ * Connection timeout: 2 s. Up to 3 retry attempts with 100 ms between each.
+ * Throws TimeoutException or SocketException to the caller after all retries are exhausted.
+ */
 using EasySave.Core.Interfaces;
 using EasySave.Core.Models;
 using System.Net.Sockets;
@@ -45,7 +51,6 @@ public class RemoteLogWriter : ILogWriter
                 };
 
                 var json = JsonSerializer.Serialize(entry);
-                // Send format along with the log entry: LOG|format|json_data
                 await writer.WriteLineAsync($"LOG|{format}|{json}");
 
                 return;
@@ -70,9 +75,7 @@ public class RemoteLogWriter : ILogWriter
         }
     }
 
-    /// <summary>
-    /// Check if the server is reachable without sending data
-    /// </summary>
+    // Check if the server is reachable without sending data (used by dashboard health check).
     public async Task<bool> IsServerReachableAsync()
     {
         try

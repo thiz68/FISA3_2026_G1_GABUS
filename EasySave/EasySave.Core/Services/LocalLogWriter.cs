@@ -1,3 +1,10 @@
+/*
+ * LocalLogWriter: appends log entries to a daily file (Logs/yyyy-MM-dd.json or .xml).
+ * The static SemaphoreSlim(1) is intentionally shared across all instances to serialize
+ * writes at the process level — prevents partial reads/writes when multiple backup jobs
+ * complete simultaneously and all try to append to the same daily file.
+ * Format is determined at write time; an unrecognized format falls back to the configured one.
+ */
 using EasySave.Core.Interfaces;
 using EasySave.Core.Models;
 using System.Text.Json;
@@ -9,6 +16,8 @@ public class LocalLogWriter : ILogWriter
 {
     private readonly string _logDirectory;
     private readonly Func<string> _getFormat;
+
+    // Static: serializes all writes across every LocalLogWriter instance in the process.
     private static readonly SemaphoreSlim _semaphore = new(1, 1);
 
     public LocalLogWriter(string logDirectory, Func<string> getFormat)
@@ -25,7 +34,7 @@ public class LocalLogWriter : ILogWriter
         {
             Directory.CreateDirectory(_logDirectory);
 
-            // Use provided format or fallback to configured format
+            // Use provided format or fallback to configured format.
             var effectiveFormat = string.IsNullOrEmpty(format) ? _getFormat() : format;
             if (effectiveFormat != "xml" && effectiveFormat != "json")
                 effectiveFormat = _getFormat();

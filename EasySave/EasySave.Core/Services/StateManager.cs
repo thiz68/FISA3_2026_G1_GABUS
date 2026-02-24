@@ -1,69 +1,64 @@
+/*
+ * StateManager: persists the real-time state of all backup jobs to states.json.
+ * All write operations are serialized under a single lock (_stateLock) to prevent
+ * data races between concurrent backup threads. ReadStateFileContent is not locked
+ * since it is used only for dashboard display (read-only, stale data is acceptable).
+ */
 namespace EasySave.Core.Services;
 
 using System.Text.Json;
 using EasySave.Core.Interfaces;
 using EasySave.Core.Models;
 
-//Manages real Time state of backup jobs, write state.json
 public class StateManager : IStateManager
 {
     private readonly string _stateFilePath;
 
-    //Dictionary to store the state of each job
-    //Key = job name, Value = job state information
+    // Key = job name, Value = current job state. Protected by _stateLock.
     private readonly Dictionary<string, JobState> _states = new();
 
-    // Lock object for synchronizing access to states and file in multi-threaded environment
+    // Lock serializes concurrent UpdateJobState calls from parallel backup threads.
     private readonly object _stateLock = new object();
 
-    //Constructor
     public StateManager()
     {
-        //Get the application's directory
         var appDirectory = AppDomain.CurrentDomain.BaseDirectory;
         _stateFilePath = Path.Combine(appDirectory, "states.json");
     }
 
-    //Update state for job
+    // Thread-safe update: sets job metadata, timestamps, and immediately persists to disk.
     public void UpdateJobState(IJob job, JobState state)
     {
-        // Synchronize access to the states dictionary and file
         lock (_stateLock)
         {
-            //Copy job information
             state.Name = job.Name;
             state.JobSourcePath = job.SourcePath;
             state.JobTargetPath = job.TargetPath;
-
-            //Record update
             state.Timestamp = DateTime.Now;
 
-            //Record or update state in dictionary
             _states[job.Name] = state;
             SaveState();
         }
     }
 
-    // Save all job states to the JSON file
+    // Serialize all job states to states.json with pretty-printing.
+    // Must be called inside _stateLock; IOException is swallowed (e.g., USB drive removed).
     public void SaveState()
     {
         var options = new JsonSerializerOptions { WriteIndented = true };
-
-        //Dictionaries to Json
         var json = JsonSerializer.Serialize(_states.Values.ToList(), options);
 
-        // Try to write file, catch errors if drive becomes unavailable (USB unplugged, etc.)
         try
         {
             File.WriteAllText(_stateFilePath, json);
         }
         catch (IOException)
         {
-            // File write failed, probably due to drive issue - we just skip saving state
+            // Skip — drive may have become unavailable mid-backup.
         }
     }
 
-    // Read the current state file content (for dashboard display)
+    // Read the current state file content for dashboard display (not thread-safe, best-effort).
     public string ReadStateFileContent()
     {
         try
@@ -75,7 +70,7 @@ public class StateManager : IStateManager
         }
         catch (IOException)
         {
-            // Ignore read errors
+            // Ignore read errors.
         }
         return string.Empty;
     }

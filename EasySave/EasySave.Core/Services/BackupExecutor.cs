@@ -1,10 +1,19 @@
+/*
+ * BackupExecutor: orchestrates parallel backup job execution.
+ * Concurrency is clamped to [1, MaxConcurrency] slots via SemaphoreSlim.
+ * Two shared gates are constructed before any task starts so counters are
+ * complete when the first thread enters copy logic:
+ *   - PriorityGate:  blocks non-priority threads until ALL priority files
+ *                    across ALL jobs have been copied + encrypted + logged.
+ *   - LargeFileGate: limits simultaneous large-file (>ThresholdKB) transfers
+ *                    to one at a time, shared across all concurrent jobs.
+ */
 namespace EasySave.Core.Services;
 
 using EasySave.Core.Interfaces;
 using EasySave.Core.Models;
 using System.Collections.Generic;
 
-// Execution of backup jobs
 public class BackupExecutor
 {
     private readonly FileBackupService _fileBackupService;
@@ -19,8 +28,8 @@ public class BackupExecutor
         _localization = localization;
     }
 
-    // Execute jobs in parallel using SemaphoreSlim to limit concurrency based on processor count
-    // Returns "backup_completed" if all succeeded, "backup_failed" if any failed
+    // Execute jobs in parallel using SemaphoreSlim to limit concurrency.
+    // Returns "backup_completed" if all succeeded, "backup_failed" if any failed.
     public string ExecuteSequential(
         List<IJob> jobs,
         ILogger logger,
@@ -28,12 +37,11 @@ public class BackupExecutor
         Func<string, bool>? shouldStop = null,
         Func<string, bool>? shouldPause = null)
     {
-        // Determine maximum concurrency: clamp between 1 and 8 based on logical processors
         int maxConcurrency = Math.Clamp(Environment.ProcessorCount, 1, 8);
         var semaphore = new SemaphoreSlim(maxConcurrency);
         var tasks = new List<Task<bool>>();
 
-        // Build global priority gate: pre-scan all jobs so the counter is complete before any copy starts
+        // Build global priority gate: pre-scan all jobs so the counter is complete before any copy starts.
         var settings1 = new ConfigManager().LoadSettings();
         string priorityExt = NormalizePriorityExtension(settings1.PriorityExtension);
         PriorityGate? gate = null;
@@ -46,24 +54,21 @@ public class BackupExecutor
             gate.Add(total);
         }
 
-        // Build global large-file gate (null = disabled)
+        // Build global large-file gate (null = disabled).
         LargeFileGate? largeFileGate = settings1.LargeFileThresholdKB > 0
             ? new LargeFileGate(settings1.LargeFileThresholdKB)
             : null;
 
         foreach (var job in jobs)
         {
-            // Create a task for each job
             tasks.Add(Task.Run(async () =>
             {
                 await semaphore.WaitAsync();
                 try
                 {
-                    // Initialize the state as Active
                     var state = new JobState { State = _localization.GetString("active") };
                     stateManager.UpdateJobState(job, state);
 
-                    // Copy all files from source to target
                     bool success = _fileBackupService.CopyDirectory(
                         job.SourcePath,
                         job.TargetPath,
@@ -80,13 +85,12 @@ public class BackupExecutor
 
                     if (success)
                     {
-                        // Mark job as completed
                         state.State = _localization.GetString("completed");
                         state.Progression = 100;
                     }
                     else
                     {
-                        // Mark job as failed (drive unavailable, USB unplugged, business software detected, etc.)
+                        // Drive unavailable, USB unplugged, hard stop, or business software abort.
                         state.State = _localization.GetString("failed");
                     }
                     stateManager.UpdateJobState(job, state);
@@ -100,19 +104,16 @@ public class BackupExecutor
             }));
         }
 
-        // Wait for all tasks to complete synchronously
         Task.WhenAll(tasks).Wait();
-
-        // Check if all jobs succeeded
         bool allSuccess = tasks.All(t => t.Result);
         return allSuccess ? "backup_completed" : "backup_failed";
     }
 
-    // Execute jobs in parallel with callback for view updates
-    // progressCallback: (jobName, progressPercent, isFailed)
-    // shouldStop: emergency stop callback (definitive stop)
-    // shouldPause: business software callback (temporary pause)
-    // onPauseStateChanged: callback when pause state changes (true = entering pause, false = exiting)
+    // Execute jobs in parallel with UI progress callbacks.
+    // progressCallback:    (jobName, progressPercent, isFailed)
+    // shouldStop:          per-job hard-stop (definitive; no recovery).
+    // shouldPause:         per-job soft pause (business software or manual; resumes automatically).
+    // onPauseStateChanged: optional notification on pause-state transitions.
     public void ExecuteWithProgress(
         List<IJob> jobs,
         ILogger logger,
@@ -123,12 +124,11 @@ public class BackupExecutor
         Func<string, bool>? shouldPause = null,
         Action<bool>? onPauseStateChanged = null)
     {
-        // Determine maximum concurrency (max threads available on computer)
         int maxConcurrency = Math.Clamp(Environment.ProcessorCount, 1, 8);
         var semaphore = new SemaphoreSlim(maxConcurrency);
         var tasks = new List<Task<bool>>();
 
-        // Build global priority gate (same logic as ExecuteSequential)
+        // Build global priority gate (same logic as ExecuteSequential).
         var settings2 = new ConfigManager().LoadSettings();
         string priorityExt = NormalizePriorityExtension(settings2.PriorityExtension);
         PriorityGate? gate = null;
@@ -141,30 +141,26 @@ public class BackupExecutor
             gate.Add(total);
         }
 
-        // Build global large-file gate (null = disabled)
+        // Build global large-file gate (null = disabled).
         LargeFileGate? largeFileGate = settings2.LargeFileThresholdKB > 0
             ? new LargeFileGate(settings2.LargeFileThresholdKB)
             : null;
 
-        // Get progress in job
+        // Wrap stateManager to intercept per-file state updates and forward progress to the UI callback.
         var progressStateManager = new ProgressTrackingStateManager(stateManager, progressCallback);
 
         foreach (var job in jobs)
         {
-            // Initialize progress to 0 at start
             progressCallback(job.Name, 0, false);
 
-            // Create a task for each job
             tasks.Add(Task.Run(async () =>
             {
                 await semaphore.WaitAsync();
                 try
                 {
-                    // Initialize the state as Active
                     var state = new JobState { State = _localization.GetString("active") };
                     progressStateManager.UpdateJobState(job, state);
 
-                    // Copy all files from source to target
                     bool success = _fileBackupService.CopyDirectory(
                         job.SourcePath,
                         job.TargetPath,
@@ -181,14 +177,13 @@ public class BackupExecutor
 
                     if (success)
                     {
-                        // Mark job as completed
                         state.State = _localization.GetString("completed");
                         state.Progression = 100;
                         progressCallback(job.Name, 100, false);
                     }
                     else
                     {
-                        // Mark job as failed (drive unavailable, USB unplugged, business software detected, etc.)
+                        // Drive unavailable, USB unplugged, hard stop, or business software abort.
                         state.State = _localization.GetString("failed");
                         progressCallback(job.Name, -1, true);
                     }
@@ -203,7 +198,6 @@ public class BackupExecutor
             }));
         }
 
-        // Wait for all tasks and call completion callback
         Task.WhenAll(tasks).ContinueWith(t =>
         {
             bool allSuccess = tasks.All(task => task.Result);
@@ -220,19 +214,19 @@ public class BackupExecutor
     }
 }
 
-// Global priority gate: blocks non-priority file copies until all priority files across all jobs are done
+// Global priority gate: blocks non-priority file copies until all priority files across all jobs are done.
 public sealed class PriorityGate
 {
     private int _pending;
     private readonly object _sync = new();
 
-    // Add count of priority files before any copy starts (called from BackupExecutor, single-threaded)
+    // Add count of priority files before any copy starts (called from BackupExecutor, single-threaded).
     public void Add(int count)
     {
         lock (_sync) { _pending += count; }
     }
 
-    // Signal that one priority file has been fully processed (copy + encrypt + log)
+    // Signal that one priority file has been fully processed (copy + encrypt + log).
     public void Done()
     {
         lock (_sync)
@@ -245,8 +239,8 @@ public sealed class PriorityGate
         }
     }
 
-    // Block the calling thread until pendingPriority == 0; checks shouldStop every 200 ms.
-    // If shouldPause fires, keeps waiting (no return/failed) until the pause clears.
+    // Block the calling thread until _pending == 0; checks shouldStop every 200 ms.
+    // While shouldPause is active, keeps waiting without returning so the job stays alive.
     public void WaitIfBlocked(Func<bool>? shouldStop, Func<bool>? shouldPause = null)
     {
         lock (_sync)
@@ -273,7 +267,7 @@ public sealed class LargeFileGate
     public LargeFileGate(long thresholdKb) => ThresholdKB = thresholdKb;
 
     // Acquires the slot. Returns true if acquired, false if shouldStop fired.
-    // If shouldPause fires while waiting, yields without holding the semaphore so
+    // While shouldPause is active, yields without holding the semaphore so
     // other non-paused jobs can use the bandwidth slot; resumes when pause clears.
     public bool Acquire(Func<bool>? shouldStop, Func<bool>? shouldPause = null)
     {
@@ -290,7 +284,7 @@ public sealed class LargeFileGate
     public void Release() => _semaphore.Release();
 }
 
-// Intercepts updates to report progress to popup progress window
+// Decorator: intercepts IStateManager.UpdateJobState calls to forward progress percentages to the UI.
 internal class ProgressTrackingStateManager : IStateManager
 {
     private readonly IStateManager _innerStateManager;
@@ -304,10 +298,7 @@ internal class ProgressTrackingStateManager : IStateManager
 
     public void UpdateJobState(IJob job, JobState state)
     {
-        // Forward to inner state manager
         _innerStateManager.UpdateJobState(job, state);
-
-        // Report progress to UI callback
         _progressCallback(job.Name, state.Progression, false);
     }
 

@@ -1,17 +1,23 @@
+/*
+ * FileBackupService: performs the actual file-level copy operations for a single job.
+ * Supports full (all files) and differential (only newer/missing files) modes.
+ * Uses a two-phase copy strategy:
+ *   Phase 1 – copy priority-extension files; call gate.Done() after each (copy+encrypt+log).
+ *   Phase 2 – wait for the global priority phase to end, then copy remaining files.
+ * Interacts with PriorityGate and LargeFileGate for cross-job synchronization.
+ */
 namespace EasySave.Core.Services;
 
 using System.Diagnostics;
 using EasySave.Core.Models;
 using EasySave.Core.Interfaces;
 
-//This class handles operations of copying for backups
-//It supports full and differential backups
 public class FileBackupService
 {
-    //Process CryptoSoft
     private readonly CryptoSoftRunner _cryptoRunner = new();
 
-    // Count priority-eligible files for pre-registration in the PriorityGate
+    // Count priority-eligible files for pre-registration in the PriorityGate.
+    // Applies the diff filter so the count matches files that will actually be copied.
     public int CountPriorityFiles(string sourceDir, string targetDir, string jobType, string priorityExtension)
     {
         if (string.IsNullOrEmpty(priorityExtension)) return 0;
@@ -34,9 +40,7 @@ public class FileBackupService
         return count;
     }
 
-    // Copy an entire directory using a two-phase approach:
-    //   Phase 1 – copy priority files only; call gate.Done() after each (copy+encrypt+log chain).
-    //   Phase 2 – wait for the global priority phase to end, then copy the rest.
+    // Copy an entire directory tree using a two-phase approach (see file header).
     // Returns true if the backup fully succeeded, false otherwise.
     // shouldPause: when non-null and returns true, the current file is deferred until it returns false
     //              (business-software pause). Distinct from shouldStop (hard abort by the user).
@@ -46,7 +50,7 @@ public class FileBackupService
         string priorityExtension = "", LargeFileGate? largeFileGate = null,
         Func<bool>? shouldPause = null)
     {
-        // Collect all files that need to be copied (diff filter applied)
+        // Collect all files that need to be copied (diff filter applied).
         List<(string src, string tgt)> eligible;
         try { eligible = CollectEligibleFiles(sourceDir, targetDir, job.Type); }
         catch (IOException) { return false; }
@@ -166,7 +170,7 @@ public class FileBackupService
         return success;
     }
 
-    // Returns all (src, tgt) pairs that must be copied, respecting the diff filter.
+    // Returns all (src, tgt) pairs that must be copied, applying the diff filter.
     // Throws IOException if the source directory is unavailable.
     private List<(string src, string tgt)> CollectEligibleFiles(string sourceDir, string targetDir, string jobType)
     {
@@ -183,8 +187,9 @@ public class FileBackupService
         return result;
     }
 
-    //Copy a single file from source to target
-    //Returns the size of the file copied
+    // Copy a single file, optionally encrypt it via CryptoSoft, then log the transfer.
+    // Transfer time is measured with a Stopwatch; negative transfer time signals a copy error in the log.
+    // Returns the source file size (used to update remaining-size progress).
     private long CopyFile(string sourceFile, string targetFile, ILogger logger, IJob job)
     {
         var fileInfo = new FileInfo(sourceFile);
@@ -262,7 +267,7 @@ public class FileBackupService
         }
     }
 
-    // Update state manager progress information.
+    // Push a per-file progress state update to the state manager.
     private void UpdateStateForFile(IJob job, string currentSource, string currentTarget,
         int remainingFiles, long remainingSize, double progression, IStateManager stateManager, ILocalizationService localization)
     {

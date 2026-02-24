@@ -60,6 +60,13 @@ public class ActivityViewModel : BaseViewModel
         set => SetProperty(ref _openLogsFolderText, value);
     }
 
+    private string _recentActivityText = string.Empty;
+    public string RecentActivityText
+    {
+        get => _recentActivityText;
+        set => SetProperty(ref _recentActivityText, value);
+    }
+
     private string _statusText = string.Empty;
     public string StatusText
     {
@@ -98,6 +105,7 @@ public class ActivityViewModel : BaseViewModel
     {
         ActivityTitle      = _localization.GetString("activity");
         OpenLogsFolderText = _localization.GetString("open_logs_folder");
+        RecentActivityText = _localization.GetString("recent_activity");
     }
 
     private void OpenLogsFolder()

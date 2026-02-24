@@ -4,7 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         mc:Ignorable="d"
-        Title="Backup Progress"
+        Title="{Binding TitleText}"
         Height="440" Width="740"
         MinHeight="380" MinWidth="600"
         WindowStartupLocation="CenterOwner"
@@ -133,7 +133,7 @@
 
         <!-- ── OK button (shown when complete) ───────────── -->
         <Button Grid.Row="4"
-                Content="OK"
+                Content="{Binding OkText}"
                 MinWidth="120"
                 Height="40"
                 HorizontalAlignment="Center"

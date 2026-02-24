@@ -37,7 +37,7 @@
                             Margin="0,0,0,16">
                         <StackPanel>
 
-                            <TextBlock Text="APPEARANCE"
+                            <TextBlock Text="{Binding AppearanceSectionTitle}"
                                        Style="{StaticResource SectionTitleStyle}"
                                        Margin="0,0,0,16"/>
 
@@ -48,11 +48,11 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                    <TextBlock Text="Dark Mode"
+                                    <TextBlock Text="{Binding DarkModeLabel}"
                                                FontSize="14"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource PrimaryTextBrush}"/>
-                                    <TextBlock Text="Switch between light and dark interface"
+                                    <TextBlock Text="{Binding DarkModeDescription}"
                                                Style="{StaticResource SecondaryTextStyle}"
                                                Margin="0,2,0,0"/>
                                 </StackPanel>
@@ -74,11 +74,11 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                    <TextBlock Text="Language"
+                                    <TextBlock Text="{Binding LanguageLabel}"
                                                FontSize="14"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource PrimaryTextBrush}"/>
-                                    <TextBlock Text="Interface language"
+                                    <TextBlock Text="{Binding InterfaceLanguageLabel}"
                                                Style="{StaticResource SecondaryTextStyle}"
                                                Margin="0,2,0,0"/>
                                 </StackPanel>
@@ -104,7 +104,7 @@
                     <Border Style="{StaticResource CardStyle}">
                         <StackPanel>
 
-                            <TextBlock Text="BACKUP"
+                            <TextBlock Text="{Binding BackupSectionTitle}"
                                        Style="{StaticResource SectionTitleStyle}"
                                        Margin="0,0,0,16"/>
 
@@ -133,14 +133,14 @@
                             <TextBlock Text="{Binding PriorityExtensionLabel}"
                                        Style="{StaticResource LabelStyle}"/>
                             <TextBox Margin="0,0,0,20"
-                                     ToolTip="Ex: .exe  —  leave empty to disable"
+                                     ToolTip="{Binding PriorityExtensionHint}"
                                      Text="{Binding PriorityExtension,
                                             UpdateSourceTrigger=PropertyChanged}"/>
 
                             <!-- Large File Threshold -->
                             <TextBlock Text="{Binding LargeFileThresholdLabel}"
                                        Style="{StaticResource LabelStyle}"/>
-                            <TextBox ToolTip="Ex: 1024 KB  —  0 or empty to disable"
+                            <TextBox ToolTip="{Binding LargeFileThresholdHint}"
                                      Text="{Binding LargeFileThresholdKB,
                                             UpdateSourceTrigger=PropertyChanged}"/>
 
@@ -156,26 +156,26 @@
                         Style="{StaticResource CardStyle}">
                     <StackPanel>
 
-                        <TextBlock Text="LOG SERVER"
+                        <TextBlock Text="{Binding LogServerSectionTitle}"
                                    Style="{StaticResource SectionTitleStyle}"
                                    Margin="0,0,0,16"/>
 
                         <!-- Log Storage Mode -->
-                        <TextBlock Text="Log Storage Mode"
+                        <TextBlock Text="{Binding LogStorageModeLabel}"
                                    Style="{StaticResource LabelStyle}"/>
                         <ComboBox Margin="0,0,0,20"
                                   ItemsSource="{Binding LogStorageModes}"
                                   SelectedIndex="{Binding SelectedLogStorageModeIndex}"/>
 
                         <!-- Server IP -->
-                        <TextBlock Text="Server IP"
+                        <TextBlock Text="{Binding ServerIpLabel}"
                                    Style="{StaticResource LabelStyle}"/>
                         <TextBox Margin="0,0,0,20"
                                  Text="{Binding LogServerIp,
                                         UpdateSourceTrigger=PropertyChanged}"/>
 
                         <!-- Server Port -->
-                        <TextBlock Text="Server Port"
+                        <TextBlock Text="{Binding ServerPortLabel}"
                                    Style="{StaticResource LabelStyle}"/>
                         <TextBox Text="{Binding LogServerPort,
                                         UpdateSourceTrigger=PropertyChanged}"/>

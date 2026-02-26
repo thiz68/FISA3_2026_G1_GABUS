@@ -1,5 +1,6 @@
 namespace EasySave.WPF.ViewModels;
 
+using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using EasySave.Core.Interfaces;
@@ -123,7 +124,7 @@ public class SettingsViewModel : BaseViewModel
         set => SetProperty(ref _businessSoftwareLabel, value);
     }
 
-    // Priority extension (e.g. ".exe" or "exe") – single value, case-insensitive at save time
+    // Priority extension(s) – semicolon-separated list of dot-prefixed extensions (e.g. ".exe;.pdf")
     private string _priorityExtension = string.Empty;
     public string PriorityExtension
     {
@@ -136,6 +137,14 @@ public class SettingsViewModel : BaseViewModel
     {
         get => _priorityExtensionLabel;
         set => SetProperty(ref _priorityExtensionLabel, value);
+    }
+
+    // Validation error for PriorityExtension – empty string = no error
+    private string _priorityExtensionError = string.Empty;
+    public string PriorityExtensionError
+    {
+        get => _priorityExtensionError;
+        set => SetProperty(ref _priorityExtensionError, value);
     }
 
     // Max file size (KB) above which only one concurrent transfer is allowed. 0 = disabled.
@@ -268,6 +277,15 @@ public class SettingsViewModel : BaseViewModel
     // Save settings to config
     private void SaveSettings()
     {
+        // Validate priority extension list before persisting
+        if (!ValidatePriorityExtensionList(PriorityExtension, out string validationError))
+        {
+            PriorityExtensionError = validationError;
+            MessageBox.Show(validationError, _localization.GetString("warning"), MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        PriorityExtensionError = string.Empty;
+
         var settings = _configManager.LoadSettings();
         settings.LogFormat = SelectedLogFormat;
         settings.ExtensionsToEncrypt = ExtensionsToEncrypt ?? string.Empty;
@@ -280,8 +298,39 @@ public class SettingsViewModel : BaseViewModel
 
         _configManager.SaveSettings(settings);
 
-
         MessageBox.Show(_localization.GetString("settings_saved"), "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    // Validates a ';'-separated priority extension list.
+    // Returns true when the input is empty (disabled) or every non-empty trimmed token starts with '.'
+    // and contains no whitespace or path-separator characters.
+    // Invalid tokens are NOT auto-corrected per spec (e.g. "exe" is rejected, not turned into ".exe").
+    private bool ValidatePriorityExtensionList(string? input, out string error)
+    {
+        error = string.Empty;
+        if (string.IsNullOrWhiteSpace(input)) return true; // empty = priority disabled, always valid
+
+        var tokens = input.Split(';', StringSplitOptions.RemoveEmptyEntries)
+                          .Select(t => t.Trim())
+                          .Where(t => t.Length > 0)
+                          .ToList();
+
+        if (tokens.Count == 0) return true; // only semicolons/spaces entered
+
+        var invalidPathChars = Path.GetInvalidFileNameChars();
+        foreach (var token in tokens)
+        {
+            bool isValid = token.StartsWith('.')
+                           && token.Length >= 2
+                           && !token.Any(char.IsWhiteSpace)
+                           && token.IndexOfAny(invalidPathChars) < 0;
+            if (!isValid)
+            {
+                error = _localization.GetString("priority_extension_invalid");
+                return false;
+            }
+        }
+        return true;
     }
 
     // Update localized strings when language changes

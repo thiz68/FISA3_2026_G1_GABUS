@@ -13,7 +13,9 @@ public class AppSettings
 
     public string BusinessSoftware { get; set; } = string.Empty;
 
-    // Single file extension that gets absolute priority over all other files across all concurrent jobs
+    // Priority file extension(s). Supports a single value (".exe") or a semicolon-separated list (".exe;.pdf;.zip").
+    // Extensions must be dot-prefixed and lowercase. Order matters: first extension is processed before second, etc.
+    // Empty or whitespace = priority disabled.
     public string PriorityExtension { get; set; } = string.Empty;
 
     // Max size (KB) above which at most one transfer is allowed at a time. 0 = disabled.

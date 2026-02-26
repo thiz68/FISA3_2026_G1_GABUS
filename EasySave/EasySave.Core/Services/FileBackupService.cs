@@ -11,10 +11,11 @@ public class FileBackupService
     //Process CryptoSoft
     private readonly CryptoSoftRunner _cryptoRunner = new();
 
-    // Count priority-eligible files for pre-registration in the PriorityGate
-    public int CountPriorityFiles(string sourceDir, string targetDir, string jobType, string priorityExtension)
+    // Count priority-eligible files for pre-registration in the PriorityGate.
+    // Counts files matching ANY extension in the provided list.
+    public int CountPriorityFiles(string sourceDir, string targetDir, string jobType, IReadOnlyList<string> priorityExtensions)
     {
-        if (string.IsNullOrEmpty(priorityExtension)) return 0;
+        if (priorityExtensions == null || priorityExtensions.Count == 0) return 0;
         string[] allFiles;
         try { allFiles = Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories); }
         catch (IOException) { return 0; }
@@ -22,7 +23,8 @@ public class FileBackupService
         int count = 0;
         foreach (var file in allFiles)
         {
-            if (Path.GetExtension(file).ToLowerInvariant() != priorityExtension) continue;
+            var ext = Path.GetExtension(file).ToLowerInvariant();
+            if (!priorityExtensions.Contains(ext)) continue;
             if (jobType == "diff")
             {
                 var rel = Path.GetRelativePath(sourceDir, file);
@@ -43,7 +45,7 @@ public class FileBackupService
     public bool CopyDirectory(string sourceDir, string targetDir, IJob job, ILogger logger,
         IStateManager stateManager, ILocalizationService localization,
         Func<bool>? shouldStop = null, PriorityGate? gate = null,
-        string priorityExtension = "", LargeFileGate? largeFileGate = null,
+        IReadOnlyList<string>? priorityExtensions = null, LargeFileGate? largeFileGate = null,
         Func<bool>? shouldPause = null)
     {
         // Collect all files that need to be copied (diff filter applied)
@@ -59,21 +61,32 @@ public class FileBackupService
         int filesRemaining = totalFiles;
         long sizeRemaining = totalSize;
 
-        bool hasPriority = !string.IsNullOrEmpty(priorityExtension);
-        var priorityFiles = hasPriority
-            ? eligible.Where(f => Path.GetExtension(f.src).ToLowerInvariant() == priorityExtension).ToList()
+        bool hasPriority = priorityExtensions != null && priorityExtensions.Count > 0;
+
+        // All priority files (any matching extension) – used to build the ordered list and compute drain count.
+        var allPriorityFiles = hasPriority
+            ? eligible.Where(f => priorityExtensions!.Contains(Path.GetExtension(f.src).ToLowerInvariant())).ToList()
             : new List<(string src, string tgt)>();
+
+        // Priority files ordered by extension priority (ext[0] first, ext[1] second, …).
+        // Within each extension group the original enumeration order is preserved.
+        var priorityFilesOrdered = hasPriority
+            ? priorityExtensions!
+                .SelectMany(ext => allPriorityFiles.Where(f => Path.GetExtension(f.src).ToLowerInvariant() == ext))
+                .ToList()
+            : new List<(string src, string tgt)>();
+
         var nonPriorityFiles = hasPriority
-            ? eligible.Where(f => Path.GetExtension(f.src).ToLowerInvariant() != priorityExtension).ToList()
+            ? eligible.Where(f => !priorityExtensions!.Contains(Path.GetExtension(f.src).ToLowerInvariant())).ToList()
             : eligible;
 
         bool success = true;
 
-        // ── Phase 1: priority files ──────────────────────────────────────────────
+        // ── Phase 1: priority files (processed in extension-priority order) ──────
         // We MUST call gate.Done() for every slot we entered (even on abort) to avoid
         // deadlocking jobs that are blocked at WaitIfBlocked.
         int priorityProcessed = 0;
-        foreach (var (src, tgt) in priorityFiles)
+        foreach (var (src, tgt) in priorityFilesOrdered)
         {
             bool acquired = false;
             try
@@ -114,7 +127,7 @@ public class FileBackupService
         // Drain any priority slots we never entered (early abort) so other jobs
         // waiting at WaitIfBlocked are not deadlocked.
         if (gate != null)
-            for (int i = priorityProcessed; i < priorityFiles.Count; i++)
+            for (int i = priorityProcessed; i < priorityFilesOrdered.Count; i++)
                 gate.Done();
 
         // ── Wait for the global priority phase to finish ─────────────────────────

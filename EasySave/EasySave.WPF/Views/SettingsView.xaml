@@ -132,10 +132,16 @@
                             <!-- Priority Extension -->
                             <TextBlock Text="{Binding PriorityExtensionLabel}"
                                        Style="{StaticResource LabelStyle}"/>
-                            <TextBox Margin="0,0,0,20"
-                                     ToolTip="{Binding PriorityExtensionHint}"
+                            <TextBox ToolTip="{Binding PriorityExtensionHint}"
                                      Text="{Binding PriorityExtension,
                                             UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Text="{Binding PriorityExtensionError}"
+                                       Foreground="#E53935"
+                                       FontSize="12"
+                                       Margin="0,2,0,18"
+                                       TextWrapping="Wrap"
+                                       Visibility="{Binding PriorityExtensionError,
+                                                    Converter={StaticResource StringToVisibilityConverter}}"/>
 
                             <!-- Large File Threshold -->
                             <TextBlock Text="{Binding LargeFileThresholdLabel}"

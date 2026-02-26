@@ -16,6 +16,7 @@
             <!-- Converters (application-scoped, referenced by all views) -->
             <converters:BackupTypeConverter x:Key="BackupTypeConverter"/>
             <BooleanToVisibilityConverter  x:Key="BooleanToVisibilityConverter"/>
+            <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -35,14 +35,14 @@ public class BackupExecutor
 
         // Build global priority gate: pre-scan all jobs so the counter is complete before any copy starts
         var settings1 = new ConfigManager().LoadSettings();
-        string priorityExt = NormalizePriorityExtension(settings1.PriorityExtension);
+        var priorityExts1 = ParsePriorityExtensions(settings1.PriorityExtension);
         PriorityGate? gate = null;
-        if (!string.IsNullOrEmpty(priorityExt))
+        if (priorityExts1.Count > 0)
         {
             gate = new PriorityGate();
             int total = 0;
             foreach (var j in jobs)
-                total += _fileBackupService.CountPriorityFiles(j.SourcePath, j.TargetPath, j.Type, priorityExt);
+                total += _fileBackupService.CountPriorityFiles(j.SourcePath, j.TargetPath, j.Type, priorityExts1);
             gate.Add(total);
         }
 
@@ -73,7 +73,7 @@ public class BackupExecutor
                         _localization,
                         () => shouldStop?.Invoke(job.Name) ?? false,
                         gate,
-                        priorityExt,
+                        priorityExts1,
                         largeFileGate,
                         () => shouldPause?.Invoke(job.Name) ?? false
                     );
@@ -130,14 +130,14 @@ public class BackupExecutor
 
         // Build global priority gate (same logic as ExecuteSequential)
         var settings2 = new ConfigManager().LoadSettings();
-        string priorityExt = NormalizePriorityExtension(settings2.PriorityExtension);
+        var priorityExts2 = ParsePriorityExtensions(settings2.PriorityExtension);
         PriorityGate? gate = null;
-        if (!string.IsNullOrEmpty(priorityExt))
+        if (priorityExts2.Count > 0)
         {
             gate = new PriorityGate();
             int total = 0;
             foreach (var j in jobs)
-                total += _fileBackupService.CountPriorityFiles(j.SourcePath, j.TargetPath, j.Type, priorityExt);
+                total += _fileBackupService.CountPriorityFiles(j.SourcePath, j.TargetPath, j.Type, priorityExts2);
             gate.Add(total);
         }
 
@@ -174,7 +174,7 @@ public class BackupExecutor
                         _localization,
                         () => shouldStop?.Invoke(job.Name) ?? false,
                         gate,
-                        priorityExt,
+                        priorityExts2,
                         largeFileGate,
                         () => shouldPause?.Invoke(job.Name) ?? false
                     );
@@ -211,12 +211,22 @@ public class BackupExecutor
         });
     }
 
-    // Normalize priority extension: "exe" or ".EXE" → ".exe"; null/empty → ""
-    private static string NormalizePriorityExtension(string? ext)
+    // Parse a ';'-separated priority extension list into an ordered, de-duplicated List<string>.
+    // Each token must already be dot-prefixed (e.g. ".exe"); tokens without a leading dot are silently skipped
+    // because the UI validation prevents saving them. Tokens are lowercased and de-duplicated (first occurrence wins).
+    // Returns an empty list when the input is null/empty/whitespace (priority disabled).
+    private static List<string> ParsePriorityExtensions(string? input)
     {
-        if (string.IsNullOrWhiteSpace(ext)) return string.Empty;
-        ext = ext.Trim().ToLowerInvariant();
-        return ext.StartsWith('.') ? ext : '.' + ext;
+        if (string.IsNullOrWhiteSpace(input)) return new List<string>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var result = new List<string>();
+        foreach (var token in input.Split(';', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var t = token.Trim().ToLowerInvariant();
+            if (t.Length > 1 && t.StartsWith('.') && seen.Add(t))
+                result.Add(t);
+        }
+        return result;
     }
 }
 

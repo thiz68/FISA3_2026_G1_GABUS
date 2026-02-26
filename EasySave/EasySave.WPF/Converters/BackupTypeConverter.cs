@@ -25,6 +25,20 @@ public class BackupTypeConverter : IValueConverter
     }
 }
 
+// Converts a string to Visibility: non-empty string → Visible, empty/null → Collapsed
+public class StringToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return value is string s && !string.IsNullOrEmpty(s)
+            ? System.Windows.Visibility.Visible
+            : System.Windows.Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => Binding.DoNothing;
+}
+
 // Converts boolean to Visibility
 public class BooleanToVisibilityConverter : IValueConverter
 {

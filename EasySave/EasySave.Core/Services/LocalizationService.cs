@@ -117,7 +117,7 @@ public class LocalizationService : ILocalizationService
             ["business_software"] = "Business Software (process name)",
             ["business_software_detected"] = "Business software detected. Backup cannot start.",
             ["business_software_stopped"] = "Backup stopped: business software detected",
-            ["priority_extension"] = "Priority Extension (e.g. .exe)",
+            ["priority_extension"] = "Priority Extensions (e.g. .exe;.pdf)",
             ["large_file_threshold_kb"] = "Large File Threshold (KB, 0 = disabled)",
 
             // Backup progress popup
@@ -150,7 +150,8 @@ public class LocalizationService : ILocalizationService
             ["log_storage_mode"] = "Log Storage Mode",
             ["server_ip"] = "Server IP",
             ["server_port"] = "Server Port",
-            ["priority_extension_hint"] = "Ex: .exe  —  leave empty to disable",
+            ["priority_extension_hint"] = "Ex: .exe;.pdf  —  leave empty to disable",
+            ["priority_extension_invalid"] = "Invalid format. Use dot-prefixed extensions separated by ';' (e.g. .exe;.pdf)",
             ["large_file_threshold_hint"] = "Ex: 1024 KB  —  0 or empty to disable",
 
             // Dialog
@@ -259,7 +260,7 @@ public class LocalizationService : ILocalizationService
             ["business_software"] = "Logiciel metier (nom du processus)",
             ["business_software_detected"] = "Logiciel metier detecte. Impossible de demarrer la sauvegarde.",
             ["business_software_stopped"] = "Sauvegarde arretee : logiciel metier detecte",
-            ["priority_extension"] = "Extension prioritaire (ex. .exe)",
+            ["priority_extension"] = "Extensions prioritaires (ex. .exe;.pdf)",
             ["large_file_threshold_kb"] = "Seuil grands fichiers (Ko, 0 = desactive)",
 
             // Backup progress popup
@@ -292,7 +293,8 @@ public class LocalizationService : ILocalizationService
             ["log_storage_mode"] = "Mode de stockage des logs",
             ["server_ip"] = "IP du serveur",
             ["server_port"] = "Port du serveur",
-            ["priority_extension_hint"] = "Ex: .exe  —  laisser vide pour desactiver",
+            ["priority_extension_hint"] = "Ex: .exe;.pdf  —  laisser vide pour desactiver",
+            ["priority_extension_invalid"] = "Format invalide. Utilisez des extensions avec point separees par ';' (ex. .exe;.pdf)",
             ["large_file_threshold_hint"] = "Ex: 1024 Ko  —  0 ou vide pour desactiver",
 
             // Dialog

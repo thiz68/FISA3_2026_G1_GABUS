@@ -370,5 +370,7 @@ Commit prefixes: `feat`, `fix`, `chore`, `refactor`, `docs`, `test`.
 
 FISA3 2026 — Group 1 — CESI Engineering School
 
-Contributors: Thibaud, Hugo, Clery, Paul,
+Contributors: Thibaud, Hugo, Clery, Paul
+
+
 
